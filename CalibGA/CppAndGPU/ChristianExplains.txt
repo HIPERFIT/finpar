@@ -1,0 +1,98 @@
+ps: to complement the last (brief) sentence, LexiFi vs DEMCMC.
+
+LexiFi is basically DE only, and uses a further minimization step (not
+provided, if I remember right). The DEMCMC I wrote (designed?  ) is
+self-contained, more parallel, and statistically sound. If one is not
+interested in the statistics, and prefers not to go to Minpack like
+LexiFi, can do a parallel grid search with a grid of small amplitude.
+
+
+LexiFi's DE uses a population with N=40, and they limit the
+evaluations to 2000 in total (so, 50 steps/genetic generations). After
+this, the best genome by fitness is chosen, and a quick minimization
+is performed.
+
+The mutation of the genomes is only crossover, with a schema like
+new_genome=gamma*(R1-random_genome). Gamma is chosen as
+Uniform(0.5,1.0), per generation. R1 is the best_genome 50% of the
+times, and a random_genome the other 50% (as per the code: line 117 of
+optimization.ml conflicts with the explanation in optimization.mli).
+
+The minimization slightly perturbs the genome, and evaluates the
+fitness a few times again. The idea is to "shake" it to "place" it in
+the best fit. This process is sequential (it's done on the best
+candidate only), and calls Minpack from C/Fortran. Here an example of
+usage [1]. For what I remember, this minimization step is not included
+in the benchmark, and I'm not sure of the gains in parallelizing it:
+few steps, lots of branches and in-place updates.
+Another option would be a parallel grid search around the best_genome
+(e.g. grid of total amplitude of ~1% in each dimension).
+
+[1] http://www.quantcode.com/modules/mydownloads/singlefile.php?lid=436
+
+Best,
+--
+Christian
+
+
+
+On Wed, Sep 4, 2013 at 10:00 PM, Christian Andreetta - DIKU - HiPerFIT
+<christian.andreetta@diku.edu> wrote:
+> Hi Cosmin,
+>
+> Sorry that I didn't yet have the time to look at it properly: family +
+> work... Will be much better in a week, but I'll try to do things
+> before.
+>
+> In random order, with the usual defs:
+> * target: the "black_price"
+> * genome=the 5 params: a,b,sigma,nu,rho
+> * candidates=the "guys/girls" expressing the genome. They use the
+> genome to feed the "pricer_of_swaption", to get a candidate price
+> * fitness: the logLikelihood(price, quote). How good is the candidate
+> price vs. the "black_price"
+> * population of size N: the amount of candidates in a step (generation)
+> * convergence: some of the candidates have a good match with the
+> target, or the fit of the best candidates do not sensibly improve. In
+> practice, we fix a number of steps, or the total runtime.
+>
+> II) yes: those are the extremes of the params. The initial population
+> should be random, with at most 1-2% of the candidates starting where
+> LexiFi sets the initial values. Nothing happens if none of the
+> candidates starts from those values: at most a light slowdown in the
+> convergence for small N, and cancelled for N>=~100.
+>
+> III) the statistical machinery works with probabilities, so we should
+> use the logLikelihood(price, quote). Using "( ( price - quote ) /
+> quote ) ^ 2" is less robust for outliers, i.e. prices that have low
+> liquidity or low information content (because the market operators are
+> unsure, or the expiration is far away, or volatility is in general
+> high, etc.)
+>
+> I) x_ref is mainly an index over the y_ref. In the LexiFi code, x_ref
+> is the genome, y the candidate price, and y_ref the black price
+>
+>
+> General considerations:
+>
+> - black_price: it's in practice a constant function. Actually. the
+> market directly provides the "black_price". LexiFi, by inversion of
+> the analytical Black price formula (Black'76 in my code), derived from
+> the market prices the implied volatility (implied because given by the
+> market). This volatility is important because is the "consensus" of
+> the the underlying of the swaptions, the interest rate. This to say
+> that we can compute the black_prices in the CPU, and feed constants to
+> the GPU: it's what the market provides in any case.
+>
+> - LexiFi optimization vs. DEMCMC: LexiFi uses a procedure that, for
+> erratic prices and markets, can produce unstable results. Its
+> advantage is in the low number of CPU evaluations. I added a bit of
+> Bayesian fairy dust, and made it more robust at the cost of more
+> evaluations. They are parallel in any case, so, given the advantages,
+> I though it's no big deal. If you need the original LexiFi
+> calibration, I can code it up in python/c++ in very little time.
+>
+>
+> Best,
+> --
+> Christian
