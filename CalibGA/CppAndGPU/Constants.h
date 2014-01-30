@@ -13,6 +13,10 @@
 
 #include "KerConsts.h"
 
+#ifdef __APPLE__
+typedef unsigned uint;
+#endif
+
 typedef uint UINT;
 
 typedef struct timeb mlfi_timeb;

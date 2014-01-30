@@ -27,7 +27,7 @@ char* getIregShapeSimple( const int LWG, int& N ) {
         flags[ sgmscan[i] ] = 0;
     }
     // 2.b) set the start-of-segment flags to one.
-    for( int i = 0; i <= NUM_SWAP_QUOTES; i++ ) {
+    for( int i = 0; i < NUM_SWAP_QUOTES; i++ ) {
         int sz = 12 * SwaptionQuotes[i][2] / SwaptionQuotes[i][1];
         flags[ sgmscan[i] ] = sz;
         //lens [ sgmscan[i] ] = sz; 

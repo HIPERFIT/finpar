@@ -178,9 +178,17 @@ struct OclObjects {
 /******************************************/
 void compileGPUprog( OclObjects& objs ) {
     char compile_option[256];
+
+#ifdef MAC
+    // Build the program with 'mad' Optimization option
+    char flags[] = "-cl-mad-enable -DMAC ";
+#else
+    char flags[] = "";
+#endif
+
     //sprintf( compile_option, "-I. -I SrcCL -D TODAY=%10f -D LWG_FB=%d -D INFTY=%f", TODAY, LWG_FB, INFTY );
-    sprintf( compile_option, "-I. -I SrcCL -D TODAY=%10f -D LWG_FB=%d -D INFTY=%f -D MAX_DATE=%f -D MIN_DATE=%f -D SOBOL_BITS_NUM=%d", 
-             TODAY, LWG_FB, INFTY, MAX_DATE, MIN_DATE, SOBOL_BITS_NUM );
+    sprintf( compile_option, "%s -I. -I SrcCL -D TODAY=%10f -D LWG_FB=%d -D INFTY=%f -D MAX_DATE=%f -D MIN_DATE=%f -D SOBOL_BITS_NUM=%d",
+	     flags, TODAY, LWG_FB, INFTY, MAX_DATE, MIN_DATE, SOBOL_BITS_NUM );
 
     //printf("Before build_for_GPU %s, TODAY is %10f \n", compile_option, TODAY);
 
@@ -196,7 +204,7 @@ void compileGPUprog( OclObjects& objs ) {
         compile_option, 
         "SrcCL/CalibKers"
     );
-//    printf("After build_for_GPU\n");
+    // printf("After build_for_GPU\n");
 }
 
 void makeOclBuffers ( CpuArrays& cpu_arrs, OclObjects& ocl_objs, OclBuffers& ocl_arrs ) {

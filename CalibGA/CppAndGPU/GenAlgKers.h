@@ -59,14 +59,15 @@ class GenAlgKers {
 
             // set the index of the next random number!
             ciErr1 |= clSetKernelArg( init_ker, 3, sizeof(uint), &sobol_offset );
+            oclCheckError(ciErr1, CL_SUCCESS);
             ciErr1 = clEnqueueNDRangeKernel (  
                                 ocl_objs.getCommandQueue(), 
                                 init_ker, 2, NULL, this->GWG, this->LWG, 
                                 0, NULL, NULL          
                             );
+            oclCheckError(ciErr1, CL_SUCCESS);
             ciErr1 |= clFinish( ocl_objs.getCommandQueue() );            
             oclCheckError(ciErr1, CL_SUCCESS);
-
             sobol_offset += (5 * POP_SIZE);
         }
 

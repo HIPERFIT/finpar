@@ -3,7 +3,12 @@
 
 #include <string.h>
 #include <iostream>
+
+#ifdef __APPLE__
+#include <OpenCL/opencl.h>
+#else
 #include <CL/opencl.h>
+#endif
 
 /**********************************/
 /******* MACROS            ********/
@@ -141,14 +146,17 @@
                     return -3000;
                 }
 
+		printf("Found %d platform(s)\n", num_platforms);
+
                 // get platform info for each platform and trap the NVIDIA platform if found
                 ciErrNum = clGetPlatformIDs (num_platforms, clPlatformIDs, NULL);
                 for(cl_uint i = 0; i < num_platforms; ++i)
                 {
-                    ciErrNum = clGetPlatformInfo (clPlatformIDs[i], CL_PLATFORM_NAME, 1024, &chBuffer, NULL);
+                    ciErrNum = clGetPlatformInfo (clPlatformIDs[i], CL_PLATFORM_VENDOR, 1024, &chBuffer, NULL);
                     if(ciErrNum == CL_SUCCESS)
                     {
-                        if(strstr(chBuffer, "NVIDIA") != NULL)
+  		        printf("Platform name is %s\n", chBuffer);
+                        if(strstr(chBuffer, "NVIDIA") != NULL || strstr(chBuffer, "Apple") != NULL)
                         {
                             *clSelectedPlatformID = clPlatformIDs[i];
                             break;
@@ -473,12 +481,14 @@
 
         if(nv_device_attibute_query)
         {
+#ifndef __APPLE__
             cl_uint compute_capability_major, compute_capability_minor;
             clGetDeviceInfo(device, CL_DEVICE_COMPUTE_CAPABILITY_MAJOR_NV, sizeof(cl_uint), &compute_capability_major, NULL);
             clGetDeviceInfo(device, CL_DEVICE_COMPUTE_CAPABILITY_MINOR_NV, sizeof(cl_uint), &compute_capability_minor, NULL);
             shrLogEx("\n  CL_DEVICE_COMPUTE_CAPABILITY_NV:\t%u.%u\n", compute_capability_major, compute_capability_minor);
-
+#endif
             shrLogEx("  NUMBER OF MULTIPROCESSORS:\t\t%u\n", compute_units); // this is the same value reported by CL_DEVICE_MAX_COMPUTE_UNITS
+#ifndef __APPLE__
             shrLogEx("  NUMBER OF CUDA CORES:\t\t\t%u\n", ConvertSMVer2CoresCopy(compute_capability_major, compute_capability_minor) * compute_units);
 
             cl_uint regs_per_block;
@@ -500,6 +510,7 @@
             cl_bool integrated_memory;
             clGetDeviceInfo(device, CL_DEVICE_INTEGRATED_MEMORY_NV, sizeof(cl_bool), &integrated_memory, NULL);
             shrLogEx("  CL_DEVICE_INTEGRATED_MEMORY_NV:\t%s\n", integrated_memory == CL_TRUE ? "CL_TRUE" : "CL_FALSE");
+#endif
         }
 
         // CL_DEVICE_PREFERRED_VECTOR_WIDTH_<type>
@@ -590,15 +601,15 @@ void build_for_GPU(
         shrLog("clCreateCommandQueue\n");
 
         for (cl_uint i = 0; i < nDevice; i++) {
-            cqCommandQueue[i] = clCreateCommandQueue(cxGPUContext, cdDevices[dev_id], 0, &ciErr1);
+            cqCommandQueue[i] = clCreateCommandQueue(cxGPUContext, cdDevices[i], 0, &ciErr1);
             oclCheckErrorEX(ciErr1, CL_SUCCESS, NULL);
         }
 
-    #ifdef DEBUG_PRINT_GPU_INFO
+	//    #ifdef DEBUG_PRINT_GPU_INFO
         for (cl_uint i = 0; i < nDevice; i++) {
             oclPrintDevInfo(0, cdDevices[i]);
         }
-    #endif
+	//    #endif
         shrLog("\nUsing %d GPU(s)...\n\n", nDevice);
 
         // 6. build program
@@ -610,6 +621,11 @@ void build_for_GPU(
 
         oclCheckError(kernel_code != NULL, shrTRUE);
         cpProgram = clCreateProgramWithSource(cxGPUContext, 1, (const char **)&kernel_code, &szKernelLength, &ciErr1);
+	if (ciErr1 != CL_SUCCESS)
+	  {
+	    printf("Error in clCreateProgramWithSource, Line %u in file %s !!!\n\n", __LINE__, __FILE__);
+	    exit(0);
+	  }
 
         //printf("Before building error: %d, code: %d, success: %d, num_dev: %d\n\n",
         //      ciErr1, CL_BUILD_PROGRAM_FAILURE, CL_SUCCESS, nDevice);

@@ -151,6 +151,7 @@ void mainKernel (  ) {
 #if (GPU_VERSION == 2)
     genalgker.run_init( );
 #else
+
     for( int i = 0; i < POP_SIZE; i++ ) {
         REAL r01, tmp;
 

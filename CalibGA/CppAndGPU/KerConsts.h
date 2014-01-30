@@ -2,7 +2,7 @@
 #define KERNEL_CONSTANTS
 
 /**
- * If set than Sobol's pseudo-rand num gen is used,
+ * If set then Sobol's pseudo-rand num gen is used,
  * Otherwise (if GPU_VERSION!=2) `rand' from C is used.
  */
 #define WITH_SOBOL 1 
@@ -12,9 +12,10 @@
  * 1 -> Only the pricing is done on GPU,
  *        mutation, crossover done on CPU
  * 2 -> Everything on GPU using Sobol's 
- *        independent formula for random numbers.
+ *        independent formula for pseudo-
+ *        random numbers.
  */
-#define GPU_VERSION 0
+#define GPU_VERSION 2
 
 /**
  * If WITH_FLOAT == 0 THEN double precision is used, 
