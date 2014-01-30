@@ -199,7 +199,7 @@ inline void segm_reduce_plus(
 /****************************************************/
 
 inline REAL2 OP_PLUS_MAX(REAL2 a, REAL2 b) {
-    return (REAL2) ( a.x + b.x, max(a.y, b.y) );
+    return (REAL2) ( a.x + b.x, maxR(a.y, b.y) );
 }
 
 inline REAL2 segm_reduce_plusmax_warp( 
@@ -288,7 +288,7 @@ inline void segm_reduce_plusmax(
 /****************************************************/
 
 inline REAL4 OP_PLUS_MIN_MAX( REAL4 a, REAL4 b ) {
-    return ( REAL4 ) ( a.x + b.x, min(a.y, b.y), max(a.z, b.z), 1.0 );
+    return ( REAL4 ) ( a.x + b.x, minR(a.y, b.y), maxR(a.z, b.z), 1.0 );
 }
 
 inline REAL4 segm_reduce_plusminmax_warp( 

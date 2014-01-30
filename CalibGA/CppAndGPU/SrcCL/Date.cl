@@ -127,7 +127,11 @@ REAL add_months ( REAL time, REAL rnbmonths ) {
  
     if ( date.month <= 0 ) { date.year -= 1; date.month += 12; }
 
-    date.day = min( date.day, end_of_month(date.year, date.month) );
+    { // date.day = min( date.day, end_of_month(date.year, date.month) );
+        int tmp = end_of_month(date.year, date.month);
+        if(date.day > tmp) date.day = tmp;
+    }
+
     date.hour = 12;
     date.min  = 0;
 

@@ -1,6 +1,6 @@
 // BOP is a generic binary associative operator, 
 //     e.g., +, *, AND, OR
-//#define BOP(a,b) ( (a)+(b) )
+//#define BOP(a,b) ( (a)+(b) ) 
 
 #define WARP     32  
 #define lgWARP   5 
@@ -10,7 +10,7 @@
 #define WARP_FST (WARP_ID  << lgWARP)
 #define WARP_LST (WARP_FST + (WARP-1))
  
-
+ 
 #include "KerConsts.h"  
 
 #if WITH_FLOAT
@@ -20,6 +20,9 @@
     typedef double2       REAL2; 
     typedef double4       REAL4; 
 #endif 
+
+inline REAL minR(REAL a, REAL b) { return ( (a <= b) ? a : b ); }
+inline REAL maxR(REAL a, REAL b) { return ( (a <= b) ? b : a ); }
 
 #include "GenAlg.cl" 
 #include "BestIndValRedKer.cl" 

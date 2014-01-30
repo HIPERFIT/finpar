@@ -284,13 +284,11 @@ REAL exactYhat(          bool   iddle,
     barrier(CLK_LOCAL_MEM_FENCE);
 
     {
-        //REAL root_lb = std::max( uplo.y - EPS, y0 );
-        //REAL root_ub = std::min( uplo.x + EPS, y1 );
-        uplo.x = min( uplo.x + EPS, y1 );
-        uplo.y = max( uplo.y - EPS, y0 );
+        uplo.x = minR( uplo.x + EPS, y1 );
+        uplo.y = maxR( uplo.y - EPS, y0 );
         // tmp2 = (root, error); //UINT iter;
 
-#if 0
+#if 1
         REAL2 tmp2 = rootFinding_Brent(
                             iddle,  n_schedi, flags,  (__local REAL*) (sh_mem4+LWG_EG), 
                             sh_mem4[TH_ID].z, scales, uplo.y, uplo.x, 1.0e-4, 1000

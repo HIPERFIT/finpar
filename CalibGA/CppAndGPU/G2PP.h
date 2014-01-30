@@ -75,8 +75,8 @@ REAL exactYhat( const UINT& n_schedi,
         const REAL root_ub = std::min( yu, y1 );
 
         REAL root, error; UINT iter;
-        //rootFinding_Brent(1, n_schedi, scales, bbi, root_lb, root_ub, 1.0e-4, 1000, root, iter, error);
-        rootBisection(1, n_schedi, scales, bbi, root_lb, root_ub, 1.0e-4, 1000, root, iter, error);
+        rootFinding_Brent(1, n_schedi, scales, bbi, root_lb, root_ub, 1.0e-4, 1000, root, iter, error);
+        //rootBisection(1, n_schedi, scales, bbi, root_lb, root_ub, 1.0e-4, 1000, root, iter, error);
 
         res = ( error == -INFTY ) ?  y0 - 1.0 : ( error ==  INFTY ) ? y1 + 1.0 : root;
     }

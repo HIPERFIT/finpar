@@ -14,7 +14,7 @@
  * 2 -> Everything on GPU using Sobol's 
  *        independent formula for random numbers.
  */
-#define GPU_VERSION 2
+#define GPU_VERSION 0
 
 /**
  * If WITH_FLOAT == 0 THEN double precision is used, 

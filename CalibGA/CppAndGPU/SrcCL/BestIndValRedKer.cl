@@ -53,7 +53,11 @@ redbest_ker1 (
     REAL2 seqbest = (REAL2) ( 0.0, -INFTY );
 
     uint  i = get_group_id(0) * (U * get_local_size(0)) + get_local_id(0);
-    uint  B = min( i + (U * get_local_size(0)), N );
+
+    
+    //uint  B = min( i + (U * get_local_size(0)), N );
+    uint  B = i + (U * get_local_size(0));
+    if( B > N ) { B = N; }
 
     for( ; i < B; i += get_local_size(0) ) {
         REAL2 cur = (REAL2) ( (REAL)i, arr[i] );

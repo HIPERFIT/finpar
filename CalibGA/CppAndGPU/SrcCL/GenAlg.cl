@@ -96,8 +96,7 @@ __kernel void accept_cond(
     uint gid = get_global_id(0);
     genomes += 11 * Npop;
     if ( gid < Npop ) {
-        //                std::min( 1.0, exp( logLik[i+POP_SIZE] - logLik[i] ) * bf_rat[i] );
-        REAL acceptance = min( 1.0, exp( genomes[gid] - genomes[gid-Npop] ) * genomes[gid+Npop] );
+        REAL acceptance = minR( 1.0, exp( genomes[gid] - genomes[gid-Npop] ) * genomes[gid+Npop] );
         REAL r01        = getSobolNum( gid + sob_offset, SOBOL_DIR_VCT );
         to_accept[gid]  = ( r01 < acceptance ) ? 1 : 0;
     }
@@ -139,12 +138,12 @@ mutate_helper(
     REAL amplitude     = fabs( (g_max - g_min) * amplitude_ratio );
     REAL semiamplitude = amplitude / 2.0;
 
-    tmp_min_max = min( g_max, gene + semiamplitude );
-    tmp_max_min = max( g_min, gene - semiamplitude );
+    tmp_min_max = minR( g_max, gene + semiamplitude );
+    tmp_max_min = maxR( g_min, gene - semiamplitude );
     forward_range = tmp_min_max - tmp_max_min;
 
-    tmp_min_max = min( g_max, gene_prop + semiamplitude );
-    tmp_max_min = max( g_min, gene_prop - semiamplitude );
+    tmp_min_max = minR( g_max, gene_prop + semiamplitude );
+    tmp_max_min = maxR( g_min, gene_prop - semiamplitude );
     backward_range = tmp_min_max - tmp_max_min;
 
     REAL bf_fact = ( semiamplitude > 0.0 ) ? (backward_range / forward_range) : 1.0;
@@ -156,7 +155,7 @@ mutate_helper(
 
 inline 
 REAL constrain_gene( REAL gene, REAL lb, REAL ub ) {
-    return max( lb, min( ub, gene ) );
+    return maxR( lb, minR( ub, gene ) );
 }
 
 /*******************************************/
