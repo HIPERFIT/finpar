@@ -2,9 +2,70 @@
 #define PREPARE_KERNELS
 
 /************************************************************/
-/*************** KERNELS' DATA STRUCTURE   ******************/
+/***************  HELPER DATA STRUCTURES   ******************/
 /************************************************************/
 
+// GPU BUFFERS
+struct oclNordeaArrays {
+    /* RO scalars */
+    cl_mem  ro_scals;
+
+    /* RO arrays */
+    cl_mem timeline; // [NUM_T]
+
+    cl_mem myX;   // [NUM_X]
+    cl_mem myDx;  // [NUM_X * 3]
+    cl_mem myDxx; // [NUM_X * 3]
+
+    cl_mem myY;   // [NUM_Y]
+    cl_mem myDy;  // [NUM_Y * 3]
+    cl_mem myDyy; // [NUM_Y * 3]
+
+    /* TRIDAG helpers */
+    cl_mem a;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem b;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem c;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem y;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem u;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem v;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem tmp4; // [4 * OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem tmp2; // [2 * OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    cl_mem res_arr; // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    /* WRITE ONLY OUTPUT stored in "res"*/
+    //cl_mem res;
+};
+
+// CPU BUFFERS
+struct NordeaArrays {
+    /* RO arrays */
+    REAL* timeline; // [NUM_T]
+
+    REAL* myX;   // [NUM_X]
+    REAL* myDx;  // [NUM_X * 3]
+    REAL* myDxx; // [NUM_X * 3]
+
+    REAL* myY;   // [NUM_Y]
+    REAL* myDy;  // [NUM_Y * 3]
+    REAL* myDyy; // [NUM_Y * 3]
+
+    /* TRIDAG helpers are created on GPU only! no need for them to exist in main memory*/
+    REAL* a;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* b;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* c;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* y;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* u;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* v;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* tmp; // [4 * OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    REAL* res_arr; // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    /* NOT USED FOR NOW! WRITE ONLY OUTPUT stored in "res"*/
+    //REAL* res;
+};
+
+// GPU KERNELS
 typedef struct {
     cl_kernel ckMatTranspUpdate;
     cl_kernel ckMatTransposeU;
