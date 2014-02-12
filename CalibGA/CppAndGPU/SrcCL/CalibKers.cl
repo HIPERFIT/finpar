@@ -3,7 +3,7 @@
 //#define BOP(a,b) ( (a)+(b) ) 
 
 #define WARP     32  
-#define lgWARP   5 
+#define lgWARP   5  
 
 #define TH_ID    (get_local_id(0))     
 #define WARP_ID  (TH_ID    >> lgWARP)
