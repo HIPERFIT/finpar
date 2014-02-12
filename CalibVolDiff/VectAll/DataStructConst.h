@@ -23,7 +23,7 @@ using namespace std;
 #define TRIDAG_ALL_OPT_ON
 #define MOST_OPTIMISED_ON
 
-const unsigned int OUTER_LOOP_COUNT = 128; //100;
+const unsigned int OUTER_LOOP_COUNT = 128; 
 const unsigned int NUM_X            = 32; //256; //64; //256;
 const unsigned int NUM_Y            = 32; //32; //32;
 const unsigned int NUM_T            = 64; //64; //64;
