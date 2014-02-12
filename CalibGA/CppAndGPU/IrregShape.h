@@ -3,43 +3,6 @@
 
 #include "Constants.h"
 
-char* getIregShapeSimple( const int LWG, int& N ) {
-    // 1. compute the size of the whole iregular
-    char* sgmscan = new char[NUM_SWAP_QUOTES+1];
-
-    N = 0;
-    sgmscan[0] = 0;
-
-    /**
-     * Compute the segmented sum:
-     *    sgmscan     = scan  ( op +, 0, sizes )
-     */
-    for( int i = 0; i < NUM_SWAP_QUOTES; i++ ) {
-        int sz = 12 * SwaptionQuotes[i][2] / SwaptionQuotes[i][1];
-        N += sz;
-        sgmscan[i+1] = N;
-    }
-
-    char*  flags = new char[N];
-
-    // 2.a) zero out the flag array
-    for( int i = 0; i <= N; i++ ) {
-        flags[ sgmscan[i] ] = 0;
-    }
-    // 2.b) set the start-of-segment flags to one.
-    for( int i = 0; i < NUM_SWAP_QUOTES; i++ ) {
-        int sz = 12 * SwaptionQuotes[i][2] / SwaptionQuotes[i][1];
-        flags[ sgmscan[i] ] = sz;
-        //lens [ sgmscan[i] ] = sz; 
-    }
-
-    delete[] sgmscan;
-
-    return flags;
-}
-
-
-
 short* getIregShapeAdjusted( const int LWG, uint& N ) {
 
     bool adjustable = true;
@@ -188,28 +151,3 @@ int* getStartInd(uint N, short* flags) {
 
 #endif // ifndef MAKE_IRREG_SHAPE
 
-
-
-#if 0
-    char*  flags = new char[N];
-    //char*  lens  = flags + N;
-
-    // 2.a) zero out the flag array
-    for( int i = 0; i <= N; i++ ) {
-        flags[ sgmscan[i] ] = 0;
-    }
-    // 2.b) set the start-of-segment flags to one.
-    for( int i = 0; i <= NUM_SWAP_QUOTES; i++ ) {
-        int sz = 12 * SwaptionQuotes[i][2] / SwaptionQuotes[i][1];
-        flags[ sgmscan[i] ] = sz;
-        //lens [ sgmscan[i] ] = sz; 
-    }
-
-    /**
-     * scan operator should be:
-     *     xop(a,b) = if(a+b <= LWG) then a+b else (a / LWG)*(LWG+1) + b
-     */
-
-    delete[] sgmscan;
-
-#endif
