@@ -3,7 +3,7 @@ OPENCL_LIBDIR     := $(OPENCL_ROOTDIR)/lib64
 OPENCL_INCDIR	  ?= $(OPENCL_ROOTDIR)/include
 
 CXX        = g++
-INCLUDES   = -I$(CUDA_INCDIR) -I.
+INCLUDES   = -I$(CUDA_INCDIR) -I. -I../../include
 LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
 CXXFLAGS   = -O2 -fopenmp
 

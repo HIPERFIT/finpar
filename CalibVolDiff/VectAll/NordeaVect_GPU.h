@@ -110,7 +110,7 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
     // making command queue, building program, etc
     build_for_GPU(
             cxGPUContext, cqCommandQueue,
-            nDevice, cdDevices, cpProgram, dev_id, "CrankNicolsonOpt"
+            nDevice, cdDevices, cpProgram, dev_id, NULL, "CrankNicolsonOpt"
         );
 
 

@@ -19,7 +19,7 @@ else
   CXXFLAGS   = -fopenmp -O3
 endif
 
-INCLUDES   = -I$(OPENCL_INCDIR) -I.
+INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../../include
 
 
 SOURCES_CPP =TestCalib.cpp

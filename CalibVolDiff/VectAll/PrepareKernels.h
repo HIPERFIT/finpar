@@ -1,7 +1,68 @@
-/************************************************************/
-/*************** KERNELS' DATA STRUCTURE   ******************/
-/************************************************************/
+/***********************************************************/
+/*************** Helper DATA STRUCTURES ********************/
+/***********************************************************/
 
+// GPU BUFFERS
+struct oclNordeaArrays {
+    /* RO scalars */
+    cl_mem  ro_scals;
+
+    /* RO arrays */
+    cl_mem timeline; // [NUM_T]
+
+    cl_mem myX;   // [NUM_X]
+    cl_mem myDx;  // [NUM_X * 3]
+    cl_mem myDxx; // [NUM_X * 3]
+
+    cl_mem myY;   // [NUM_Y]
+    cl_mem myDy;  // [NUM_Y * 3]
+    cl_mem myDyy; // [NUM_Y * 3]
+
+    /* TRIDAG helpers */
+    cl_mem a;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem b;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem c;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem y;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem u;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem v;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem tmp4; // [4 * OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    cl_mem tmp2; // [2 * OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    cl_mem res_arr; // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    /* WRITE ONLY OUTPUT stored in "res"*/
+    //cl_mem res;
+};
+
+// CPU BUFFERS
+struct NordeaArrays {
+    /* RO arrays */
+    REAL* timeline; // [NUM_T]
+
+    REAL* myX;   // [NUM_X]
+    REAL* myDx;  // [NUM_X * 3]
+    REAL* myDxx; // [NUM_X * 3]
+
+    REAL* myY;   // [NUM_Y]
+    REAL* myDy;  // [NUM_Y * 3]
+    REAL* myDyy; // [NUM_Y * 3]
+
+    /* TRIDAG helpers are created on GPU only! no need for them to exist in main memory*/
+    REAL* a;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* b;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* c;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* y;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* u;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* v;   // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+    REAL* tmp; // [4 * OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    REAL* res_arr; // [OUTER_LOOP_COUNT * NUM_X * NUM_Y]
+
+    /* NOT USED FOR NOW! WRITE ONLY OUTPUT stored in "res"*/
+    //REAL* res;
+};
+
+// GPU KERNELS
 typedef struct {
     // PRE/POST TRIDAG KERNELS
     cl_kernel ckPreTridagX;  // NUM_X x NUM_Y x OUTER_LOOP_COUNT
@@ -1198,226 +1259,6 @@ void run_GPUkernels_one_time_iteration (
     run_transposeGPU_WithUpdate( cqCommandQueue, kernels );
 }
 
-void run_trimmed_GPUkernels_one_time_iteration (
-        cl_command_queue&   cqCommandQueue,
-        GPUkernels&         kernels,
-        NordeaArrays&       cpu_arrs,
-        oclNordeaArrays&    ocl_arrs,
-        int                 time_ind,
-        const REAL          alpha,
-        const REAL          beta,
-        const REAL          nu
-) {
-    //run_GPUkernels_one_time_iteration(cqCommandQueue, kernels);       time_ind --;
-    //run_GPUkernels_one_time_iteration(cqCommandQueue, kernels);       time_ind --;
-    //run_GPUkernels_one_time_iteration(cqCommandQueue, kernels);       time_ind --;
-
-    //printf("Before prepare_tridag_X\n");
-    run_prepare_tridag_X( cqCommandQueue, kernels );
-
-    //printf("Before tridagX\n");
-    //run_TRIDAG( cqCommandQueue, kernels, 0);
-#if 0
-    {
-        // scan with matrix multiply!
-        run_MatMultScan( cqCommandQueue, kernels, 0 );
-
-        // map the results of the parallel prefix with matrix multiplication!
-        run_conclude_matmult( cqCommandQueue, kernels, 0 );
-
-        // prepare for forward scan with function composition!
-        run_preludeFwdMapFunComp( cqCommandQueue, kernels, 0 );
-
-        // (forward) scan with function composition!
-        run_FwdFunCompScan( cqCommandQueue, kernels, 0 );
-
-        // post_fwd_fun_comp
-        run_postFwdMapFunComp( cqCommandQueue, kernels, 0 );
-
-        // prepare for backward scan with linear-function composition
-        run_preludeBwdMapFunComp( cqCommandQueue, kernels, 0 );
-
-        // (backward) scan with function composition!
-        run_FwdFunCompScan( cqCommandQueue, kernels, 0 );
-
-        // post_bwd_fun_comp
-        run_postBwdMapFunComp( cqCommandQueue, kernels, 0 );
-    }
-#endif
-
-    //printf("Before prepare_tridag_Y\n");
-    //run_prepare_tridag_Y( cqCommandQueue, kernels );
-
-    //printf("Before tridagY\n");
-    //run_TRIDAG( cqCommandQueue, kernels, 1);
-
-    //printf("Before TRANSPOSE\n");
-    //run_transposeGPU_WithUpdate( cqCommandQueue, kernels );
-
-
-    cl_int ciErr;
-    const unsigned int ARR_SIZE = NUM_X * NUM_Y * OUTER_LOOP_COUNT * sizeof(REAL);
-#if 1
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.a, CL_TRUE, 0, ARR_SIZE, cpu_arrs.a, 0, NULL, NULL );
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.b, CL_TRUE, 0, ARR_SIZE, cpu_arrs.b, 0, NULL, NULL );
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.c, CL_TRUE, 0, ARR_SIZE, cpu_arrs.c, 0, NULL, NULL );
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.u, CL_TRUE, 0, ARR_SIZE, cpu_arrs.u, 0, NULL, NULL );
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.v, CL_TRUE, 0, ARR_SIZE, cpu_arrs.v, 0, NULL, NULL );
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.y, CL_TRUE, 0, ARR_SIZE, cpu_arrs.y, 0, NULL, NULL );
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.tmp4, CL_TRUE, 0, 4*ARR_SIZE, cpu_arrs.tmp, 0, NULL, NULL );
-#endif
-    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.res_arr, CL_TRUE, 0, ARR_SIZE, cpu_arrs.res_arr, 0, NULL, NULL );
-    oclCheckError(ciErr, CL_SUCCESS);
-
-    // now the rest of the code!
-    unsigned int i, j, k;
-
-    REAL dtInv = 1.0/(cpu_arrs.timeline[time_ind+1]-cpu_arrs.timeline[time_ind]);
-
-    REAL   *res_arr = cpu_arrs.res_arr, *a = cpu_arrs.a,
-           *b = cpu_arrs.b, *c = cpu_arrs.c, *u = cpu_arrs.u,
-           *v = cpu_arrs.v, *y = cpu_arrs.y, *scan_tmp = cpu_arrs.tmp;
-
-    printf("Global: %lu, %lu, %lu; LOCAL: %lu, %lu, %lu\n\n",
-            kernels.GWS_YXZ[0], kernels.GWS_YXZ[1], kernels.GWS_YXZ[2],
-            kernels.LWS_YXZ[0], kernels.LWS_YXZ[1], kernels.LWS_YXZ[2]
-          );
-
-    printf("v[1]: %.8f, v[last]: %f, arr size: %lu, sizeof real: %lu \n\n",
-            v[25999], v[(ARR_SIZE/sizeof(REAL))], ARR_SIZE/sizeof(REAL), sizeof(REAL));
-
-#if 1
-    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
-
-        const unsigned int glob_ind = k*NUM_X*NUM_Y;
-
-        //  explicit x and y
-        for(j=0; j<NUM_Y; j++)  {
-
-            for(i=0; i<NUM_X; i++) {
-
-                // decls (constants)
-                const unsigned int ind = glob_ind + j*NUM_X + i;
-                unsigned int mul3;
-                REAL tmp; //tmp2, tmp1 = dtInv*res_arr[j*NUM_X+i]; //
-
-                REAL cur_myMuX  = 0.0, cur_myMuY = 0.0;
-                REAL cur_myVarY = nu*nu;
-                REAL cur_myVarX = exp(2*(beta*log(myX[i]) + myY[j] - 0.5*nu*nu*myTimeline[time_ind]));
-
-                // second loop
-                mul3 = REAL3_CT * j;
-                tmp = 0.0;
-
-                if(j!=0)
-                    tmp += (cur_myMuY*myDy[mul3] + 0.5*cur_myVarY*myDyy[mul3])*res_arr[ind-NUM_X]; //[(j-1)*NUM_X+i];
-
-                tmp += (cur_myMuY*myDy[mul3+1] + 0.5*cur_myVarY*myDyy[mul3+1])*res_arr[ind]; // [j*NUM_X+i];
-
-                if(j!=NUM_Y-1)
-                    tmp += (cur_myMuY*myDy[mul3+2] + 0.5*cur_myVarY*myDyy[mul3+2])*res_arr[ind+NUM_X]; //[(j+1)*NUM_X+i];
-
-                v[glob_ind + i*NUM_Y + j] = tmp;   // v[i*NUM_Y + j] = tmp;     //v[i][j] = tmp2;
-
-                // first loop
-                mul3 = REAL3_CT * i;
-                tmp += dtInv*res_arr[ind]; // [j*NUM_X+i];
-
-                if(i!=0)
-                    tmp += 0.5*(cur_myMuX*myDx[mul3] + 0.5*cur_myVarX*myDxx[mul3])*res_arr[ind-1]; //[j*NUM_X+i-1];
-
-                tmp += 0.5*(cur_myMuX*myDx[mul3+1] + 0.5*cur_myVarX*myDxx[mul3+1])*res_arr[ind]; //[j*NUM_X+i];
-
-                if(i!=NUM_X-1)
-                    tmp += 0.5*(cur_myMuX*myDx[mul3+2] + 0.5*cur_myVarX*myDxx[mul3+2])*res_arr[ind+1]; //[j*NUM_X+i+1];
-
-                u[ind] = tmp; //u[j*NUM_X + i] = tmp1 + tmp2; //u[j][i] = tmp1 + tmp2;
-
-                // third loop (computing the implicit x parameters)
-                a[ind] =        - 0.5*(cur_myMuX*myDx[mul3  ] + 0.5*cur_myVarX*myDxx[mul3  ]); // a[j*NUM_X+i] = ...
-                b[ind] =  dtInv - 0.5*(cur_myMuX*myDx[mul3+1] + 0.5*cur_myVarX*myDxx[mul3+1]); // b[j*NUM_X+i] = ...
-                c[ind] =        - 0.5*(cur_myMuX*myDx[mul3+2] + 0.5*cur_myVarX*myDxx[mul3+2]); // c[j*NUM_X+i] = ...
-            }
-        }
-    }    // end OUTER_LOOP
-#endif
-
-#if 1
-    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
-        // implicit x tridag: as a (vectorized) scan (the vector is dimension "y")
-        for(j=0;j<NUM_Y;j++) {
-
-            const unsigned int ind = k*NUM_X*NUM_Y + j*NUM_X;
-
-            //tridag_scan_array_womatmult(
-            tridag_scan_array(
-                    a+ind, b+ind, c+ind,
-                    u+ind, NUM_X, u+ind,
-                    y+ind, scan_tmp+4*ind
-                );
-        }
-    }    // end OUTER_LOOP
-#endif
-#if 1
-    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
-        //  implicit y
-        for(i=0;i<NUM_X;i++) {
-            for(j=0;j<NUM_Y;j++) {
-
-                const unsigned int ind = k*NUM_X*NUM_Y + i*NUM_Y + j;
-
-                unsigned int mul3j = REAL3_CT*j; //3*j;
-                double cur_myMuY = 0.0;
-                double cur_myVarY = nu*nu;
-
-                a[ind] =        - 0.5*(cur_myMuY*myDy[mul3j  ] + 0.5*cur_myVarY*myDyy[mul3j  ]); // a[i*NUM_Y+j] = ...
-                b[ind] =  dtInv - 0.5*(cur_myMuY*myDy[mul3j+1] + 0.5*cur_myVarY*myDyy[mul3j+1]); // b[i*NUM_Y+j] = ...
-                c[ind] =        - 0.5*(cur_myMuY*myDy[mul3j+2] + 0.5*cur_myVarY*myDyy[mul3j+2]); // c[i*NUM_Y+j] = ...
-
-                v[ind] =  dtInv * u[k*NUM_X*NUM_Y + j*NUM_X+i] - 0.5*v[ind];  // y[j] = dtInv*u[j][i] - 0.5*v[i][j];
-            }
-        }
-    }    // end OUTER_LOOP
-#endif
-
-#if 1
-    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
-        for(i=0; i<NUM_X; i++) {
-
-            const unsigned int ind = k*NUM_X*NUM_Y + i*NUM_Y;
-
-            //tridag_scan_array_womatmult(
-
-            tridag_scan_array(
-                    a+ind, b+ind, c+ind,
-                    v+ind, NUM_Y, v+ind,
-                    y+ind, scan_tmp+4*ind
-                );
-
-//            tridag_scan_array(
-//                    a+ind, b+ind, c+ind,
-//                    v+ind, NUM_Y, y+ind,
-//                    u+ind, scan_tmp+4*ind
-//                );
-        }
-    }    // end OUTER_LOOP
-#endif
-    //printf("\n\n\n");
-#if 1
-    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {  // segmented transpose followed by copy out!
-        const unsigned int glb_ind = k*NUM_X*NUM_Y;
-
-        for(i=0; i<NUM_X; i++) {
-            for(int j=0; j<NUM_Y; j++) {
-               res_arr[glb_ind + j*NUM_X+i] = v[glb_ind + i*NUM_Y+j]; //y[glb_ind + i*NUM_Y+j];
-               //printf("y[%d, %d] = %f, ",i,j,y[glb_ind + i*NUM_Y+j]);
-            }
-        }
-    }    // end OUTER_LOOP
-#endif
-
-}
-
 /**********************************************************/
 /******************* RELEASE KERNELS **********************/
 /**********************************************************/
@@ -1503,7 +1344,7 @@ void release_all_GPU_resources(
 
 
 /**********************************************************/
-/******************* RELEASE KERNELS **********************/
+/*******************  DEBUG TESTING  **********************/
 /**********************************************************/
 
 void testMatMultScan (
@@ -1753,4 +1594,229 @@ void testFunCompScan (
             }
         }
     }
+}
+
+
+/***************************************************************/
+/**********************   DEBUG!!!!!!   ************************/
+/***************************************************************/
+
+void run_trimmed_GPUkernels_one_time_iteration (
+        cl_command_queue&   cqCommandQueue,
+        GPUkernels&         kernels,
+        NordeaArrays&       cpu_arrs,
+        oclNordeaArrays&    ocl_arrs,
+        int                 time_ind,
+        const REAL          alpha,
+        const REAL          beta,
+        const REAL          nu
+) {
+    //run_GPUkernels_one_time_iteration(cqCommandQueue, kernels);       time_ind --;
+    //run_GPUkernels_one_time_iteration(cqCommandQueue, kernels);       time_ind --;
+    //run_GPUkernels_one_time_iteration(cqCommandQueue, kernels);       time_ind --;
+
+    //printf("Before prepare_tridag_X\n");
+    run_prepare_tridag_X( cqCommandQueue, kernels );
+
+    //printf("Before tridagX\n");
+    //run_TRIDAG( cqCommandQueue, kernels, 0);
+#if 0
+    {
+        // scan with matrix multiply!
+        run_MatMultScan( cqCommandQueue, kernels, 0 );
+
+        // map the results of the parallel prefix with matrix multiplication!
+        run_conclude_matmult( cqCommandQueue, kernels, 0 );
+
+        // prepare for forward scan with function composition!
+        run_preludeFwdMapFunComp( cqCommandQueue, kernels, 0 );
+
+        // (forward) scan with function composition!
+        run_FwdFunCompScan( cqCommandQueue, kernels, 0 );
+
+        // post_fwd_fun_comp
+        run_postFwdMapFunComp( cqCommandQueue, kernels, 0 );
+
+        // prepare for backward scan with linear-function composition
+        run_preludeBwdMapFunComp( cqCommandQueue, kernels, 0 );
+
+        // (backward) scan with function composition!
+        run_FwdFunCompScan( cqCommandQueue, kernels, 0 );
+
+        // post_bwd_fun_comp
+        run_postBwdMapFunComp( cqCommandQueue, kernels, 0 );
+    }
+#endif
+
+    //printf("Before prepare_tridag_Y\n");
+    //run_prepare_tridag_Y( cqCommandQueue, kernels );
+
+    //printf("Before tridagY\n");
+    //run_TRIDAG( cqCommandQueue, kernels, 1);
+
+    //printf("Before TRANSPOSE\n");
+    //run_transposeGPU_WithUpdate( cqCommandQueue, kernels );
+
+
+    cl_int ciErr;
+    const unsigned int ARR_SIZE = NUM_X * NUM_Y * OUTER_LOOP_COUNT * sizeof(REAL);
+#if 1
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.a, CL_TRUE, 0, ARR_SIZE, cpu_arrs.a, 0, NULL, NULL );
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.b, CL_TRUE, 0, ARR_SIZE, cpu_arrs.b, 0, NULL, NULL );
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.c, CL_TRUE, 0, ARR_SIZE, cpu_arrs.c, 0, NULL, NULL );
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.u, CL_TRUE, 0, ARR_SIZE, cpu_arrs.u, 0, NULL, NULL );
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.v, CL_TRUE, 0, ARR_SIZE, cpu_arrs.v, 0, NULL, NULL );
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.y, CL_TRUE, 0, ARR_SIZE, cpu_arrs.y, 0, NULL, NULL );
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.tmp4, CL_TRUE, 0, 4*ARR_SIZE, cpu_arrs.tmp, 0, NULL, NULL );
+#endif
+    ciErr = clEnqueueReadBuffer( cqCommandQueue, ocl_arrs.res_arr, CL_TRUE, 0, ARR_SIZE, cpu_arrs.res_arr, 0, NULL, NULL );
+    oclCheckError(ciErr, CL_SUCCESS);
+
+    // now the rest of the code!
+    unsigned int i, j, k;
+
+    REAL dtInv = 1.0/(cpu_arrs.timeline[time_ind+1]-cpu_arrs.timeline[time_ind]);
+
+    REAL   *res_arr = cpu_arrs.res_arr, *a = cpu_arrs.a,
+           *b = cpu_arrs.b, *c = cpu_arrs.c, *u = cpu_arrs.u,
+           *v = cpu_arrs.v, *y = cpu_arrs.y, *scan_tmp = cpu_arrs.tmp;
+
+    printf("Global: %lu, %lu, %lu; LOCAL: %lu, %lu, %lu\n\n",
+            kernels.GWS_YXZ[0], kernels.GWS_YXZ[1], kernels.GWS_YXZ[2],
+            kernels.LWS_YXZ[0], kernels.LWS_YXZ[1], kernels.LWS_YXZ[2]
+          );
+
+    printf("v[1]: %.8f, v[last]: %f, arr size: %lu, sizeof real: %lu \n\n",
+            v[25999], v[(ARR_SIZE/sizeof(REAL))], ARR_SIZE/sizeof(REAL), sizeof(REAL));
+
+#if 1
+    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
+
+        const unsigned int glob_ind = k*NUM_X*NUM_Y;
+
+        //  explicit x and y
+        for(j=0; j<NUM_Y; j++)  {
+
+            for(i=0; i<NUM_X; i++) {
+
+                // decls (constants)
+                const unsigned int ind = glob_ind + j*NUM_X + i;
+                unsigned int mul3;
+                REAL tmp; //tmp2, tmp1 = dtInv*res_arr[j*NUM_X+i]; //
+
+                REAL cur_myMuX  = 0.0, cur_myMuY = 0.0;
+                REAL cur_myVarY = nu*nu;
+                REAL cur_myVarX = exp(2*(beta*log(myX[i]) + myY[j] - 0.5*nu*nu*myTimeline[time_ind]));
+
+                // second loop
+                mul3 = REAL3_CT * j;
+                tmp = 0.0;
+
+                if(j!=0)
+                    tmp += (cur_myMuY*myDy[mul3] + 0.5*cur_myVarY*myDyy[mul3])*res_arr[ind-NUM_X]; //[(j-1)*NUM_X+i];
+
+                tmp += (cur_myMuY*myDy[mul3+1] + 0.5*cur_myVarY*myDyy[mul3+1])*res_arr[ind]; // [j*NUM_X+i];
+
+                if(j!=NUM_Y-1)
+                    tmp += (cur_myMuY*myDy[mul3+2] + 0.5*cur_myVarY*myDyy[mul3+2])*res_arr[ind+NUM_X]; //[(j+1)*NUM_X+i];
+
+                v[glob_ind + i*NUM_Y + j] = tmp;   // v[i*NUM_Y + j] = tmp;     //v[i][j] = tmp2;
+
+                // first loop
+                mul3 = REAL3_CT * i;
+                tmp += dtInv*res_arr[ind]; // [j*NUM_X+i];
+
+                if(i!=0)
+                    tmp += 0.5*(cur_myMuX*myDx[mul3] + 0.5*cur_myVarX*myDxx[mul3])*res_arr[ind-1]; //[j*NUM_X+i-1];
+
+                tmp += 0.5*(cur_myMuX*myDx[mul3+1] + 0.5*cur_myVarX*myDxx[mul3+1])*res_arr[ind]; //[j*NUM_X+i];
+
+                if(i!=NUM_X-1)
+                    tmp += 0.5*(cur_myMuX*myDx[mul3+2] + 0.5*cur_myVarX*myDxx[mul3+2])*res_arr[ind+1]; //[j*NUM_X+i+1];
+
+                u[ind] = tmp; //u[j*NUM_X + i] = tmp1 + tmp2; //u[j][i] = tmp1 + tmp2;
+
+                // third loop (computing the implicit x parameters)
+                a[ind] =        - 0.5*(cur_myMuX*myDx[mul3  ] + 0.5*cur_myVarX*myDxx[mul3  ]); // a[j*NUM_X+i] = ...
+                b[ind] =  dtInv - 0.5*(cur_myMuX*myDx[mul3+1] + 0.5*cur_myVarX*myDxx[mul3+1]); // b[j*NUM_X+i] = ...
+                c[ind] =        - 0.5*(cur_myMuX*myDx[mul3+2] + 0.5*cur_myVarX*myDxx[mul3+2]); // c[j*NUM_X+i] = ...
+            }
+        }
+    }    // end OUTER_LOOP
+#endif
+
+#if 1
+    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
+        // implicit x tridag: as a (vectorized) scan (the vector is dimension "y")
+        for(j=0;j<NUM_Y;j++) {
+
+            const unsigned int ind = k*NUM_X*NUM_Y + j*NUM_X;
+
+            //tridag_scan_array_womatmult(
+            tridag_scan_array(
+                    a+ind, b+ind, c+ind,
+                    u+ind, NUM_X, u+ind,
+                    y+ind, scan_tmp+4*ind
+                );
+        }
+    }    // end OUTER_LOOP
+#endif
+#if 1
+    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
+        //  implicit y
+        for(i=0;i<NUM_X;i++) {
+            for(j=0;j<NUM_Y;j++) {
+
+                const unsigned int ind = k*NUM_X*NUM_Y + i*NUM_Y + j;
+
+                unsigned int mul3j = REAL3_CT*j; //3*j;
+                double cur_myMuY = 0.0;
+                double cur_myVarY = nu*nu;
+
+                a[ind] =        - 0.5*(cur_myMuY*myDy[mul3j  ] + 0.5*cur_myVarY*myDyy[mul3j  ]); // a[i*NUM_Y+j] = ...
+                b[ind] =  dtInv - 0.5*(cur_myMuY*myDy[mul3j+1] + 0.5*cur_myVarY*myDyy[mul3j+1]); // b[i*NUM_Y+j] = ...
+                c[ind] =        - 0.5*(cur_myMuY*myDy[mul3j+2] + 0.5*cur_myVarY*myDyy[mul3j+2]); // c[i*NUM_Y+j] = ...
+
+                v[ind] =  dtInv * u[k*NUM_X*NUM_Y + j*NUM_X+i] - 0.5*v[ind];  // y[j] = dtInv*u[j][i] - 0.5*v[i][j];
+            }
+        }
+    }    // end OUTER_LOOP
+#endif
+
+#if 1
+    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
+        for(i=0; i<NUM_X; i++) {
+
+            const unsigned int ind = k*NUM_X*NUM_Y + i*NUM_Y;
+
+            //tridag_scan_array_womatmult(
+
+            tridag_scan_array(
+                    a+ind, b+ind, c+ind,
+                    v+ind, NUM_Y, v+ind,
+                    y+ind, scan_tmp+4*ind
+                );
+
+//            tridag_scan_array(
+//                    a+ind, b+ind, c+ind,
+//                    v+ind, NUM_Y, y+ind,
+//                    u+ind, scan_tmp+4*ind
+//                );
+        }
+    }    // end OUTER_LOOP
+#endif
+    //printf("\n\n\n");
+#if 1
+    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {  // segmented transpose followed by copy out!
+        const unsigned int glb_ind = k*NUM_X*NUM_Y;
+
+        for(i=0; i<NUM_X; i++) {
+            for(int j=0; j<NUM_Y; j++) {
+               res_arr[glb_ind + j*NUM_X+i] = v[glb_ind + i*NUM_Y+j]; //y[glb_ind + i*NUM_Y+j];
+               //printf("y[%d, %d] = %f, ",i,j,y[glb_ind + i*NUM_Y+j]);
+            }
+        }
+    }    // end OUTER_LOOP
+#endif
+
 }
