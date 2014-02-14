@@ -1,0 +1,5 @@
+OUTER   =   128
+NUM_X   =   256
+NUM_Y   =   256
+NUM_T   =    64
+
