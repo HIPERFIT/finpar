@@ -1,28 +1,12 @@
-// Hiperfit example1.cpp : Defines the entry point for the console application.
-//
-
-//#include "stdafx.h"
 #include <vector>
 #include <cmath>
-#include <stdio.h>
 
-#include <time.h>
-#include <sys/timeb.h>
+typedef double REAL;
 
-// TIMING
-
-typedef struct timeb mlfi_timeb;
-#define mlfi_ftime ftime
-
-#define mlfi_diff_time(t1,t2) \
-  (t1.time - t2.time) * 1000 + (t1.millitm - t2.millitm)
+#include "Util.h"
+#include "../includeC/ParseInput.h"
 
 using namespace std;
-
-const unsigned int OUTER_LOOP_COUNT = 100;
-const unsigned int NUM_X            = 256;
-const unsigned int NUM_Y            = 32;
-const unsigned int NUM_T            = 64;
 
 //	grid
 vector<double>			myX, myY, myTimeline;
@@ -37,6 +21,10 @@ vector<vector<double> > myMuX, myVarX, myMuY, myVarY;
 //	operators
 vector<vector<double> >	myDx, myDxx, myDy, myDyy;
 
+
+
+
+/***********************************/
 
 void updateParams(const unsigned g, const double alpha, const double beta, const double nu)
 {
@@ -262,11 +250,16 @@ rollback(const unsigned g)
 	}
 }
 
-double value(const double s0,const double strike, const double t, const double alpha, const double nu, const double beta)
-{
-	//unsigned numX = 200, numY = 20, numT = 50;
-    const unsigned int numX = NUM_X, numY = NUM_Y, numT = NUM_T;
-	
+double value(   const double s0,
+                const double strike, 
+                const double t, 
+                const double alpha, 
+                const double nu, 
+                const double beta,
+                const unsigned int numX,
+                const unsigned int numY,
+                const unsigned int numT
+) {	
 	initGrid(s0,alpha,nu,t, numX, numY, numT);
 	initOperator(myX,myDx,myDxx);
 	initOperator(myY,myDy,myDyy);
@@ -283,8 +276,13 @@ double value(const double s0,const double strike, const double t, const double a
 
 int main()
 {
+    unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T; 
 	const double s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
-	
+
+    cout<<"\nRunning Original Volatility-Calibration Benchmark"<<endl;
+
+    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T ); 
+
 	vector<double> strikes(OUTER_LOOP_COUNT),res(OUTER_LOOP_COUNT);
 
 	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i)
@@ -294,21 +292,25 @@ int main()
         mlfi_timeb  t_start, t_end;
         unsigned long int elapsed;
         mlfi_ftime(&t_start);
-
         // the main computational kernel!
     	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i) {
-	    	res[i] = value(s0,strikes[i],t,alpha,nu,beta);
+	    	res[i] = value( s0, strikes[i], t, alpha, nu, beta,
+                            NUM_X, NUM_Y, NUM_T );
         }
-
         mlfi_ftime(&t_end);
-        elapsed = mlfi_diff_time(t_end,t_start);
-        printf("\n\nOriginal Nordea CPU Run Time: %lu !\n\n", elapsed);
+
+        //writeResult( res.data(), OUTER_LOOP_COUNT );
+        bool is_valid = validate   ( res.data(), OUTER_LOOP_COUNT );
+
+        if(is_valid) {
+            elapsed = mlfi_diff_time(t_end,t_start);
+            cout<<"\nValid Result, CPU Sequential Runtime Without IO: "<<elapsed<<" ms."<<endl;
+        }
     }
 
-    for( int k=0; k<OUTER_LOOP_COUNT; ++k ) {
-        printf("(res[%d]: %f)\n", k, res[k]);
-    }
-
-
-	return 0;
+	return 1;
 }
+
+//#pragma omp parallel for default(shared) schedule(static) if(OUTER_LOOP_COUNT>4)
+//get_tot_num_threads()
+
