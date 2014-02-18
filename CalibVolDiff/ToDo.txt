@@ -1,0 +1,8 @@
+1. VectOuters:
+    - currently all the result array is copied
+        back to CPU space, but only a small part
+        of it is actually required. This filtering
+        can be done on GPU so as to optimize 
+        communication costs.
+
+2. 
