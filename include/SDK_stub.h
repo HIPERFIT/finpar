@@ -623,11 +623,11 @@ void build_for_GPU(
             oclCheckErrorEX(ciErr1, CL_SUCCESS, NULL);
         }
 
-	//    #ifdef DEBUG_PRINT_GPU_INFO
+#ifdef DEBUG_PRINT_GPU_INFO
         for (cl_uint i = 0; i < nDevice; i++) {
             oclPrintDevInfo(0, cdDevices[i]);
         }
-	//    #endif
+#endif
         shrLog("\nUsing %d GPU(s)...\n\n", nDevice);
 
         // 6. build program

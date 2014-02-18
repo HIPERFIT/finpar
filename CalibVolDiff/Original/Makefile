@@ -1,7 +1,7 @@
 CXX        = g++
 INCLUDES   = -I$(CUDA_INCDIR) -I. -I../../include
 LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
-CXXFLAGS   = -O3 -fopenmp
+CXXFLAGS   = -O3 -ffast-math  -fopenmp
 
 SOURCES_CPP =VolCalibOrig.cpp
 OBJECTS     =VolCalibOrig.o  

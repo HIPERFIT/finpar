@@ -386,21 +386,12 @@ void run_GPUkernels_one_time_iteration (
         cl_command_queue&   cqCommandQueue,
         GPUkernels&         kernels
 ) {
-	size_t globalWorkSize[3];
+    size_t globalWorkSize[3];
 
-	//printf("Before running kernelX!!!\n");
     run_NordeaKernelX( cqCommandQueue, kernels );
-
-	//printf("Before running transposeU!!!\n");
     run_transposeGPU ( cqCommandQueue, kernels.ckMatTransposeU, kernels.FORM_32X ); // y <- transpose(u)
-
-    //printf("Before running transposeV!!!\n");
     run_transposeGPU ( cqCommandQueue, kernels.ckMatTransposeV, kernels.FORM_Y32 ); // u <- transpose(v)
-
-    //printf("Before running kernelY!!!\n");
     run_NordeaKernelY( cqCommandQueue, kernels );
-
-    //printf("Before running transposeUpdate!!!\n");
     run_transposeGPU_WithUpdate( cqCommandQueue, kernels.ckMatTranspUpdate, kernels.FORM_32Y);
 }
 
@@ -476,20 +467,11 @@ void run_trimmed_GPUkernels_one_time_iteration (
         const REAL          beta,
         const REAL          nu
 ) {
-    //printf("Before prepare_tridag_X\n");
 	run_NordeaKernelX( cqCommandQueue, kernels );
-
 	run_transposeGPU ( cqCommandQueue, kernels.ckMatTransposeU, kernels.FORM_32X ); // y <- transpose(u)
-
-    //printf("Before running transposeV!!!\n");
     run_transposeGPU ( cqCommandQueue, kernels.ckMatTransposeV, kernels.FORM_Y32 ); // u <- transpose(v)
-
-    //printf("Before running kernelY!!!\n");
     run_NordeaKernelY( cqCommandQueue, kernels );
-
-    //printf("Before running transposeUpdate!!!\n");
     run_transposeGPU_WithUpdate( cqCommandQueue, kernels.ckMatTranspUpdate, kernels.FORM_32Y);
-
 
     cl_int ciErr;
     const unsigned int ARR_SIZE = NUM_X * NUM_Y * OUTER_LOOP_COUNT * sizeof(REAL);

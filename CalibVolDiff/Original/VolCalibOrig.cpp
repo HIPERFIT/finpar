@@ -146,35 +146,7 @@ void setPayoff(const double strike)
 }
 
 
-#if 0
-//	tridag
-void tridag(
-	const vector<double>&	a,
-	const vector<double>&	b,
-	const vector<double>&	c,
-	const vector<double>&	r,
-	int						n,
-	vector<double>&			u,
-	vector<double>&			uu)
-{
-	int j;
-	double bet;
-
-	bet  = 1.0/b[0];
-	u[0] = r[0]*bet;
-	for(j=1;j<n;j++)
-	{
-		uu[j] = c[j-1]*bet;
-		bet   = 1.0/(b[j] - a[j]*uu[j]);
-		u[j]  = (r[j] - a[j]*u[j-1])*bet;
-	}
-	for(j=n-2;j>=0;j--)
-		u[j]  -= uu[j+1]*u[j+1];
-}
-
-#else
-
-inline void tridag_seq111(
+inline void tridag(
     const vector<double>&   a,
     const vector<double>&   b,
     const vector<double>&   c,
@@ -202,8 +174,6 @@ inline void tridag_seq111(
         u[i] = (u[i] - c[i]*u[i+1]) / uu[i];
     }
 }
-
-#endif
 
 void
 rollback(const unsigned g)
@@ -262,7 +232,7 @@ rollback(const unsigned g)
 			c[i] =		 - 0.5*(myMuX[i][j]*myDx[i][2] + 0.5*myVarX[i][j]*myDxx[i][2]);
 		}
 
-		/*tridag*/tridag_seq111(a,b,c,u[j],numX,u[j],yy);
+		tridag(a,b,c,u[j],numX,u[j],yy);
 	}
 
 	//	implicit y
@@ -278,7 +248,7 @@ rollback(const unsigned g)
 		for(j=0;j<numY;j++)
 			y[j] = dtInv*u[j][i] - 0.5*v[i][j];
 
-		/*tridag*/tridag_seq111(a,b,c,y,numY,myResult[i],yy);
+		tridag(a,b,c,y,numY,myResult[i],yy);
 	}
 }
 

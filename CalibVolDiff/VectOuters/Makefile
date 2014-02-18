@@ -5,11 +5,11 @@ OPENCL_INCDIR	  ?= $(OPENCL_ROOTDIR)/include
 CXX        = g++
 INCLUDES   = -I$(CUDA_INCDIR) -I. -I../../include
 LIB        = -L$(OPENCL_LIBDIR) -L/usr/lib/ -lOpenCL
-CXXFLAGS   = -O3 -fopenmp
+CXXFLAGS   = -O3 -ffast-math -fopenmp
 
-SOURCES_CPP =NordeaVect.cpp
-OBJECTS     =NordeaVect.o  
-EXECUTABLE  =nordea
+SOURCES_CPP =VectMain.cpp
+OBJECTS     =VectMain.o  
+EXECUTABLE  =CalibVol
 
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 
