@@ -1,7 +1,7 @@
 #ifndef NORDEA_GPU
 #define NORDEA_GPU
 
-#include "SDK_stub.h"
+#include "../../include/SDK_stub.h"
 
 #include "PrepareKernels.h"
 
@@ -110,7 +110,7 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
     // making command queue, building program, etc
     build_for_GPU(
             cxGPUContext, cqCommandQueue,
-            nDevice, cdDevices, cpProgram, dev_id, NULL, "CrankNicolsonOpt"
+            nDevice, cdDevices, cpProgram, dev_id, NULL, "CrankNicolson"
         );
 
 
@@ -120,35 +120,14 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
         );
 
 
-
-#if 0
-    { // test scan with mat mult
-        testMatMultScan (
-                cqCommandQueue[dev_id],
-                cpProgram,
-                cxGPUContext
-        );
-        exit(0);
-    }
-#endif
-
-
     { // make all kernels!
         make_kernels( cqCommandQueue[dev_id], cpProgram, ro_scal, ocl_arrs, kernels );
     }
 
-    mlfi_timeb  t_start, t_end;
-    unsigned long int elapsed;
-    mlfi_ftime(&t_start);
+//    mlfi_timeb  t_start, t_end;
+//    unsigned long int elapsed;
+//    mlfi_ftime(&t_start);
 
-
-#if 0
-    // now execute kernels!
-    run_trimmed_GPUkernels_one_time_iteration (
-            cqCommandQueue[dev_id], kernels, cpu_arrs, ocl_arrs,
-            NUM_T-2, ro_scal.alpha, ro_scal.beta, ro_scal.nu
-        );
-#endif
 
     // now execute kernels!
     for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
@@ -158,10 +137,9 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
     } // END TIME LOOP!
 
 
-    mlfi_ftime(&t_end);
-    elapsed = mlfi_diff_time(t_end,t_start);
-
-    printf("\n\nGPU Run Time: %lu !\n\n", elapsed);
+//    mlfi_ftime(&t_end);
+//    elapsed = mlfi_diff_time(t_end,t_start);
+//    printf("\n\nGPU Run Time: %lu !\n\n", elapsed);
 
 
     { // WRITE BACK THE RESULT ARRAY TO CPU !!! //
@@ -172,33 +150,13 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
                             0, ARR_SIZE, cpu_arrs.res_arr, 0, NULL, NULL
                 );
         oclCheckError(ciErr, CL_SUCCESS);
-#if 0
-        ciErr = clEnqueueReadBuffer (
-                            cqCommandQueue[dev_id], ocl_arrs.ro_scals, CL_TRUE,
-                            0, sizeof(RWScalars), &ro_scal, 0, NULL, NULL
-                );
 
-        printf("Before checking RW scalars!!!\n\n\n");
-        { // test correctness for iter NUM_T-4
-            int t_ind = 0; //NUM_T - 2;
-            REAL dtInv = 1 / ( cpu_arrs.timeline[t_ind+1] - cpu_arrs.timeline[t_ind] );
-            bool verified =        ( t_ind == ro_scal.t_ind )
-                                && ( dtInv == ro_scal.dtInv )
-                                && ( cpu_arrs.timeline[t_ind] == ro_scal.timeline_i );
-            printf("Verified: %d %f %f %f %f %d %d \n",
-                    (int)verified,
-                    ro_scal.dtInv, dtInv,
-                    ro_scal.timeline_i, cpu_arrs.timeline[t_ind],
-                    ro_scal.t_ind, t_ind
-                );
-            //assert( verified && "INVALID RW Scalars!!!" );
-        }
-#endif
         // RELEASE ALL GPU RESOURCES
         release_all_GPU_resources (
                 cqCommandQueue[dev_id], cxGPUContext, cpProgram, cdDevices, ocl_arrs, kernels
             );
     }
+
 
 }
 

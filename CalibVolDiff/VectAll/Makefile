@@ -4,13 +4,12 @@ OPENCL_INCDIR	  ?= $(OPENCL_ROOTDIR)/include
 
 CXX        = g++
 INCLUDES   = -I$(CUDA_INCDIR) -I. -I../../include
-LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
-CXXFLAGS   = -O2 -fopenmp
+LIB        = -L$(OPENCL_LIBDIR) -L/usr/lib/ -lOpenCL
+CXXFLAGS   = -O3 -ffast-math -fopenmp
 
-
-SOURCES_CPP =NordeaVect.cpp
-OBJECTS     =NordeaVect.o  
-EXECUTABLE  =nordea
+SOURCES_CPP =VectMain.cpp
+OBJECTS     =VectMain.o  
+EXECUTABLE  =CalibVol
 
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 
@@ -23,7 +22,6 @@ gpu:
 
 cpu: 
 	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
-
 
 default: 
 	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)

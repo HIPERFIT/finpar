@@ -31,6 +31,15 @@ bool is_pow2(int atr_val) {
     }
     return false;
 }
+#if 0
+static bool is_pow2(unsigned int x) {
+    while(x > 1) {
+        if( x & 1 ) return false;
+        x = x >> 1;
+    }
+    return true;
+}
+#endif
 
 inline int parseIntAttribute(ifstream& fin, char* buf, const char* atr) {
     int ret_val;

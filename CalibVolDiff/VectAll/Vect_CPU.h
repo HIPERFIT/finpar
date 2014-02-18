@@ -1,7 +1,7 @@
 #ifndef NORDEA_CPU
 #define NORDEA_CPU
 
-#include "../ParPrefixUtil.h"
+#include "../includeC/ParPrefixUtil.h"
 
 ////////////////////////////////////////////////////////////
 //// FINALLY THE MEAT: The CPU Version of the Main Loop!
@@ -82,16 +82,23 @@ void iteration_expanded_CPU (
 
 #pragma omp parallel for default(shared) private(k,j,i) if(OUTER_LOOP_COUNT>4)
     for( k=0; k<OUTER_LOOP_COUNT; ++k ) {
-        // implicit x tridag: as a (vectorized) scan (the vector is dimension "y")
+        // implicit x tridag
         for(j=0;j<NUM_Y;j++) {
 
             const unsigned int ind = k*NUM_X*NUM_Y + j*NUM_X;
 
+#if 0
+            // As a (vectorized) scan (the vector is dimension "y")
             tridag_scan_array(
                     a+ind, b+ind, c+ind,
                     u+ind, NUM_X, u+ind,
                     y+ind, scan_tmp+4*ind
                 );
+#else
+            tridag( a+ind, b+ind, c+ind, 
+                    u+ind, NUM_X, u+ind, 
+                    y+ind );
+#endif
         }
     }    // end OUTER_LOOP
 
@@ -122,11 +129,18 @@ void iteration_expanded_CPU (
 
             const unsigned int ind = k*NUM_X*NUM_Y + i*NUM_Y;
 
+#if 0
+            // As a (vectorized) scan (the vector is dimension "x")
             tridag_scan_array(
                     a+ind, b+ind, c+ind,
                     v+ind, NUM_Y, y+ind,
                     u+ind, scan_tmp+2*ind
                 );
+#else
+            tridag( a+ind, b+ind, c+ind, 
+                    v+ind, NUM_Y, y+ind, 
+                    u+ind );
+#endif
         }
     }    // end OUTER_LOOP
 

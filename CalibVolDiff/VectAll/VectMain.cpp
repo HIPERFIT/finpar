@@ -1,8 +1,10 @@
-#include "Constants.h"
-#include "DataStructConst.h"
-#include "NordeaInit.h"
-#include "NordeaVect_CPU.h"
-#include "NordeaVect_GPU.h"
+#include "../../include/Util.h"
+#include "../includeC/Constants.h"
+#include "../includeC/DataStructConst.h"
+#include "../includeC/ParseInput.h"
+#include "VolCalibInit.h"
+#include "Vect_CPU.h"
+#include "Vect_GPU.h"
 
 
 void whole_loop_nest (
@@ -100,7 +102,6 @@ void whole_loop_nest (
     for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
         REAL* res_arr = myResArr+i*NUM_X*NUM_Y;
         res[i] = res_arr[myYindex*NUM_X+myXindex];
-        if(DEBUG) { printf("(res[%d]: %f)\n", i, res[i]); }
     }
 
     { // de-allocate the arrays
@@ -112,26 +113,51 @@ void whole_loop_nest (
         delete[] u;
         delete[] v;
 
-        //delete[] yy;
-        //delete[] res;
         delete[] scan_tmp;
     }
 }
 
 
-
-
 int main() {
+    mlfi_timeb  t_start, t_end;
+    unsigned long int elapsed;
+
     const REAL s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
+    REAL *strikes, *res;
 
-    REAL strikes[OUTER_LOOP_COUNT];
-    REAL res    [OUTER_LOOP_COUNT];
+    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T );
+    NUM_XY = NUM_X*NUM_Y;
 
-    for(unsigned i=0; i<OUTER_LOOP_COUNT; ++i) {
-        strikes[i] = 0.001*i;
+    strikes = new REAL[OUTER_LOOP_COUNT];
+    res     = new REAL[OUTER_LOOP_COUNT];
+    allocGlobArrs();
+
+    { // Instrumenting Runtime and Validation!
+        mlfi_ftime(&t_start);
+
+        for(unsigned i=0; i<OUTER_LOOP_COUNT; ++i) {
+            strikes[i] = 0.001*i;
+        }
+
+        whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
+
+        mlfi_ftime(&t_end);
+    	elapsed = mlfi_diff_time(t_end,t_start);
+
+        // validation
+        //writeResult( res.data(), OUTER_LOOP_COUNT );
+        bool is_valid = validate   ( res, OUTER_LOOP_COUNT );
+        if        ( /*is_valid &&*/ IS_GPU > 0 ) {  // GPU mode
+            cout<<"\nValid Result, GPU Parallel Runtime Without IO: "<<elapsed<<" ms."<<endl;
+        } else if ( is_valid ) {                // CPU mode
+            cout<<"\nValid Result, CPU Parallel Runtime Without IO on "
+                <<get_tot_num_threads()<<" threads : "<<elapsed<<" ms."<<endl;
+        }
     }
 
-    whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
+    delete[] strikes;
+    delete[] res;
+    deallocGlobArrs();
 
     return 0;
 }

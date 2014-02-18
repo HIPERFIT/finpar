@@ -3,40 +3,6 @@
 
 #include "../includeC/ParPrefixUtil.h"
 
-//////////////////////////////////////////
-/// CLASSIC, SEQUENTIAL TRIDAG
-//////////////////////////////////////////
-//  tridag
-void tridag_cos(
-    REAL*   a,
-    REAL*   b,
-    REAL*   c,
-    REAL*   d,
-    int     n,
-    REAL*   y,
-    REAL*   u)
-{
-    int    i;
-    double beta;
-
-    y[0] = d[0];
-    u[0] = b[0];
-
-    for(i=1; i<n; i++)
-    {
-        beta = a[i] / u[i-1];
-
-        u[i] = b[i] - beta*c[i-1];
-        y[i] = d[i] - beta*y[i-1];
-    }
-
-    y[n-1] = y[n-1]/u[n-1];
-
-    for(i=n-2; i>=0; i--) {
-        y[i] = (y[i] - c[i]*y[i+1]) / u[i];
-    }
-}
-
 ////////////////////////////////////////////////////////////
 //// FINALLY THE MEAT: The CPU Version of the Main Loop!
 ////////////////////////////////////////////////////////////
@@ -114,7 +80,7 @@ void iteration_expanded_CPU (
                 c[ind] =        - 0.5*(cur_myMuX*myDx[mul3+2] + 0.5*cur_myVarX*myDxx[mul3+2]); // c[j*NUM_X+i] = ...
             }
 
-            tridag_cos(a+glob_ind, b+glob_ind, c+glob_ind, u+glob_ind, NUM_X, u+glob_ind, y+glob_ind);
+            tridag(a+glob_ind, b+glob_ind, c+glob_ind, u+glob_ind, NUM_X, u+glob_ind, y+glob_ind);
         }
     }    // end OUTER_LOOP
 
@@ -136,7 +102,7 @@ void iteration_expanded_CPU (
                 v[ind] =  dtInv * u[k*NUM_X*NUM_Y + j*NUM_X+i] - 0.5*v[ind];  // y[j] = dtInv*u[j][i] - 0.5*v[i][j];
             }
 
-            tridag_cos(a+glob_ind, b+glob_ind, c+glob_ind, v+glob_ind, NUM_Y, v+glob_ind, y+glob_ind);
+            tridag(a+glob_ind, b+glob_ind, c+glob_ind, v+glob_ind, NUM_Y, v+glob_ind, y+glob_ind);
         }
     }    // end OUTER_LOOP
 

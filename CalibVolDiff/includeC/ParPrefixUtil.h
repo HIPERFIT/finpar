@@ -12,8 +12,40 @@ typedef struct timeb mlfi_timeb;
 #define mlfi_diff_time(t1,t2) \
   (t1.time - t2.time) * 1000 + (t1.millitm - t2.millitm)
 
-/////////////////////////////////////////////////////////////
+//////////////////////////////////////////
+/// CLASSIC, SEQUENTIAL TRIDAG
+//////////////////////////////////////////
+void tridag(
+    REAL*   a,
+    REAL*   b,
+    REAL*   c,
+    REAL*   d,
+    int     n,
+    REAL*   y,
+    REAL*   u)
+{
+    int    i;
+    double beta;
 
+    y[0] = d[0];
+    u[0] = b[0];
+
+    for(i=1; i<n; i++)
+    {
+        beta = a[i] / u[i-1];
+
+        u[i] = b[i] - beta*c[i-1];
+        y[i] = d[i] - beta*y[i-1];
+    }
+
+    y[n-1] = y[n-1]/u[n-1];
+
+    for(i=n-2; i>=0; i--) {
+        y[i] = (y[i] - c[i]*y[i+1]) / u[i];
+    }
+}
+
+/////////////////////////////////////////////////////////////
 
 /**
  * Multiplies 2x2 matrixes `a' and `b' and
@@ -97,69 +129,32 @@ void tridag_scan_array(
 
     // initialize u[0]
     u[0] = b[0];
-#if 0
-    for(i=1; i<n; i++)
-    {
-        beta = a[i] / u[i-1];
 
-        u[i] = b[i] - beta*c[i-1];
-        //y[i] = d[i] - beta*y[i-1];
-    }
-#else
     { // 1. solve u[i] = b[i] - (a[i]/u[i-1])*c[i-1]
 
         // initialize tmp[4..4*n-1]
-
         tmp[0] = 1.0; tmp[1] = 0.0; tmp[2] = 0.0; tmp[3] = 1.0; // NEW
 
         for(i=1,k=4; i<n; i++, k+=4) {   // NEW: k = 4;
             tmp[k]   = b[i];
-            //tmp[k+1] = 0.0 - a[i]*c[i-1];
             tmp[k+1] = 0.0 - a[i]*c[i-1];   // NEW
             tmp[k+2] = 1.0;
             tmp[k+3] = 0.0;
         }
 
         // scan with matrix multiplication on tmp
-        //scan_matmult_2by2(tmp, n-1);
         scan_matmult_2by2(tmp, n);  // NEW
-
-        //printf("tmp[0]: %f, %f, %f, %f\n", tmp[0], tmp[1], tmp[2], tmp[3]);
-        //printf("b[1]: %f, a[1]: %f, c[0]: %f, a[1]*c[0]: %f\n", b[1], a[1], c[0], a[1]*c[0]);
 
         // map the result back:
         for(i=1,k=4; i<n; i++, k+=4) {   // NEW k=4
             u[i] = map_matmult(tmp+k, b[0], 1.0);
 
-#if 0
-            REAL beta = a[i] / u[i-1];
-
-            beta = b[i] - beta*c[i-1];
-
-            REAL err = beta - u[i];
-            if(err < 0.0) err = 0.0 - err;
-            if(err > 0.001) {
-                printf("ERROR: i: %d, u[%d]= %.16f != %.16f\n\n", i, i, u[i], beta);
-
-                printf("elem %d: %.8f, %.8f, %.8f, %.8f, b: %.8f, a: %.8f, c: %.8f, b0: %.8f, u: %.8f\n",
-                        i, tmp[k], tmp[k+1], tmp[k+2], tmp[k+3], b[i], a[i], c[i-1], b[0], u[i]);
-                exit(0);
-            }
-#endif
         }
 
     }
-#endif
 
     // init y[0]
     y[0] = d[0];
-#if 0
-    for(i=1; i<n; i++)
-    {
-        beta = a[i] / u[i-1];
-        y[i] = d[i] - beta*y[i-1];
-    }
-#else
     { // 2. compute the forward recurrence y[i] = d[i] - (a[i]/u[i-1])*y[i-1]
         //init tmp[2..2*n-1]
         tmp[0] = 0.0; tmp[1] = 1.0; // NEW
@@ -176,14 +171,8 @@ void tridag_scan_array(
             y[i] = map_linfuncomp(tmp+k, y[0]);
         }
     }
-#endif
 
     y[n-1] = y[n-1]/u[n-1];
-#if 0
-    for(i=n-2; i>=0; i--) {
-        y[i] = (y[i] - c[i]*y[i+1]) / u[i];
-    }
-#else
     { // 2. compute the backward recurrence y[i] = (y[i] - c[i]*y[i+1]) / u[i];
         //init tmp[2..2*n-1]
         tmp[0] = 0.0; tmp[1] = 1.0; // NEW
@@ -200,7 +189,6 @@ void tridag_scan_array(
             y[i] = map_linfuncomp(tmp+k, y[n-1]);
         }
     }
-#endif
 }
 
 void test_matmult(){
@@ -242,78 +230,15 @@ void tridag_scan_array_womatmult(
     int    i, k;
     REAL beta;
 
-#if 0
-    // initialize u[0]
-    u[0] = b[0];
-    { // 1. solve u[i] = b[i] - (a[i]/u[i-1])*c[i-1]
-
-        // initialize tmp[4..4*n-1]
-
-        for(i=1,k=0; i<n; i++, k+=4) {
-            tmp[k]   = b[i];
-            tmp[k+1] = 0.0 - a[i]*c[i-1];
-            tmp[k+2] = 1.0;
-            tmp[k+3] = 0.0;
-        }
-
-        // scan with matrix multiplication on tmp
-        scan_matmult_2by2(tmp, n-1);
-
-        //printf("tmp[0]: %f, %f, %f, %f\n", tmp[0], tmp[1], tmp[2], tmp[3]);
-        //printf("b[1]: %f, a[1]: %f, c[0]: %f, a[1]*c[0]: %f\n", b[1], a[1], c[0], a[1]*c[0]);
-
-        // map the result back:
-        for(i=1,k=4; i<n; i++, k+=4) {
-            u[i] = map_matmult(tmp+k, b[0], 1.0);
-
-        }
-
-    }
-#else
     // scan with matrix multiplication on tmp
     scan_matmult_2by2(tmp, n-1);
-
-    //printf("tmp[0]: %f, %f, %f, %f\n", tmp[0], tmp[1], tmp[2], tmp[3]);
-    //printf("b[1]: %f, a[1]: %f, c[0]: %f, a[1]*c[0]: %f\n", b[1], a[1], c[0], a[1]*c[0]);
 
     // map the result back:
     for(i=1,k=4; i<n; i++, k+=4) {
         u[i] = map_matmult(tmp+k, b[0], 1.0);
 
     }
-#endif
 
-#if 0
-    // init y[0]
-    y[0] = d[0];
-    { // 2. compute the forward recurrence y[i] = d[i] - (a[i]/u[i-1])*y[i-1]
-        tmp[0] = 0.0; tmp[1] = 1.0;
-        //init tmp[2..2*n-1]
-        for(i=1,k=2; i<n; i++, k+=2) {
-            tmp[k]   = d[i];
-            tmp[k+1] = 0.0 - a[i]/u[i-1];
-        }
-
-        // forward scan with linear function composition on tmp
-        scan_linfuncomp(tmp, n); // n-1
-
-        // map the result back:
-        for(i=1,k=2; i<n; i++, k+=2) {
-            y[i] = map_linfuncomp(tmp+k, y[0]);
-        }
-    }
-#else
-
-    // forward scan with linear function composition on tmp
-    //scan_linfuncomp(tmp, n); // n-1
-
-    // map the result back:
-    //for(i=1,k=2; i<n; i++, k+=2) {
-    //    y[i] = map_linfuncomp(tmp+k, y[0]);
-    //}
-#endif
-
-#if 1
     y[n-1] = y[n-1]/u[n-1];
     { // 2. compute the forward recurrence y[i] = (y[i] - c[i]*y[i+1]) / u[i];
         //init tmp[2..2*n-1]
@@ -330,18 +255,6 @@ void tridag_scan_array_womatmult(
             y[i] = map_linfuncomp(tmp+k, y[n-1]);
         }
     }
-#else
-    {
-        //scan_linfuncomp(tmp, n-1);
-
-        // map the result back:
-        for(i=n-2,k=0; i>=0; i--, k+=2) {
-            y[i] = map_linfuncomp(tmp+k, y[n-1]);
-        }
-    }
-#endif
-
-
 }
 
 inline void tridag_seq_32(
@@ -405,8 +318,6 @@ inline void tridag_seq_1(
         y[i] = (y[i] - c[i]*y[i+1]) / u[i];
     }
 }
-
-
 
 #endif // end include PAR_PREFIX_UTIL
 

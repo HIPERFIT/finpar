@@ -1,8 +1,16 @@
-1. VectOuters:
-    - currently all the result array is copied
+1. For both VectAll and VectOuters, check whether the GPU 
+    code is specialized for NVIDIA hardware constants, 
+    such as WARP == 32. 
+
+2. VectOuters and VectAll:
+      Currently all the result arrays are copied
         back to CPU space, but only a small part
         of it is actually required. This filtering
         can be done on GPU so as to optimize 
         communication costs.
 
-2. 
+3. Make the seguential overhead, e.g., allocation of CPU/GPU arrays, 
+        close to negligible by increasing the NUM_T, especially for 
+        the Medium and Small datasets.
+
+4. 

@@ -7,7 +7,6 @@
 #include "Vect_GPU.h"
 
 
-
 void whole_loop_nest (
         REAL*       res,
         const REAL* strikes,

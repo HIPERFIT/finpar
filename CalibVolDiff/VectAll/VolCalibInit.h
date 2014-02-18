@@ -1,7 +1,7 @@
 #ifndef NORDEA_INIT
 #define NORDEA_INIT
 
-#include "DataStructConst.h"
+#include "../includeC/DataStructConst.h"
 
 ///////////////////////////////////////////////////////
 //// INITIALISATION !
