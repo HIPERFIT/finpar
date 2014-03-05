@@ -95,7 +95,7 @@ void whole_loop_nest (
 
         mlfi_ftime(&t_end);
         elapsed = mlfi_diff_time(t_end,t_start);
-        printf("\n\nCPU Run Time: %lu !\n\n", elapsed);
+        //printf("\n\nCPU Run Time: %lu !\n\n", elapsed);
 
     }
 
@@ -145,9 +145,11 @@ int main() {
     	elapsed = mlfi_diff_time(t_end,t_start);
 
         // validation
-        //writeResult( res.data(), OUTER_LOOP_COUNT );
-        bool is_valid = validate   ( res, OUTER_LOOP_COUNT );
-        if        ( /*is_valid &&*/ IS_GPU > 0 ) {  // GPU mode
+        //writeResult( res, OUTER_LOOP_COUNT );
+        bool is_valid = true;
+        is_valid = validate   ( res, OUTER_LOOP_COUNT );
+        
+        if        ( is_valid && IS_GPU > 0 ) {  // GPU mode
             cout<<"\nValid Result, GPU Parallel Runtime Without IO: "<<elapsed<<" ms."<<endl;
         } else if ( is_valid ) {                // CPU mode
             cout<<"\nValid Result, CPU Parallel Runtime Without IO on "

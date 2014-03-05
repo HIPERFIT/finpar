@@ -1,5 +1,5 @@
 OUTER   =   128  // no restrictions
 NUM_X   =    32  // = 2^x, where x \in {5, ..., 9}
 NUM_Y   =    32  // = 2^x, where x \in {5, ..., 9}
-NUM_T   =    64  // no restrictions
+NUM_T   =   256  // no restrictions
 

@@ -1,6 +1,10 @@
+0. Test on different OpSys:    Ubuntu, Mac, Windows
+   Test on different hardware: AMD GPU & NVIDIA GPU 
+                                (Intel Phi?)
+
 1. For both VectAll and VectOuters, check whether the GPU 
     code is specialized for NVIDIA hardware constants, 
-    such as WARP == 32. 
+    such as WARP == 32. (Meaning, test it on AMD GPU)
 
 2. VectOuters and VectAll:
       Currently all the result arrays are copied
@@ -13,4 +17,12 @@
         close to negligible by increasing the NUM_T, especially for 
         the Medium and Small datasets.
 
-4. 
+4. Source code focusing on readability (not performance).
+
+5. CONTENT-ORIENTED:
+        -- eliminate some of the restrictions for VectAll, e.g.,
+            arbitrary size of NUM_X and NUM_Y which leads to
+            ``global'' segmented scan (in which the segments have
+            regular sizes).
+        -- irregular segmented scan, in which there are no restrictions
+            on the size of the segments.
