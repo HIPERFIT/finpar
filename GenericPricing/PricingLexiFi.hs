@@ -146,11 +146,12 @@ ugaussian = map ugaussianEl
 brownianBridgeDates :: Int -> [[Int]] -> [[Double]] -> [Double] -> [Double]
 brownianBridgeDates num_dates bb_inds bb_data gauss =
   let bbrow = update (replicate num_dates 0.0)
-              (bi!!0) ((sd!!0) * (gauss!!0))
-      bbrow' = foldl f bbrow (zip3 (zip3 bi li ri) (zip3 sd lw rw) gauss)
+              (bi!!0) (sd!!0 * gauss!!0)
+      bbrow' = foldl f bbrow $ drop 1 $
+               zip3 (zip3 bi li ri) (zip3 sd lw rw) gauss
   in zipWith (-) bbrow' (0:bbrow')
-  where [bi,li,ri] = map (drop 1 . map (subtract 1)) bb_inds
-        [sd,lw,rw] = map (drop 1) bb_data
+  where [bi,li,ri] = map (map $ subtract 1) bb_inds
+        [sd,lw,rw] = bb_data
         f bbrow ((l,j,k),(x,y,z),zi) =
           let wk = bbrow !! k
               tmp = z * wk + x * zi
