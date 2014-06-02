@@ -1,10 +1,10 @@
 #include "../../include/Util.h"
 #include "../includeC/Constants.h"
 #include "../includeC/DataStructConst.h"
-#include "../includeC/ParseInput.h"
 #include "VolCalibInit.h"
 #include "Vect_CPU.h"
 #include "Vect_GPU.h"
+#include "../includeC/ParseInput.h"
 
 
 void whole_loop_nest (
@@ -113,6 +113,14 @@ int main() {
     const REAL s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
     REAL *strikes, *res;
 
+    if( IS_GPU ) { 
+        fprintf(stdout, "\n// GPU Outer-Level Massively-Parallel ");
+        fprintf(stdout, "Execution of Volatility Calibration Benchmark:\n"); 
+    } else { 
+        fprintf(stdout, "\n// CPU Outer-Level Multi-Threaded     ");
+        fprintf(stdout, "Execution of Volatility Calibration Benchmark:\n"); 
+    }
+
     readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T );
     NUM_XY = NUM_X*NUM_Y;
 
@@ -133,14 +141,14 @@ int main() {
         mlfi_ftime(&t_end);
     	elapsed = mlfi_diff_time(t_end,t_start);
 
-        // validation
-        //writeResult( res.data(), OUTER_LOOP_COUNT );
-        bool is_valid = validate   ( res, OUTER_LOOP_COUNT );
-        if        ( is_valid && IS_GPU > 0 ) {  // GPU mode
-            cout<<"\nValid Result, GPU Parallel Runtime Without IO: "<<elapsed<<" ms."<<endl;
-        } else if ( is_valid ) {                // CPU mode
-            cout<<"\nValid Result, CPU Parallel Runtime Without IO on "
-                <<get_tot_num_threads()<<" threads : "<<elapsed<<" ms."<<endl;
+        { // validation & write back of the result
+            bool is_valid   = validate   ( res, OUTER_LOOP_COUNT );
+            int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
+                                         get_CPU_num_threads() ;
+            writeStatsAndResult( is_valid, res, OUTER_LOOP_COUNT, 
+                                 NUM_X, NUM_Y, NUM_T, 
+                                 (IS_GPU!=0), num_threads, elapsed );
+            //writeResult( res.data(), OUTER_LOOP_COUNT );
         }
     }
 

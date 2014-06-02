@@ -419,10 +419,10 @@ void release_all_GPU_resources(
         GPUkernels&         kernels
 ) {
 
-    shrLog("Release Kernels...\n");
+    shrLog(stdlog, "Release Kernels...\n");
     release_all_kernels( kernels );
 
-    shrLog("Release CPU buffers and OpenCL objects...\n");
+    shrLog(stdlog, "Release CPU buffers and OpenCL objects...\n");
     clReleaseProgram(cpProgram);
 
     clReleaseMemObject(ocl_arrs.ro_scals);
@@ -497,18 +497,10 @@ void run_trimmed_GPUkernels_one_time_iteration (
            *v = cpu_arrs.v, *y = cpu_arrs.y;
 
     unsigned int cos_test_ind = 3*NUM_XY + 23*NUM_X + 211, cos_test_ind_rev = 3*NUM_XY + 211*NUM_Y + 23;
-//
-//    printf("LALALALALLALA v[1]: %f, u[1]: %f, v[last]: %f, arr size: %lu, sizeof real: %lu dtInv: %f timelone: %f\n\n",
-//            v[cos_test_ind_rev], u[cos_test_ind],
-//            v[(ARR_SIZE/sizeof(REAL))],
-//            ARR_SIZE/sizeof(REAL), sizeof(REAL), dtInv, myTimeline[time_ind]);
-//
-//    printf("LALALALALLALA v[1]: %f, u[1]: %f, v[last]: %f, arr size: %lu, sizeof real: %lu \n\n",
-//            v[cos_test_ind_rev], u[cos_test_ind], v[(ARR_SIZE/sizeof(REAL))], ARR_SIZE/sizeof(REAL), sizeof(REAL));
-//
 
 
-    { // transpose u: u is in form: [i/32, j, i%32] and needs to be brought to form [i/32, i%32, j], a.k.a. [i,j]
+    { // transpose u: u is in form: [i/32, j, i%32] 
+      //   and needs to be brought to form [i/32, i%32, j], a.k.a. [i,j]
     	const unsigned int ID = OUTER_LOOP_COUNT * NUM_X / 32;
     	for( k=0; k<ID; ++k ) {  // segmented transpose followed by copy out!
     	    const unsigned int glb_ind = k*NUM_Y*32;
@@ -520,7 +512,8 @@ void run_trimmed_GPUkernels_one_time_iteration (
     	    }
     	}
     }
-    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {  // segmented transpose followed by copy out!
+    // segmented transpose followed by copy out!
+    for( k=0; k<OUTER_LOOP_COUNT; ++k ) {  
         const unsigned int glb_ind = k*NUM_X*NUM_Y;
 
         for(i=0; i<NUM_X; i++) {

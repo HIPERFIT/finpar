@@ -124,22 +124,12 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
         make_kernels( cqCommandQueue[dev_id], cpProgram, ro_scal, ocl_arrs, kernels );
     }
 
-//    mlfi_timeb  t_start, t_end;
-//    unsigned long int elapsed;
-//    mlfi_ftime(&t_start);
-
-
     // now execute kernels!
     for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
 
             run_GPUkernels_one_time_iteration ( cqCommandQueue[dev_id], kernels );
 
     } // END TIME LOOP!
-
-
-//    mlfi_ftime(&t_end);
-//    elapsed = mlfi_diff_time(t_end,t_start);
-//    printf("\n\nGPU Run Time: %lu !\n\n", elapsed);
 
 
     { // WRITE BACK THE RESULT ARRAY TO CPU !!! //

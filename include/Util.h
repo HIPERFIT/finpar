@@ -21,7 +21,7 @@ typedef struct timeb mlfi_timeb;
 /*****   Utilities Related to Read/Write to File   *****/
 /*******************************************************/
 
-int get_tot_num_threads() {
+int get_CPU_num_threads() {
     int procs;
 
 #pragma omp parallel shared(procs)
@@ -33,6 +33,10 @@ int get_tot_num_threads() {
     bool valid_procs = (procs > 0) && (procs <= 1024);
     assert(valid_procs && "Number of threads NOT in {1, ..., 1024}");
     return procs;
+}
+
+int get_GPU_num_threads() {
+    return 1024;
 }
 
 #endif //GENERIC_UTILITIES

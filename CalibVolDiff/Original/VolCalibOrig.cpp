@@ -1,6 +1,8 @@
 #include <vector>
 #include <cmath>
 
+#define WITH_FLOATS 0
+
 typedef double REAL;
 
 #include "Util.h"
@@ -281,8 +283,7 @@ int main()
     unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T; 
 	const double s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
 
-    cout<<"\nRunning Original Volatility-Calibration Benchmark"<<endl;
-
+    fprintf(stdout, "\n// Original (Sequential) Volatility Calibration Benchmark:\n");
     readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T ); 
 
 	vector<double> strikes(OUTER_LOOP_COUNT),res(OUTER_LOOP_COUNT);
@@ -290,24 +291,26 @@ int main()
 	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i)
 		strikes[i] = 0.001*i;
 
-    {    // start timer
-        mlfi_timeb  t_start, t_end;
-        unsigned long int elapsed;
+    unsigned long int elapsed = 0;
+    {   // Main Computational Kernel
+
+        mlfi_timeb  t_start, t_end;        
         mlfi_ftime(&t_start);
-        // the main computational kernel!
+
     	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i) {
 	    	res[i] = value( s0, strikes[i], t, alpha, nu, beta,
                             NUM_X, NUM_Y, NUM_T );
         }
+
         mlfi_ftime(&t_end);
+        elapsed = mlfi_diff_time(t_end,t_start);
+    }
 
-        //writeResult( res.data(), OUTER_LOOP_COUNT );
+    {   // validation and writeback of the result
         bool is_valid = validate   ( res.data(), OUTER_LOOP_COUNT );
-
-        if(is_valid) {
-            elapsed = mlfi_diff_time(t_end,t_start);
-            cout<<"\nValid Result, CPU Sequential Runtime Without IO: "<<elapsed<<" ms."<<endl;
-        }
+        writeStatsAndResult( is_valid, res.data(), OUTER_LOOP_COUNT, 
+                             NUM_X, NUM_Y, NUM_T, false, 1, elapsed );        
+//        writeResult( res.data(), OUTER_LOOP_COUNT );
     }
 
 	return 1;

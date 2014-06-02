@@ -1224,23 +1224,16 @@ void run_GPUkernels_one_time_iteration (
     run_NordeaKernelY( cqCommandQueue, kernels );
 
 #else
-    //printf("Before prepare_tridag_X\n");
+
     run_prepare_tridag_X( cqCommandQueue, kernels );
 
-
-    //printf("Before tridagX\n");
     run_TRIDAG( cqCommandQueue, kernels, 0);
 
-
-    //printf("Before prepare_tridag_Y\n");
     run_prepare_tridag_Y( cqCommandQueue, kernels );
 
-
-    //printf("Before tridagY\n");
     run_TRIDAG( cqCommandQueue, kernels, 1);
 #endif
 
-    //printf("Before TRANSPOSE\n");
     run_transposeGPU_WithUpdate( cqCommandQueue, kernels );
 }
 
@@ -1293,10 +1286,10 @@ void release_all_GPU_resources(
         GPUkernels&         kernels
 ) {
 
-    shrLog("Release Kernels...\n");
+    shrLog(stdlog, "Release Kernels...\n");
     release_all_kernels( kernels );
 
-    shrLog("Release CPU buffers and OpenCL objects...\n");
+    shrLog(stdlog, "Release CPU buffers and OpenCL objects...\n");
     clReleaseProgram(cpProgram);
 
     clReleaseMemObject(ocl_arrs.ro_scals);
@@ -1385,17 +1378,17 @@ void testMatMultScan (
         // 1. GPU-ONLY GLOBAL ARRAYS //
         ciErr |= clSetKernelArg(ckTridagMatMultX, counter++, sizeof(uint), (void *) (&NUM_X) );
         oclCheckError(ciErr, CL_SUCCESS);
-        printf("Before executing kernel!\n");
+        shrLog(stdlog, "Before executing kernel!\n");
 
 
         { // Finally, the array size:
             ciErr |= clEnqueueNDRangeKernel(cqCommandQueue, ckTridagMatMultX, 1, NULL,
                                              &globalWorkSize, &localWorkSize, 0, NULL, NULL);
 
-            //printf("ERROR: %d, %d!\n", ciErr, CL_INVALID_WORK_GROUP_SIZE);
+            //shrLog(stdlog, "ERROR: %d, %d!\n", ciErr, CL_INVALID_WORK_GROUP_SIZE);
 
             oclCheckError(ciErr, CL_SUCCESS);
-            printf("After executing kernel!\n");
+            shrLog(stdlog, "After executing kernel!\n");
             ciErr |= clFinish(cqCommandQueue);
         }
 
@@ -1419,13 +1412,13 @@ void testMatMultScan (
     }
 
     // write:
-    printf("\n\nResult GPGPU SCAN MAT MULT!!!!\n\n");
+    shrLog(stdlog, "\n\nResult GPGPU SCAN MAT MULT!!!!\n\n");
     for(int j=0; j<NUM_Y; j++) {
-        printf("ROW NUM %d:\n\t", j);
+        shrLog(stdlog, "ROW NUM %d:\n\t", j);
         REAL* tmpj = tmp + j*NUM_X*4;
         for(int i=0; i<NUM_X; i++) {
             REAL* tmpji = tmpj + i*4;
-            printf("[elem(%d)=(%f, %f, %f, %f)], ",
+            shrLog(stdlog, "[elem(%d)=(%f, %f, %f, %f)], ",
                         i, tmpji[0], tmpji[1], tmpji[2], tmpji[3]);
         }
     }
@@ -1445,13 +1438,13 @@ void testMatMultScan (
             scan_matmult_2by2(tmpj, NUM_X);
         }
         // write:
-        printf("\n\nResult CPU SCAN MAT MULT!!!!\n\n");
+        shrLog(stdlog, "\n\nResult CPU SCAN MAT MULT!!!!\n\n");
         for(int j=0; j<NUM_Y; j++) {
-            printf("ROW NUM %d:\n\t", j);
+            shrLog(stdlog, "ROW NUM %d:\n\t", j);
             REAL* tmpj = tmp + j*NUM_X*4;
             for(int i=0; i<NUM_X; i++) {
                 REAL* tmpji = tmpj + i*4;
-                printf("[elem(%d)=(%f, %f, %f, %f)], ",
+                shrLog(stdlog, "[elem(%d)=(%f, %f, %f, %f)], ",
                             i, tmpji[0], tmpji[1], tmpji[2], tmpji[3]);
             }
         }
@@ -1511,17 +1504,17 @@ void testFunCompScan (
         // 1. GPU-ONLY GLOBAL ARRAYS //
         ciErr |= clSetKernelArg(ckTridagMatMultX, counter++, sizeof(uint), (void *) (&NUM_X) );
         oclCheckError(ciErr, CL_SUCCESS);
-        printf("Before executing kernel!\n");
+        shrLog(stdlog, "Before executing kernel!\n");
 
 
         { // Finally, the array size:
             ciErr |= clEnqueueNDRangeKernel(cqCommandQueue, ckTridagMatMultX, 1, NULL,
                                              &globalWorkSize, &localWorkSize, 0, NULL, NULL);
 
-            //printf("ERROR: %d, %d!\n", ciErr, CL_INVALID_WORK_GROUP_SIZE);
+            //shrLog(stdlog, "ERROR: %d, %d!\n", ciErr, CL_INVALID_WORK_GROUP_SIZE);
 
             oclCheckError(ciErr, CL_SUCCESS);
-            printf("After executing kernel!\n");
+            shrLog(stdlog, "After executing kernel!\n");
             ciErr |= clFinish(cqCommandQueue);
         }
 
@@ -1545,13 +1538,13 @@ void testFunCompScan (
     }
 
     // write:
-    printf("\n\nResult GPGPU SCAN MAT MULT!!!!\n\n");
+    shrLog(stdlog, "\n\nResult GPGPU SCAN MAT MULT!!!!\n\n");
     for(int j=0; j<NUM_Y; j++) {
-        printf("ROW NUM %d:\n\t", j);
+        shrLog(stdlog, "ROW NUM %d:\n\t", j);
         REAL* tmpj = tmp + j*NUM_X*2;
         for(int i=0; i<NUM_X; i++) {
             REAL* tmpji = tmpj + i*2;
-            printf("[elem(%d)=(%f, %f)], ", i, tmpji[0], tmpji[1]);
+            shrLog(stdlog, "[elem(%d)=(%f, %f)], ", i, tmpji[0], tmpji[1]);
         }
     }
 
@@ -1569,13 +1562,13 @@ void testFunCompScan (
         }
 
         // write:
-        printf("\n\nResult CPU SCAN MAT MULT!!!!\n\n");
+        shrLog(stdlog, "\n\nResult CPU SCAN MAT MULT!!!!\n\n");
         for(int j=0; j<NUM_Y; j++) {
-            printf("ROW NUM %d:\n\t", j);
+            shrLog(stdlog, "ROW NUM %d:\n\t", j);
             REAL* tmpj = tmp + j*NUM_X*2;
             for(int i=0; i<NUM_X; i++) {
                 REAL* tmpji = tmpj + i*2;
-                printf("[elem(%d)=(%f, %f)], ", i, tmpji[0], tmpji[1]);
+                shrLog(stdlog, "[elem(%d)=(%f, %f)], ", i, tmpji[0], tmpji[1]);
             }
         }
     }
