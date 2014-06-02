@@ -4,6 +4,12 @@ import Control.Applicative
 import Control.Monad
 import Data.Maybe
 
+------------------------------------
+--- Requires the installation of ---
+--- Parsec package, i.e.,        ---
+---     cabal install parsec     ---
+------------------------------------
+
 import Text.Parsec hiding (optional, (<|>), token)
 import Text.Parsec.String
 
@@ -11,6 +17,11 @@ import Data.Bits
 import Data.List hiding (tail)
 import Prelude hiding (tail)
 
+import Debug.Trace
+
+------------------------------
+--- Parser-related Helpers ---
+------------------------------
 signed :: Parser String -> Parser String
 signed p = (char '-' >> (('-':) <$> p)) <|> p
 
@@ -36,10 +47,30 @@ readDouble = lexeme $ read <$> signed (s2 <|> s1)
 readArray :: Parser a -> Parser [a]
 readArray p = lexeme $ between (token "[") (token "]") (p `sepBy` token ",")
 
+---------------------------------------------
+--- Definition of lish-homomorphic reduce ---
+---    requires a binary associative op   ---
+---------------------------------------------
+
+reduce :: (a -> a -> a) -> a -> [a] -> a
+reduce bop ne lst = foldl bop ne lst
+
+--zip5 :: [a] -> [b] -> [c] -> [d] -> [e] -> [(a,b,c,d,e)]
+--zip5 [] [] [] [] [] = []
+--zip5 (a:as) (b:bs) (c:cs) (d:ds) (e:es) = 
+--    (a,b,c,d,e) :: (zip5 as bs cs ds es)
+--zip5 as bs cs ds es = []
+
+---------------------------------------------
+--- Chunking Helpers                      ---
+---------------------------------------------
 chunk :: Int -> [a] -> [[a]]
 chunk _ []  = []
 chunk n arr = take n arr : chunk n (drop n arr)
 
+---------------------------------------------
+--- Sobol Quasi-random vector generation  ---
+---------------------------------------------
 grayCode :: Int -> Int
 grayCode x = (x `shiftR` 1) `xor` x
 
@@ -149,13 +180,13 @@ brownianBridgeDates num_dates bb_inds bb_data gauss =
               (bi!!0) (sd!!0 * gauss!!0)
       bbrow' = foldl f bbrow $ drop 1 $
                zip3 (zip3 bi li ri) (zip3 sd lw rw) gauss
-  in zipWith (-) bbrow' (0:bbrow')
+  in zipWith (-) bbrow' (0.0:bbrow')
   where [bi,li,ri] = map (map $ subtract 1) bb_inds
         [sd,lw,rw] = bb_data
         f bbrow ((l,j,k),(x,y,z),zi) =
           let wk = bbrow !! k
               tmp = z * wk + x * zi
-          in update bbrow l $ if j + 1 == 0
+          in update bbrow l $ if (j + 1) == 0
                               then tmp
                               else tmp + y * (bbrow!!j)
         update a i v = take i a ++ [v] ++ drop (i+1) a
@@ -204,27 +235,65 @@ payoff2 md_disc xss
 trajInner :: Double -> Int -> [Double] -> Double
 trajInner amount i disc = amount * disc !! i
 
-compute :: Int -> Int -> Int -> Int -> [[Int]]
-        -> [[Double]] -> [[Double]] -> [[Double]]
-        -> [Double] -> [Double] -> [Double]
-        -> [[Int]] -> [[Double]] -> Double
-compute num_mc_it num_dates num_und num_bits dir_vs
-  md_c md_vols md_drifts md_st _ md_disc bb_inds bb_data =
-  payoff / fromIntegral num_mc_it
-  where sobol_mat = map (sobolIndR num_bits dir_vs) [1..num_mc_it]
-        gauss_mat = map ugaussian sobol_mat
-        bb_mat = map (brownianBridge num_und num_dates bb_inds bb_data) gauss_mat
-        bs_mat = map (blackScholes num_und md_c md_vols md_drifts md_st) bb_mat
-        payoff = sum $ map (payoff2 md_disc) bs_mat
+compute :: Int -> Int -> Int -> Int -> Int -> Int -> [[Int]] 
+        -> [[[Double]]] -> [[[Double]]] -> [[[Double]]] 
+        ->  [[Double]]  ->  [[Double]]  ->  [[Double]]
+        -> [[Int]] -> [[Double]] 
+        -> [Double]
+compute contract  num_mc_it num_dates num_under num_models num_bits 
+        dir_vs    md_cs     md_vols   md_drifts md_starts  md_detvals 
+        md_discts bb_inds   bb_data =
+
+  let num_det_pricers = length $ head md_detvals
+      num_cash_flows  = length $ head md_discts
+--      num_mc_it'      = 2
+
+--      bb_data1 = map (\y -> map (\x -> if x >= 20.0 then x - 18.0 else if x >= 10.0 then x - 9.0 else x) y) bb_data0
+--      bb_data  = trace (show bb_data1) bb_data1
+
+
+      sobol_mat = map    (sobolIndR num_bits dir_vs) [1..num_mc_it]
+--      sobol_mat'= trace (show sobol_mat) sobol_mat
+
+      gauss_mat = map     ugaussian sobol_mat
+
+--      gauss_mat'= trace (show gauss_mat) gauss_mat
+
+      bb_mat    = map    (brownianBridge num_under num_dates bb_inds bb_data) gauss_mat
+
+--      bb_mat'   = trace (show bb_mat) bb_mat
+
+      md_cvdsmat= zip5 md_cs md_vols md_drifts md_starts (replicate num_models bb_mat)     
+      bs_mats   = map    (\cvdsmat -> let (c, vol, drift, start, bb_mat) = cvdsmat
+                                      in  map (blackScholes num_under c vol drift start) bb_mat 
+                         )
+                         md_cvdsmat 
+
+      md_discmat= zip md_discts bs_mats
+      payoffs   = map    (\disc_bs -> let (disc, bsmat) = disc_bs
+                                      in  map (payoff2 disc) bsmat
+                         )
+                         md_discmat
+--      bs_mat    = map    (blackScholes num_under md_c md_vols md_drifts md_starts) bb_mat
+--      payoffs   = map    (payoff2 md_discts) bs_mat
+      sum_prices= map (\payoff -> reduce (+) 0.0 payoff) payoffs
+      
+      prices    = map (\sp -> sp / fromIntegral num_mc_it) sum_prices
+  in  prices
 
 main :: IO ()
 main = do s <- getContents
           either (error . show) print $ parse run "input" s
   where run = compute <$>
-              readInt <*> readInt <*> readInt <*> readInt <*> readInt2d <*>
-              readDouble2d <*> readDouble2d <*> readDouble2d <*>
-              readDouble1d <*> readDouble1d <*> readDouble1d <*>
-              readInt2d <*> readDouble2d
+                readInt <*> readInt <*> readInt <*> readInt <*> 
+                readInt <*> readInt <*> readInt2d <*>
+                readDouble3d <*> readDouble3d <*> readDouble3d <*>
+                readDouble2d <*> readDouble2d <*> readDouble2d <*>
+                readInt2d    <*> readDouble2d
         readInt2d = readArray $ readArray readInt
         readDouble1d = readArray readDouble
         readDouble2d = readArray $ readArray readDouble
+        readDouble3d = readArray $ readArray $ readArray readDouble
+
+-- ghc -O2 -msse2 -rtsopts  PricingLexiFi.hs
+-- ./PricingLexiFi +RTS -K128m -RTS < ../Data/Medium/input.data

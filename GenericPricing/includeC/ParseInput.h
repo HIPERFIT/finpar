@@ -2,6 +2,7 @@
 #define PARSE_INPUT
 
 #include "ParserC.h"
+#include "Util.h"
 #include "Constants.h"
 #include <assert.h>
 #include <math.h>
@@ -16,7 +17,7 @@
 
 
 void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts, 
-                    ModelArrays& md_arrs, BrowBridgeArrays& bb_arrs 
+                    ModelArrays& md_arrs, BrowBridgeArrays& bb_arrs
 ) {
     if( read_int( &scals.contract   ) ||
         read_int( &scals.num_mcits  ) ||
@@ -108,7 +109,6 @@ void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts,
         ok = ( shape[0] == scals.num_models );
         assert(ok && "Incorrect shape of md_discts!");
         scals.num_cash_flows  = shape[1];
-        printf("discount[2]: %f\n", md_arrs.md_discts[2]);
     }
 
     { // Brownian Bridge Indirect Arrays and Data
@@ -129,6 +129,39 @@ void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts,
         ok = ( shape[0] == 3 ) && ( shape[1] == scals.num_dates )  ;
         assert(ok && "Incorrect shape of bb_data (brownian bridge data arrays)!");
     }
+}
+
+bool validate( const REAL& price ) {
+    bool is_valid = true;
+    REAL std_price;
+    
+    if ( read_real( &std_price ) ) {
+        fprintf(stderr, "Syntax error when reading the standard (output) price.\n");
+        exit(1);
+    }
+
+    float err = fabs(std_price - price);
+    if ( err > EPS ) {
+        is_valid = false;
+        fprintf(stderr, "Error = %f, EPS = %f!\n", err, EPS);
+    }
+
+    return is_valid;
+}
+
+void writeStatsAndResult(   const bool& valid, const REAL& price,  
+                            const bool& is_gpu,const int & P,     
+                            const unsigned long int& elapsed  
+) {
+    if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); } 
+    else      { fprintf(stdout, "0\t\t// INVALID Result,\n"); }
+
+    fprintf(stdout, "%ld\t\t// Runtime in micro seconds,\n", elapsed);
+    if(is_gpu) fprintf(stdout, "%d\t\t// GPU Threads,\n", P);
+    else       fprintf(stdout, "%d\t\t// CPU Threads,\n", P);
+
+    // write the result
+    write_scal(&price, "Generic Pricing Result.");
 }
 
 #endif // PARSE_INPUT

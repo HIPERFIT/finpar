@@ -15,6 +15,8 @@
 
 //#include "Optimizations.h"
 
+#define EPS             0.0005
+
 #define logWARP         5  //ro_scal->logBLOCK // 5
 #define WARP            32 //ro_scal->BLOCK    // 32
 

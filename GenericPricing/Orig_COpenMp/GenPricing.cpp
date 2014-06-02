@@ -1,5 +1,5 @@
 #define FAST_BB                     1
-#define _OPTIMIZATION_USE_FLOATS    1
+#define _OPTIMIZATION_USE_FLOATS    0
 
 
 #include "ParseInput.h"
@@ -12,7 +12,7 @@ UINT do_padding(const UINT& n) {
     return (((n / 64) * 64) + 64);
 }
 
-void run_CPUkernel(    
+REAL run_CPUkernel( const int&          Ps,
                     LoopROScalars   &   scals,
                     int*                sob_mat,       
                     ModelArrays     &   md_arrs,
@@ -20,16 +20,6 @@ void run_CPUkernel(
 ) {
     const UINT sob_dim      = scals.num_under * scals.num_dates;
     const UINT num_under_sq = scals.num_under * scals.num_under;
-    int Ps = -1;
-
-    // get the number of OMP threads
-#pragma omp parallel shared(Ps)
-    {
-            UINT th_id = omp_get_thread_num();
-            if(th_id == 0) { Ps = omp_get_num_threads(); }
-    }
-    assert(Ps > 0 && "Number of OMP threads <= 0!");
-
 
     // allocate for Ps threads
     const UINT Sd = do_padding( sob_dim          );
@@ -47,8 +37,6 @@ void run_CPUkernel(
             sob_matT[j*sob_dim + i] = sob_mat[i*scals.sobol_bits + j];
         }
     }
-
-    printf("CHUNK: %d\n\n", scals.chunk);
 
     struct timeval t_start, t_end, t_diff;
     gettimeofday(&t_start, NULL);
@@ -78,26 +66,53 @@ void run_CPUkernel(
                 if ( k == i)    sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
                 else            sobolRec( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
 
+#if 0
+                if (k==0) {
+                    printf("\n\nSobol vector: [ ");
+                    for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
+                        printf("%8f, ",  ((REAL)sob_vct[ii])/(1<<30) );
+                    }
+                    printf(" ]\n\n");
+                }
+#endif
+
+
                 // transform the normal [0,1) to gaussian distribution [-inf, +inf]
                 uGaussian( scals.sob_norm_fact, sob_dim, sob_vct, md_vct );
 
-                // correlate the dates on each path using a Brownian Bridge
-                brownianBridge( scals.num_under,    scals.num_dates, 
-                                bb_arrs.bb_inds,    bb_arrs.bb_data, 
-                                md_vct,             trj_vct         );
-#if FAST_BB
-                REAL* traj = md_vct;
-#else
-                REAL* traj = trj_vct; //md_vct;
-#endif
-#if 0
+#if 1
                 if (k==1) {
-                    printf("\n\nBB vector: [ ");
+                    printf("\n\nGaussian vector: [ ");
                     for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
                         printf("%8f, ",  md_vct[ii]);
                     }
                     printf(" ]\n\n");
                 }
+#endif
+
+
+                // correlate the dates on each path using a Brownian Bridge
+                brownianBridge( scals.num_under,    scals.num_dates, 
+                                bb_arrs.bb_inds,    bb_arrs.bb_data, 
+                                md_vct,             trj_vct         );
+
+#if 1
+                if (k==1) {
+                    int bim1 = bb_arrs.bb_inds[0]-1;
+                    printf("First ind: %d, data: %lf\n", bim1, trj_vct[ bim1 * scals.num_under + 0 ]);
+
+                    printf("\n\nBB vector: [ ");
+                    for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
+                        printf("%8f, ",  trj_vct[ii]);
+                    }
+                    printf(" ]\n\n");
+                }
+#endif
+
+#if FAST_BB
+                REAL* traj = md_vct;
+#else
+                REAL* traj = trj_vct; //md_vct;
 #endif
 
                 // compute trajectory
@@ -160,19 +175,15 @@ void run_CPUkernel(
     timeval_subtract(&t_diff, &t_end, &t_start);
     elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
 
-    printf("CPU Run Time: %lu !!! \n\n\n", elapsed);
-
-    printf("Price for vhat[0] is: %.16f !!!\n\n", (vhat_glb[0] / scals.num_mcits) );
-
-//  updateState(&priv_arr, seq_count, data);                          // UPDATE IMPLEM!
-//  updateModels(models, &ro_scal, &priv_arr);
-
+    // clean-up!
     md_arrs.cleanup();
     bb_arrs.cleanup();
     free(sob_glb_vct);
     free( md_glb_vct);
     free(trj_glb_vct);
     free( vhat_glb  );
+
+    return (vhat_glb[0] / scals.num_mcits);
 }
 
 
@@ -182,23 +193,42 @@ int main() {
     ModelArrays      md_arrs;
     BrowBridgeArrays bb_arrs;
 
+    fprintf(stdout, "\n// Generic Pricing, Multi-Threaded Benchmark:\n");
+
     readDataSet(scals,sobol_dirvcts, md_arrs, bb_arrs);
     scals.init();
 
-    printf("Contract: %d, MC Its#: %d, #Underlyings: %d, #Path Dates: %d, #Sobol Bits: %d, #Models: %d, chunk: %d\n\n", 
-            scals.contract, scals.num_mcits, scals.num_under, scals.num_dates, scals.sobol_bits, scals.num_models, scals.chunk);
+    fprintf(stdout, "// Contract: %d, MC Its#: %d, #Underlyings: %d, #Path Dates: %d, chunk: %d\n\n", 
+            scals.contract, scals.num_mcits, scals.num_under, scals.num_dates, scals.chunk      );
 
-    printf("#det pricers: %d, #cash flows: %d\n\n", scals.num_det_pricers, scals.num_cash_flows);
+//    fprintf(stdout, "// #det pricers: %d, #cash flows: %d\n\n", 
+//                    scals.num_det_pricers, scals.num_cash_flows);
 
-    run_CPUkernel( scals, sobol_dirvcts, md_arrs, bb_arrs );
-#if 0
-    printf("Row 0 of sobol direction vectors:\n[ ");
-    for(int i=0; i<scals.sobol_bits; i++) {
-        printf("%d, ", sobol_dirvcts[i]);
+    const int Ps = get_CPU_num_threads();
+//    int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
+//                                 get_CPU_num_threads() ;
+
+    REAL price = 0.0;
+    unsigned long int elapsed;
+    { // run kernel
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
+
+        price = run_CPUkernel( Ps, scals, sobol_dirvcts, md_arrs, bb_arrs );
+
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
-    printf(" ]\n\n");
-#endif
+
+    {   // validation and writeback of the result
+        bool is_valid = validate   ( price );
+        writeStatsAndResult( is_valid, price, false, Ps, elapsed );        
+//        writeResult( res.data(), OUTER_LOOP_COUNT );
+    }
 
     return 1;
 }
 
+
+// cat ../Data/Medium/input.data ../Data/Medium/output.data  | ./GenPricing 2> Debug.txt

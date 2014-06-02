@@ -158,7 +158,7 @@ int read_array(int64_t elem_size, int (*elem_reader)(void*),
     }
 
     if (read_dims != dims) {
-        printf("ERROR DIMS: %ld %ld \n\n", read_dims, dims);
+//        printf("ERROR DIMS: %ld %ld \n\n", read_dims, dims);
         return 1;
     }
 

@@ -1246,20 +1246,21 @@ void aggregDiscountedPayoff(
         const REAL*     inst_traj,  // [num_dates, num_under] current trajectory
               double*   vhat        // [model_num] Accumulated per-model price
 ) {
-//    if        (contr_num == 1) {
-#if   (CONTRACT_NUM == 1)
+    if        (contr_num == 1) {
+//#if   (CONTRACT_NUM == 1)
        	trajectory_contract1(model_num, num_under, num_cash_flows, num_pricers, md_discts, md_detvals, inst_traj, vhat);
-//    } else if (contr_num == 2) {
-#elif (CONTRACT_NUM == 2)
+    } else if (contr_num == 2) {
+//#elif (CONTRACT_NUM == 2)
         trajectory_contract2(model_num, num_under, num_cash_flows, num_pricers, md_discts, md_detvals, inst_traj, vhat);
-//    } else if (contr_num == 3) {
-#elif (CONTRACT_NUM == 3)
+    } else if (contr_num == 3) {
+//#elif (CONTRACT_NUM == 3)
         trajectory_contract3(model_num, num_under, num_cash_flows, num_pricers, md_discts, md_detvals, inst_traj, vhat);
-//    } else {
-#else
+    } else {
+//#else
         trajectory_contract1(model_num, num_under, num_cash_flows, num_pricers, md_discts, md_detvals, inst_traj, vhat);
-//    }
-#endif
+    }
+//#endif
+
 }
 
 #endif //CONTRACTS_CODE
