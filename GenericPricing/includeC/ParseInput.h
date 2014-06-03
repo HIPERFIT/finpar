@@ -131,27 +131,34 @@ void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts,
     }
 }
 
-bool validate( const REAL& price ) {
+bool validate( const int num_models, const REAL* prices ) {
     bool is_valid = true;
-    REAL std_price;
+    REAL* std_prices;
+    int64_t shape[3];
     
-    if ( read_real( &std_price ) ) {
-        fprintf(stderr, "Syntax error when reading the standard (output) price.\n");
+    if (read_array(sizeof(REAL), read_real, (void**)&std_prices, shape, 1) ) {
+        fprintf(stderr, "Syntax error when reading reference prices.\n");
         exit(1);
     }
+    assert( (shape[0] == num_models) && "Incorrect shape of reference-price array!");
 
-    float err = fabs(std_price - price);
+    double err = 0.0;
+    for( int i = 0; i < num_models; i++ ) {
+        err = std::max( err, fabs(std_prices[i] - prices[i]) );
+    }
+
     if ( err > EPS ) {
         is_valid = false;
         fprintf(stderr, "Error = %f, EPS = %f!\n", err, EPS);
     }
 
+    free(std_prices);
     return is_valid;
 }
 
-void writeStatsAndResult(   const bool& valid, const REAL& price,  
-                            const bool& is_gpu,const int & P,     
-                            const unsigned long int& elapsed  
+void writeStatsAndResult(   const bool& valid,  const int & num_models, 
+                            const REAL* prices, const bool& is_gpu,
+                            const int& P,       const unsigned long int& elapsed  
 ) {
     if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); } 
     else      { fprintf(stdout, "0\t\t// INVALID Result,\n"); }
@@ -161,7 +168,8 @@ void writeStatsAndResult(   const bool& valid, const REAL& price,
     else       fprintf(stdout, "%d\t\t// CPU Threads,\n", P);
 
     // write the result
-    write_scal(&price, "Generic Pricing Result.");
+    write_1Darr( prices, num_models, "Generic Pricing Result." );
+    //write_scal(&price, "Generic Pricing Result.");
 }
 
 #endif // PARSE_INPUT

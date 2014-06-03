@@ -12,11 +12,11 @@ UINT do_padding(const UINT& n) {
     return (((n / 64) * 64) + 64);
 }
 
-REAL run_CPUkernel( const int&          Ps,
-                    LoopROScalars   &   scals,
-                    int*                sob_mat,       
-                    ModelArrays     &   md_arrs,
-                    BrowBridgeArrays&   bb_arrs
+REAL* run_CPUkernel( const int&          Ps,
+                     LoopROScalars   &   scals,
+                     int*                sob_mat,       
+                     ModelArrays     &   md_arrs,
+                     BrowBridgeArrays&   bb_arrs
 ) {
     const UINT sob_dim      = scals.num_under * scals.num_dates;
     const UINT num_under_sq = scals.num_under * scals.num_under;
@@ -80,7 +80,7 @@ REAL run_CPUkernel( const int&          Ps,
                 // transform the normal [0,1) to gaussian distribution [-inf, +inf]
                 uGaussian( scals.sob_norm_fact, sob_dim, sob_vct, md_vct );
 
-#if 1
+#if 0
                 if (k==1) {
                     printf("\n\nGaussian vector: [ ");
                     for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
@@ -96,10 +96,10 @@ REAL run_CPUkernel( const int&          Ps,
                                 bb_arrs.bb_inds,    bb_arrs.bb_data, 
                                 md_vct,             trj_vct         );
 
-#if 1
+#if 0
                 if (k==1) {
                     int bim1 = bb_arrs.bb_inds[0]-1;
-                    printf("First ind: %d, data: %lf\n", bim1, trj_vct[ bim1 * scals.num_under + 0 ]);
+                    //printf("First ind: %d, data: %lf\n", bim1, trj_vct[ bim1 * scals.num_under + 0 ]);
 
                     printf("\n\nBB vector: [ ");
                     for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
@@ -144,7 +144,7 @@ REAL run_CPUkernel( const int&          Ps,
                         }
                     }
 #if 0
-                if (k==1) {
+                if (k==0) {
                     printf("\n\nTrajectory vector: [ ");
                     for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
                         printf("%8f, ", traj[ii]);
@@ -159,16 +159,23 @@ REAL run_CPUkernel( const int&          Ps,
                                                 md_arrs.md_discts,  
                                                 md_arrs.md_detvals,   
                                                 traj,   vhat      );
-
+#if 0
+                if (k==0) {
+                    printf("Estimated price it %d: %lf\n", k, vhat[0]);
+                }
+#endif
+                
                 }            
             }
         } 
     }
 
-    for( int p = 1; p < Ps; p ++ ) {
-        for(int i = 0; i < scals.num_models; i ++) { 
+    
+    for(int i = 0; i < scals.num_models; i ++) {
+        for( int p = 1; p < Ps; p ++ ) { 
             vhat_glb[i] += vhat_glb[ i + p*Sv ];
         }
+        vhat_glb[i] = vhat_glb[i] / scals.num_mcits;
     }
 
     gettimeofday(&t_end, NULL);
@@ -181,9 +188,9 @@ REAL run_CPUkernel( const int&          Ps,
     free(sob_glb_vct);
     free( md_glb_vct);
     free(trj_glb_vct);
-    free( vhat_glb  );
+//    free( vhat_glb  );
 
-    return (vhat_glb[0] / scals.num_mcits);
+    return vhat_glb;
 }
 
 
@@ -208,13 +215,13 @@ int main() {
 //    int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
 //                                 get_CPU_num_threads() ;
 
-    REAL price = 0.0;
+    REAL* prices;
     unsigned long int elapsed;
     { // run kernel
         struct timeval t_start, t_end, t_diff;
         gettimeofday(&t_start, NULL);
 
-        price = run_CPUkernel( Ps, scals, sobol_dirvcts, md_arrs, bb_arrs );
+        prices = run_CPUkernel( Ps, scals, sobol_dirvcts, md_arrs, bb_arrs );
 
         gettimeofday(&t_end, NULL);
         timeval_subtract(&t_diff, &t_end, &t_start);
@@ -222,8 +229,9 @@ int main() {
     }
 
     {   // validation and writeback of the result
-        bool is_valid = validate   ( price );
-        writeStatsAndResult( is_valid, price, false, Ps, elapsed );        
+        bool is_valid = validate   ( scals.num_models, prices );
+        writeStatsAndResult( is_valid, scals.num_models, prices, false, Ps, elapsed ); 
+        free(prices);       
 //        writeResult( res.data(), OUTER_LOOP_COUNT );
     }
 
