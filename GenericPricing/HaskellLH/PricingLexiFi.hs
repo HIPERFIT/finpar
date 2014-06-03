@@ -40,7 +40,7 @@ readInt = lexeme $ read <$> signed (many1 digit)
 readDouble :: Parser Double
 readDouble = lexeme $ read <$> signed (s2 <|> s1)
   where s1 = do bef <- many1 digit
-                aft <- fromMaybe "" <$> optional s2
+                aft <- fromMaybe "" <$> optional ((:) <$> char '.' <*> many1 digit)
                 return $ bef ++ aft
         s2 = (++) <$> (char '.' >> pure "0.") <*> many1 digit
 
