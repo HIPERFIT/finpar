@@ -1,0 +1,1 @@
+[(EXsimple_price(EUR, 1046.116801759208, "MC BS (C) 3dim, Sobol, 10000 paths, 1426 ms"))]

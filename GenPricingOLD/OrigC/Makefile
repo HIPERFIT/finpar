@@ -1,0 +1,280 @@
+################################################################################
+#    Cosmin:
+#        Adding CUDA's OpenCL stuff
+#
+################################################################################
+
+.SUFFIXES : .cl
+
+CUDA_INSTALL_PATH ?= /usr/local/cuda
+
+ifdef cuda-install
+	CUDA_INSTALL_PATH := $(cuda-install)
+endif
+
+# detect OS
+OSUPPER = $(shell uname -s 2>/dev/null | tr [:lower:] [:upper:])
+OSLOWER = $(shell uname -s 2>/dev/null | tr [:upper:] [:lower:])
+# 'linux' is output for Linux system, 'darwin' for OS X
+DARWIN = $(strip $(findstring DARWIN, $(OSUPPER)))
+ifneq ($(DARWIN),)
+   SNOWLEOPARD = $(strip $(findstring 10.6, $(shell egrep "<string>10\.6" /System/Library/CoreServices/SystemVersion.plist)))
+   LION        = $(strip $(findstring 10.7, $(shell egrep "<string>10\.7" /System/Library/CoreServices/SystemVersion.plist)))
+endif
+
+# detect if 32 bit or 64 bit system
+HP_64 =	$(shell uname -m | grep 64)
+OSARCH= $(shell uname -m)
+
+
+# Basic directory setup for SDK
+# (override directories only if they are not already defined)
+SRCDIR            ?= .
+CUDA_ROOTDIR      ?= ${HOME}/NVIDIA_GPU_Computing_SDK
+#ROOTDIR          ?= ../../../
+CUDA_LIBDIR       := $(CUDA_ROOTDIR)/shared/lib/
+CUDA_SHAREDDIR    := $(CUDA_ROOTDIR)/shared/
+CUDA_OCLROOTDIR   := $(CUDA_ROOTDIR)/OpenCL/
+CUDA_OCLCOMMONDIR ?= $(CUDA_OCLROOTDIR)/common/
+CUDA_OCLBINDIR    ?= $(CUDA_OCLROOTDIR)/bin/
+CUDA_OCLLIBDIR    := $(CUDA_OCLCOMMONDIR)/lib
+CUDA_INCDIR	  ?= .
+
+# Compilers
+CXX        := g++
+CC         := gcc
+#CC         := g++
+LINK       := g++ -fPIC
+
+# Includes
+INCLUDES  += -I$(CUDA_INCDIR) -I$(CUDA_OCLCOMMONDIR)/inc -I$(CUDA_SHAREDDIR)/inc
+
+ifeq "$(strip $(HP_64))" ""
+	MACHINE := 32
+	USRLIBDIR := -L/usr/lib/
+else
+	MACHINE := 64
+	USRLIBDIR := -L/usr/lib64/
+endif
+
+# Warning flags
+CXXWARN_FLAGS := \
+	-Wswitch \
+	-Wformat \
+	-Wchar-subscripts \
+	-Wparentheses \
+	-Wmultichar \
+	-Wtrigraphs \
+	-Wpointer-arith \
+	-Wcast-align \
+	-Wreturn-type \
+	-Wno-unused-function \
+	-Wimplicit \
+	-fpermissive \
+	$(SPACE)
+
+#	-Wimplicit \
+#	-W -Wall \
+
+
+CWARN_FLAGS := $(CXXWARN_FLAGS) \
+	-Wnested-externs \
+	-Wmain \
+
+#	-Wstrict-prototypes \
+#	-Wmissing-declarations \	
+#	-Wmissing-prototypes \
+
+	
+# architecture flag for nvcc and gcc compilers build
+LIB_ARCH        := $(OSARCH)
+
+# Determining the necessary Cross-Compilation Flags
+# 32-bit OS, but we target 64-bit cross compilation
+ifeq ($(x86_64),1)
+    LIB_ARCH         = x86_64
+
+    ifneq ($(DARWIN),)
+         CXX_ARCH_FLAGS += -arch x86_64
+    else
+         CXX_ARCH_FLAGS += -m64
+    endif
+else
+# 64-bit OS, and we target 32-bit cross compilation
+    ifeq ($(i386),1)
+        LIB_ARCH         = i386
+        ifneq ($(DARWIN),)
+            CXX_ARCH_FLAGS += -arch i386
+        else
+            CXX_ARCH_FLAGS += -m32
+        endif
+    else
+        ifeq "$(strip $(HP_64))" ""
+            LIB_ARCH        = i386
+            ifneq ($(DARWIN),)
+                CXX_ARCH_FLAGS += -arch i386
+            else
+                CXX_ARCH_FLAGS += -m32
+            endif
+        else
+            LIB_ARCH        = x86_64
+            ifneq ($(DARWIN),)
+               CXX_ARCH_FLAGS += -arch x86_64
+            else
+               CXX_ARCH_FLAGS += -m64
+            endif
+        endif
+    endif
+endif
+
+
+# Compiler-specific flags
+CXXFLAGS  := $(CXXWARN_FLAGS) $(CXX_ARCH_FLAGS)
+CFLAGS    := $(CWARN_FLAGS) $(CXX_ARCH_FLAGS)
+LINK      += $(CXX_ARCH_FLAGS)
+
+# Common flags
+COMMONFLAGS += $(INCLUDES) -DUNIX
+
+# Add Mac Flags
+ifneq ($(DARWIN),)
+	COMMONFLAGS += -DMAC
+endif
+
+# Debug/release configuration
+ifeq ($(dbg),1)
+	COMMONFLAGS += -g
+	BINSUBDIR   := debug
+	LIBSUFFIX   := D
+else 
+	COMMONFLAGS += -O3 
+	BINSUBDIR   := release
+	LIBSUFFIX   :=
+	CXXFLAGS    += -fno-strict-aliasing
+	CFLAGS      += -fno-strict-aliasing
+endif
+
+# OpenGL is used or not (if it is used, then it is necessary to include GLEW)
+ifeq ($(USEGLLIB),1)
+
+	ifneq ($(DARWIN),)
+		OPENGLLIB := -L/System/Library/Frameworks/OpenGL.framework/Libraries -lGL -lGLU $(CUDA_SHAREDDIR)/lib/$(OSLOWER)/libGLEW.a
+	else
+		OPENGLLIB := -lGL -lGLU -lX11 -lXmu
+		ifeq "$(strip $(HP_64))" ""
+			OPENGLLIB += -lGLEW -L/usr/X11R6/lib
+		else
+			OPENGLLIB += -lGLEW_x86_64 -L/usr/X11R6/lib64
+		endif
+	endif
+
+	CUBIN_ARCH_FLAG := -m64
+endif
+
+ifeq ($(USEGLUT),1)
+	ifneq ($(DARWIN),)
+		OPENGLLIB += -framework GLUT
+		INCLUDES += -I/System/Library/Frameworks/OpenGL.framework/Headers
+	else
+		OPENGLLIB += -lglut
+	endif
+endif
+
+# Libs
+ifneq ($(DARWIN),)
+   LIB       := -L${CUDA_OCLLIBDIR} -L$(CUDA_LIBDIR) -L$(CUDA_SHAREDDIR)/lib/$(OSLOWER) 
+   LIB += -framework OpenCL -framework OpenGL ${OPENGLLIB} -framework AppKit ${ATF} ${LIB} 
+else
+   LIB       := ${USRLIBDIR} -L${CUDA_OCLLIBDIR} -L$(CUDA_LIBDIR) -L$(CUDA_SHAREDDIR)/lib/$(OSLOWER) 
+   LIB += -lOpenCL ${OPENGLLIB} ${LIB} 
+endif
+
+LIB    += -lm -ldl
+
+# Lib/exe configuration
+ifneq ($(STATIC_LIB),)
+	TARGETDIR := .
+	TARGET   := $(subst .a,_$(LIB_ARCH)$(LIBSUFFIX).a,$(CUDA_OCLLIBDIR)/$(STATIC_LIB))
+	LINKLINE  = ar qv $(TARGET) $(OBJS) 
+else
+	LIB += -loclUtil_$(LIB_ARCH)$(LIBSUFFIX) -lshrutil_$(LIB_ARCH)$(LIBSUFFIX)
+	TARGETDIR := .
+	TARGET    := $(TARGETDIR)/$(EXECUTABLE)
+	LINKLINE  = $(LINK) -o $(TARGET) $(OBJS) $(LIB)
+endif
+
+# check if verbose 
+ifeq ($(verbose), 1)
+	VERBOSE :=
+else
+	VERBOSE := @
+endif
+
+# Add common flags
+CXXFLAGS  += $(COMMONFLAGS)
+CFLAGS    += $(COMMONFLAGS)
+
+###########################################################################
+#  Copyright (C) 2000-2011 LexiFi SAS. All rights reserved.               #
+#                                                                         #
+#  No part of this document may be reproduced or transmitted in any       #
+#  form or for any purpose without the express permission of LexiFi SAS.  #
+###########################################################################
+
+#.PHONY: import compile compile_msvc clean
+
+#CC=gcc -pg
+#Defined above CC=gcc
+#CC=gcc
+#CC=gcc -mno-cygwin
+
+#LIB    += -lm -ldl
+#CFLAGS_LIB= -lm -ldl
+#ARCHIVE=lexifi_blackscholes.zip
+#ROOT=../../..
+
+GPU_VER=CosminGPU
+#GPU_VER=CosminGPU_MK
+
+SOURCES_C=mlfi_model_support.c mlfi_linalg.c mlfi_sobol.c mt19937ar.c nblackscholes.c CosminSobol.c 
+SOURCES_CPP=$(GPU_VER).cpp
+OBJECTS=mlfi_model_support.o mlfi_linalg.o mlfi_sobol.o mt19937ar.o nblackscholes.o CosminSobol.o $(GPU_VER).o 
+EXECUTABLE=nblackscholes.exe
+
+##### contract 1
+#PRICER_DIR=./examples
+#CONTR_NUM = 1
+
+##### contract 2
+PRICER_DIR=./barrier_rev_convert_contract
+CONTR_NUM=2
+
+##### contract 3
+#PRICER_DIR=./worst_off_contract
+#CONTR_NUM=3
+
+.c.o:
+	$(CC) $(CFLAGS) -D HIPERFIT -D CONTRACT=$(CONTR_NUM)  -c -o $@ $<
+.cpp.o:
+	$(CXX) $(CXXFLAGS) -D HIPERFIT -D CONTRACT=$(CONTR_NUM)  -c -o $@ $<
+
+run_pricer:
+	(cd $(PRICER_DIR); $(CC) -shared -ffast-math -fPIC -I ../. -o payoff.dll payoff.c; ../$(EXECUTABLE) res.txt payoff params.txt; cat res.txt)
+
+# Compile pricing model implementation with gcc
+compile: $(OBJECTS)
+	#@echo "#========= CONTRACT NUMBER: ${CONTR_NUM} =============="
+	$(CXX) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
+
+#compile: 
+#	$(CC) $(CFLAGS) -c $(SOURCES_C)
+#	$(CXX) $(CXXFLAGS) -c $(SOURCES_CPP)
+#	$(CXX) -o $(EXECUTABLE) *.o $(LIB)
+##	$(CC) -o $(EXECUTABLE) *.o $(LIB)
+##	$(CC) $(CFLAGS) -o $(EXECUTABLE) $(SOURCES) $(LIB)
+#
+
+clean:
+	rm -f $(EXECUTABLE) $(PRICER_DIR)/*.o $(PRICER_DIR)/*.dll $(PRICER_DIR)/*.ptx $(OBJECTS)
+	@# clean nVidia compiler cache
+	rm -rf $(HOME)/.nv/ComputeCache/*
