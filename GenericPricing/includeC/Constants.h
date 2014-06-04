@@ -23,12 +23,12 @@ typedef unsigned char  UCHAR;
 #define MY_UCHAR UCHAR
 //#define MY_UCHAR UINT
 
-#define dev_id 0 // the GPU device number to run the code on
+#define DEV_ID 0 // the GPU device number to run the code on
 
 typedef struct {
     // Is the function-member of a structure supported in OpenCL?
     void init() { 
-        chunk = 64;
+        chunk = 64; // must be a power of two!
         sob_norm_fact = 1.0 / (1<<sobol_bits); 
     }
 

@@ -24,6 +24,25 @@
 /***      Read-Only Arrays        ***/           
 /************************************/
 typedef struct {
+    int*    sobol_dirvcts;  // [sobol_bit_count][num_under*num_dates]
+    UCHAR*  sobol_fix_ind;  // [chunk-1]
+
+    void cleanup() {
+        free(sobol_dirvcts);  free(sobol_fix_ind);
+    }
+} SobolArrays __attribute__ ((aligned (16)));
+
+typedef struct {
+    int * bb_inds;    // [3, num_dates], i.e., bi, li, ri
+    REAL* bb_data;    // [3, num_dates], i.e., sd, lw, rw
+
+    void cleanup() {
+        free(bb_inds);  free(bb_data);
+    }
+} BrowBridgeArrays  __attribute__ ((aligned (16)));
+
+
+typedef struct {
     REAL* md_c;       // [num_models, num_under, num_under]
     REAL* md_vols;    // [num_models, num_dates, num_under]
     REAL* md_drifts;  // [num_models, num_dates, num_under]
@@ -38,20 +57,17 @@ typedef struct {
 } ModelArrays  __attribute__ ((aligned (16)));
 
 
-typedef struct {
-    int * bb_inds;    // [3, num_dates], i.e., bi, li, ri
-    REAL* bb_data;    // [3, num_dates], i.e., sd, lw, rw
-
-    void cleanup() {
-        free(bb_inds);  free(bb_data);
-    }
-} BrowBridgeArrays  __attribute__ ((aligned (16)));
-
+/************************************/
+/*** Various Utility Functions    ***/
+/************************************/
+UINT do_padding(const UINT& n) {
+    return (((n / 64) * 64) + 64);
+}
 
 /************************************/
 /*** Parsing The Current DataSet  ***/           
 /************************************/
-void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts, 
+void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
                     ModelArrays& md_arrs, BrowBridgeArrays& bb_arrs
 ) {
     if( read_int( &scals.contract   ) ||
@@ -64,11 +80,15 @@ void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts,
         fprintf(stderr, "Syntax error when reading the first four ints params.\n");
         exit(1);
     }
+    scals.init();
 
     int64_t shape[3];
 
-    { // reading sobol's direction vectors
-        if (read_array(sizeof(int), read_int, (void**)&sobol_dirvcts, shape, 2) ) {
+    { // reading sobol's arrays
+
+        // 1. sobol's direction vectors
+        int* sob_mat;
+        if (read_array(sizeof(int), read_int, (void**)&sob_mat, shape, 2) ) {
             fprintf(stderr, "Syntax error when reading sobol direction-vector matrix of dim [%d,%d].\n",
                             scals.num_under*scals.num_dates, scals.sobol_bits);
             exit(1);
@@ -77,6 +97,18 @@ void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts,
         bool ok = ( shape[1] == scals.sobol_bits ) && 
                   ( shape[0] == scals.num_under*scals.num_dates );
         assert(ok && "Incorrect shape of sobol direction vectors!");
+
+        // Transpose the sobol direction vectors!
+        int sob_dim = scals.num_under * scals.num_dates;
+        sob_arrs.sobol_dirvcts = static_cast<int*> ( malloc( do_padding( sob_dim* scals.sobol_bits ) * sizeof(int) ) );
+        for( int j = 0; j < scals.sobol_bits; j++ ) {
+            for( int i = 0; i< sob_dim; i++ ) {
+                sob_arrs.sobol_dirvcts[j*sob_dim + i] = sob_mat[i*scals.sobol_bits + j];
+            }
+        }
+        free(sob_mat);
+
+        sob_arrs.sobol_fix_ind = NULL;
     }
 
     { // reading the market (models) data

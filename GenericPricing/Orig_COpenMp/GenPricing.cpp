@@ -6,18 +6,15 @@
 #include "Contracts.h"
 #include <omp.h>
 
-UINT do_padding(const UINT& n) {
-    return (((n / 64) * 64) + 64);
-}
-
-double* run_CPUkernel(  const int&          Ps,
-                        LoopROScalars   &   scals,
-                        int*                sob_mat,       
-                        ModelArrays     &   md_arrs,
-                        BrowBridgeArrays&   bb_arrs
+double* run_CPUkernel(  const int&                Ps,
+                        const LoopROScalars   &   scals,
+                        const SobolArrays     &   sob_arrs,
+                        const ModelArrays     &   md_arrs,
+                        const BrowBridgeArrays&   bb_arrs
 ) {
     const UINT sob_dim      = scals.num_under * scals.num_dates;
     const UINT num_under_sq = scals.num_under * scals.num_under;
+    const int* sob_matT     = sob_arrs.sobol_dirvcts;
 
     // allocate for Ps threads
     const UINT Sd = do_padding( sob_dim          );
@@ -27,18 +24,6 @@ double* run_CPUkernel(  const int&          Ps,
 
     const UINT Sv = do_padding( scals.num_models );
     double* vhat_glb  = static_cast<double*>( malloc( Ps * Sv * sizeof(double)) );
-
-    // Transpose the sobol direction vectors!
-    int* sob_matT = static_cast<int*> ( malloc( do_padding(sob_dim * scals.sobol_bits) * sizeof(int) ) );
-    for( int j = 0; j < scals.sobol_bits; j++ ) {
-        for( int i = 0; i< sob_dim; i++ ) {
-            sob_matT[j*sob_dim + i] = sob_mat[i*scals.sobol_bits + j];
-        }
-    }
-
-    struct timeval t_start, t_end, t_diff;
-    gettimeofday(&t_start, NULL);
-    unsigned long int elapsed;
 
 #pragma omp parallel
     {
@@ -176,32 +161,24 @@ double* run_CPUkernel(  const int&          Ps,
         vhat_glb[i] = vhat_glb[i] / scals.num_mcits;
     }
 
-    gettimeofday(&t_end, NULL);
-    timeval_subtract(&t_diff, &t_end, &t_start);
-    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
-
     // clean-up!
-    md_arrs.cleanup();
-    bb_arrs.cleanup();
     free(sob_glb_vct);
     free( md_glb_vct);
     free(trj_glb_vct);
-//    free( vhat_glb  );
 
     return vhat_glb;
 }
 
 
 int main() {
-    int*             sobol_dirvcts;
     LoopROScalars    scals;
+    SobolArrays      sob_arrs;
     ModelArrays      md_arrs;
     BrowBridgeArrays bb_arrs;
 
     fprintf(stdout, "\n// Generic Pricing, Multi-Threaded Benchmark:\n");
 
-    readDataSet(scals,sobol_dirvcts, md_arrs, bb_arrs);
-    scals.init();
+    readDataSet(scals, sob_arrs, md_arrs, bb_arrs);
 
     fprintf(stdout, "// Contract: %d, MC Its#: %d, #Underlyings: %d, #Path Dates: %d, chunk: %d\n\n", 
             scals.contract, scals.num_mcits, scals.num_under, scals.num_dates, scals.chunk      );
@@ -216,7 +193,13 @@ int main() {
         struct timeval t_start, t_end, t_diff;
         gettimeofday(&t_start, NULL);
 
-        prices = run_CPUkernel( Ps, scals, sobol_dirvcts, md_arrs, bb_arrs );
+        { // do work and cleanup
+            prices = run_CPUkernel( Ps, scals, sob_arrs, md_arrs, bb_arrs );
+
+            md_arrs .cleanup();
+            bb_arrs .cleanup();
+            sob_arrs.cleanup();
+        }
 
         gettimeofday(&t_end, NULL);
         timeval_subtract(&t_diff, &t_end, &t_start);
