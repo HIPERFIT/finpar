@@ -9,13 +9,48 @@
 #include <algorithm>
 
 
+/*******************************/
+/***     Macros Helpers      ***/
+/*******************************/  
+#define EPS             0.0005
+
 #if _OPTIMIZATION_USE_FLOATS
     #define read_real read_float
 #else
     #define read_real read_double
 #endif
 
+/************************************/
+/***      Read-Only Arrays        ***/           
+/************************************/
+typedef struct {
+    REAL* md_c;       // [num_models, num_under, num_under]
+    REAL* md_vols;    // [num_models, num_dates, num_under]
+    REAL* md_drifts;  // [num_models, num_dates, num_under]
+    REAL* md_starts;  // [num_models, num_under]
+    REAL* md_detvals; // [num_models, num_det_pricers]
+    REAL* md_discts;  // [num_models, num_cash_flows]
 
+    void cleanup() {
+        free(md_c);         free(md_vols);      free(md_drifts);    
+        free(md_starts);    free(md_discts);    free(md_detvals);
+    }
+} ModelArrays  __attribute__ ((aligned (16)));
+
+
+typedef struct {
+    int * bb_inds;    // [3, num_dates], i.e., bi, li, ri
+    REAL* bb_data;    // [3, num_dates], i.e., sd, lw, rw
+
+    void cleanup() {
+        free(bb_inds);  free(bb_data);
+    }
+} BrowBridgeArrays  __attribute__ ((aligned (16)));
+
+
+/************************************/
+/*** Parsing The Current DataSet  ***/           
+/************************************/
 void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts, 
                     ModelArrays& md_arrs, BrowBridgeArrays& bb_arrs
 ) {
@@ -131,12 +166,15 @@ void readDataSet(   LoopROScalars& scals, int*& sobol_dirvcts,
     }
 }
 
-bool validate( const int num_models, const REAL* prices ) {
-    bool is_valid = true;
-    REAL* std_prices;
+/****************************************/
+/*** Validate w.r.t. Reference Result ***/           
+/****************************************/
+bool validate( const int num_models, const double* prices ) {
+    bool    is_valid = true;
+    double* std_prices;
     int64_t shape[3];
     
-    if (read_array(sizeof(REAL), read_real, (void**)&std_prices, shape, 1) ) {
+    if (read_array(sizeof(double), read_double, (void**)&std_prices, shape, 1) ) {
         fprintf(stderr, "Syntax error when reading reference prices.\n");
         exit(1);
     }
@@ -156,9 +194,12 @@ bool validate( const int num_models, const REAL* prices ) {
     return is_valid;
 }
 
-void writeStatsAndResult(   const bool& valid,  const int & num_models, 
-                            const REAL* prices, const bool& is_gpu,
-                            const int& P,       const unsigned long int& elapsed  
+/**************************************/
+/*** Format the Result & Other Info ***/           
+/**************************************/
+void writeStatsAndResult(   const bool&   valid,  const int & num_models, 
+                            const double* prices, const bool& is_gpu,
+                            const int& P,         const unsigned long int& elapsed  
 ) {
     if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); } 
     else      { fprintf(stdout, "0\t\t// INVALID Result,\n"); }

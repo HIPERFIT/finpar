@@ -16,6 +16,24 @@ int timeval_subtract(struct timeval *result, struct timeval *t2, struct timeval 
     result->tv_usec = diff % resolution;
     return (diff<0);
 }
+
 #endif
+
+
+typedef struct timeb mlfi_timeb;
+#define mlfi_ftime ftime
+
+#define mlfi_diff_time(t1,t2) \
+  (t1.time - t2.time) * 1000 + (t1.millitm - t2.millitm)
+
+#if 0
+    unsigned long int elapsed;
+    mlfi_timeb  t_start, t_end;
+    mlfi_ftime(&t_start);
+    // ...
+    mlfi_ftime(&t_end);
+    elapsed = mlfi_diff_time(t_end,t_start);
+#endif
+
 
 #endif

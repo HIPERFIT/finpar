@@ -76,7 +76,7 @@ grayCode :: Int -> Int
 grayCode x = (x `shiftR` 1) `xor` x
 
 xorInds :: Int -> Int -> [Int] -> Int
-xorInds bits_num n dir_vs = foldl xor 0 $ map (dir_vs!!) is
+xorInds bits_num n dir_vs = reduce xor 0 $ map (dir_vs!!) is
   where bits = [0..bits_num-1]
         is = filter (testBit $ grayCode n) bits
 

@@ -1,6 +1,4 @@
 #define FAST_BB                     1
-#define _OPTIMIZATION_USE_FLOATS    0
-
 
 #include "ParseInput.h"
 #include "TimeHelper.h"
@@ -12,11 +10,11 @@ UINT do_padding(const UINT& n) {
     return (((n / 64) * 64) + 64);
 }
 
-REAL* run_CPUkernel( const int&          Ps,
-                     LoopROScalars   &   scals,
-                     int*                sob_mat,       
-                     ModelArrays     &   md_arrs,
-                     BrowBridgeArrays&   bb_arrs
+double* run_CPUkernel(  const int&          Ps,
+                        LoopROScalars   &   scals,
+                        int*                sob_mat,       
+                        ModelArrays     &   md_arrs,
+                        BrowBridgeArrays&   bb_arrs
 ) {
     const UINT sob_dim      = scals.num_under * scals.num_dates;
     const UINT num_under_sq = scals.num_under * scals.num_under;
@@ -208,14 +206,11 @@ int main() {
     fprintf(stdout, "// Contract: %d, MC Its#: %d, #Underlyings: %d, #Path Dates: %d, chunk: %d\n\n", 
             scals.contract, scals.num_mcits, scals.num_under, scals.num_dates, scals.chunk      );
 
-//    fprintf(stdout, "// #det pricers: %d, #cash flows: %d\n\n", 
-//                    scals.num_det_pricers, scals.num_cash_flows);
-
     const int Ps = get_CPU_num_threads();
 //    int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
 //                                 get_CPU_num_threads() ;
 
-    REAL* prices;
+    double* prices;
     unsigned long int elapsed;
     { // run kernel
         struct timeval t_start, t_end, t_diff;
@@ -232,7 +227,6 @@ int main() {
         bool is_valid = validate   ( scals.num_models, prices );
         writeStatsAndResult( is_valid, scals.num_models, prices, false, Ps, elapsed ); 
         free(prices);       
-//        writeResult( res.data(), OUTER_LOOP_COUNT );
     }
 
     return 1;
