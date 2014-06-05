@@ -3,42 +3,46 @@ OPENCL_LIBDIR     := $(OPENCL_ROOTDIR)/lib64
 OPENCL_INCDIR	  ?= $(OPENCL_ROOTDIR)/include
 
 CXX        = g++
-INCLUDES   = -I$(CUDA_INCDIR) -I. -I../includeC -I../../include
-LIB        = -L$(OPENCL_LIBDIR) -L/usr/lib/ -lOpenCL
+#INCLUDES   = -I$(CUDA_INCDIR) -I. -I../includeC -I../../include
+INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../includeC -I../../include
+# TODO CUDA or OPENCL here?
 CXXFLAGS   = -O2 -fno-strict-aliasing -fopenmp
+OPENCL     = -L$(OPENCL_LIBDIR) -L/usr/lib/ -lOpenCL
+# TODO is /usr/lib really needed here?
 #-m64
 #-ffast-math  -fopenmp
 
 SOURCES_CPP =GenPricing.cpp
-OBJECTS     =GenPricing.o  
+HELPERS     =Contracts.h SobolGaussBB.h
+# XXX what about the boilerplate in ../includeC ???
+OBJECTS     =GenPricing.o
 EXECUTABLE  =GenPricing
 
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 
+default: cpu
 
-.cpp.o:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+# TODO need redesign, probably use different executable names (or
+# standardisation of "gpu" targets across all benchmarks)
 
-gpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+#.cpp.o:
+#	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-cpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+gpu:
+	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(OPENCL)
 
-default: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+cpu: $(SOURCES_CPP) $(HELPERS)
+	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP)
 
-run_small: 
+run_small: $(EXECUTABLE)
 	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE)
 
-run_medium: 
+
+run_medium:  $(EXECUTABLE)
 	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
 
-run_large: 
+run_large:  $(EXECUTABLE)
 	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
-
-#default: $(OBJECTS)
-#	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
 
 clean:
 	rm -f $(EXECUTABLE) $(OBJECTS)
