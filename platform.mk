@@ -21,3 +21,4 @@ NCORES = 4
 # in gigabyte
 MEMORY = 4
 
+export

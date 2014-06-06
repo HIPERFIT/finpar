@@ -100,7 +100,7 @@ $$(eval $$(call runRule,$(1),large))
 
 # and cleaning...
 clean ::
-	make -C $(1) clean
+	$$(MAKE) -C $(1) clean
 endef
 
 ################## constructing the targets ################
