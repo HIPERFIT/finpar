@@ -128,7 +128,7 @@ struct OclBuffers {
 
 
     void releaseResources (  ) {
-        shrLog("Release oclBuffers ... ");
+        shrLog(stdlog, "Release oclBuffers ... ");
 
         clReleaseMemObject( best_ind        );
         clReleaseMemObject( best_val        );
@@ -164,7 +164,7 @@ struct OclObjects {
         return cmdQueue[dev_id]; 
     }
     void releaseResources (  ) {
-        shrLog("Release OpenCL objects ...");
+        shrLog(stdlog, "Release OpenCL objects ...");
         clReleaseProgram     ( program );
         clReleaseCommandQueue( getCommandQueue() );
         free(devices);
