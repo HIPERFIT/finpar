@@ -42,6 +42,7 @@ VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/VectAll \
                          CalibVolDiff/Original CalibVolDiff/VectOuters
 VERSIONS_CalibGA        =CalibGA/CppAndGPU CalibGA/python CalibGA/OCaml
 
+include platform.mk
 
 ####################### rules start here ########################
 
