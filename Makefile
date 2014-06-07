@@ -24,7 +24,8 @@
 
 # ./GenericPricing/Orig_COpenMp
 # ./GenericPricing/HaskellLH
-
+# ./GenericPricing/CppOpenCL
+#
 # planned future work:
 # ./CalibVolDiff/Orig_COpenMP
 # ./CalibVolDiff/VectAll
@@ -36,7 +37,7 @@
 
 BENCHMARKS =GenericPricing #CalibVolDiff #CalibGA
 
-VERSIONS_GenericPricing =GenericPricing/Orig_COpenMp GenericPricing/HaskellLH
+VERSIONS_GenericPricing =GenericPricing/Orig_COpenMp GenericPricing/HaskellLH GenericPricing/CppOpenCL
 
 VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/VectAll \
                          CalibVolDiff/Original CalibVolDiff/VectOuters

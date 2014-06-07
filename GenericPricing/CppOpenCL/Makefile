@@ -1,32 +1,30 @@
-OPENCL_ROOTDIR    ?= /usr/local/cuda
-OPENCL_LIBDIR     := $(OPENCL_ROOTDIR)/lib64
-OPENCL_INCDIR	  ?= $(OPENCL_ROOTDIR)/include
+include ../../setup.mk
 
-CXX        = g++
-INCLUDES   = -I$(CUDA_INCDIR) -I. -I../includeC -I../../include
-LIB        = -L$(OPENCL_LIBDIR) -L/usr/lib/ -lOpenCL
-CXXFLAGS   = -O3 -fno-strict-aliasing  -fopenmp
-#-m64
-#-ffast-math  -fopenmp
+ifndef ($(HAVE_GPU))
+include ../../platform.mk
+endif
+
+INCLUDES  += -I../includeC
+GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) -D GPU_DEV_ID=$(GPU_DEVICE_ID) -D GPU_LOC_MEM=$(GPU_LOCAL_MEM) \
+             -D GPU_CONST_MEM=$(GPU_CONST_MEM) -D GPU_REG_MEM=$(GPU_REG_MEM) -D GPU_GLB_MEM=$(GPU_DEVICE_MEM)
 
 SOURCES_CPP =GenPricing.cpp
+HELPERS     =StructGPU.h ../includeC/Constants.h ../includeC/Optimizations.h ../includeC/ParseInput.h ../includeC/TimeHelper.h
 OBJECTS     =GenPricing.o  
 EXECUTABLE  =GenPricing
 
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
+default: gpu
 
+.cpp.o: $(SOURCES_CPP) $(HELPERS)
+	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
 
-.cpp.o:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+gpu: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
 
-gpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
-
-cpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
-
-default: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+# The CPU version is in: ../Orig_COpenMP. This folder is GPU only!
+cpu: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
 
 run_small: 
 	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt

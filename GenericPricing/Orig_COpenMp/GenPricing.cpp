@@ -184,8 +184,6 @@ int main() {
             scals.contract, scals.num_mcits, scals.num_under, scals.num_dates, scals.chunk      );
 
     const int Ps = get_CPU_num_threads();
-//    int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
-//                                 get_CPU_num_threads() ;
 
     double* prices;
     unsigned long int elapsed;

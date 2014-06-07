@@ -3,11 +3,8 @@
 
 #include "Optimizations.h"
 
-#define lgWARP          5  
-#define WARP            32 
-#define DEV_ID 0 // the GPU device number to run the code on
+#define WARP            (1<<lgWARP) 
 #define logMAX_CHUNK    8
-
 #define TILE            8
 
 #if (_OPTIMIZATION_USE_FLOATS)

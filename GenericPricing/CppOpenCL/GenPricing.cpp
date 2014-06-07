@@ -42,17 +42,20 @@ run_GPUkernel (
         		                    "GenericPricingPrivOpt" :   // .cl
                                     "GenericPricingVectOpt" ;   // .cl
 
-    const char* preamble =  makeGPUprogPreamble( ro_scal, kernel_type );
-
-    build_for_GPU(  cxGPUContext, cqCommandQueue, nDevice, cdDevices,
-                    cpProgram,    DEV_ID,         NULL,    preamble,  kernel_name  );
-
+    { // build the OpenCL program
+        const char* preamble =  makeGPUprogPreamble( ro_scal, kernel_type );
+        char  compile_opts[128];
+        sprintf( compile_opts, "-D lgWARP=%d", lgWARP );
+        build_for_GPU(  cxGPUContext, cqCommandQueue, nDevice, 
+                        cdDevices,    cpProgram,      GPU_DEV_ID,
+                        compile_opts, preamble,       kernel_name  );
+    }
     // we do not measure the just-in-time compilation time!
     struct timeval t_start, t_end, t_diff;
     gettimeofday(&t_start, NULL);
 
     {
-        num_cores = discriminate_cost_model(ro_scal, cdDevices[DEV_ID], kernel_type);
+        num_cores = discriminate_cost_model(ro_scal, cdDevices[GPU_DEV_ID], kernel_type);
         computeSobolFixIndex(sob_arrs, ro_scal.chunk);
 
         globalWorkSize[0]    = getWorkSize( ro_scal.num_gpuits, ro_scal.chunk, ro_scal.BLOCK );
@@ -62,12 +65,12 @@ run_GPUkernel (
     oclLoopArrays ocl_arrs;
     if(kernel_type == PRIV) { // CALL THE PRIVATE KERNEL
         glb_vhat = oclAllocArrays_PrivKernel(
-                        ocl_arrs, cxGPUContext, cqCommandQueue[DEV_ID],
+                        ocl_arrs, cxGPUContext, cqCommandQueue[GPU_DEV_ID],
                         ciErr1, ro_scal, sob_arrs, bb_arrs, md_arrs
                     );
 
         runGPU_PRIV (
-                ro_scal, glb_vhat, ocl_arrs, cqCommandQueue[DEV_ID], cpProgram, 
+                ro_scal, glb_vhat, ocl_arrs, cqCommandQueue[GPU_DEV_ID], cpProgram, 
                 globalWorkSize, localWorkSize
             );
 
@@ -76,7 +79,7 @@ run_GPUkernel (
     } else { // VECT VERSION!
 
         glb_vhat = oclAllocArrays_VectKernel(
-                    ocl_arrs, cxGPUContext, cqCommandQueue[DEV_ID],
+                    ocl_arrs, cxGPUContext, cqCommandQueue[GPU_DEV_ID],
                     ciErr1, ro_scal, sob_arrs, bb_arrs, md_arrs
                 );
 
@@ -95,13 +98,13 @@ run_GPUkernel (
                 ocl_arrs.ro_scals = clCreateBuffer(
                                         cxGPUContext, CL_MEM_READ_ONLY, cur_size, NULL, &ciErr2
                                     );
-                ciErr2 = clEnqueueWriteBuffer(cqCommandQueue[DEV_ID], ocl_arrs.ro_scals, CL_TRUE, 0,
+                ciErr2 = clEnqueueWriteBuffer(cqCommandQueue[GPU_DEV_ID], ocl_arrs.ro_scals, CL_TRUE, 0,
                                                 cur_size, &ro_scal, 0, NULL, NULL);
                 oclCheckError(ciErr2, CL_SUCCESS);
             }
 
             runGPU_VECT (
-                    ro_scal, glb_vhat, ocl_arrs, cqCommandQueue[DEV_ID], cpProgram,
+                    ro_scal, glb_vhat, ocl_arrs, cqCommandQueue[GPU_DEV_ID], cpProgram,
                     globalWorkSize, localWorkSize
                 );
 
@@ -127,7 +130,7 @@ run_GPUkernel (
         if(kernel_type == PRIV) ocl_arrs.cleanupPRIV();
         else                    ocl_arrs.cleanupVECT();
         free(glb_vhat);
-        clReleaseCommandQueue(cqCommandQueue[DEV_ID]);
+        clReleaseCommandQueue(cqCommandQueue[GPU_DEV_ID]);
         free(cdDevices);
         clReleaseContext(cxGPUContext);
     }
