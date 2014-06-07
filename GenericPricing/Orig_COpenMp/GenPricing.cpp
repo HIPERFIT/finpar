@@ -212,7 +212,7 @@ int main() {
         free(prices);       
     }
 
-    return 1;
+    return 0; // XXX this was "1" before, why?
 }
 
 

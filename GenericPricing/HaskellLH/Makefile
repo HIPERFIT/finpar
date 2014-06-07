@@ -14,13 +14,13 @@ all: $(EXECUTABLE)
 $(EXECUTABLE): % : %.hs
 	$(GHC) $(OPTIMIZATION) --make $< -o $@
 
-run_small: 
+run_small: $(EXECUTABLE)
 	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE)
 
-run_medium: 
+run_medium:  $(EXECUTABLE)
 	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
 
-run_large: 
+run_large:  $(EXECUTABLE)
 	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
 
 

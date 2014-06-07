@@ -11,3 +11,15 @@
 *.lai
 *.la
 *.a
+
+# Haskell interface files
+*.hi
+
+# generated executables
+GenericPricing/HaskellLH/GenPricing
+GenericPricing/Orig_COpenMp/GenPricing
+CalibVolDiff/Original/CalibVol
+
+# emacs backups
+*~
+
