@@ -123,7 +123,7 @@
             }
             index++;
         }
-        printf("MapSMtoCores SM %d.%d is undefined (please update to the latest SDK)!\n", major, minor);
+        fprintf(stderr, "MapSMtoCores SM %d.%d is undefined (please update to the latest SDK)!\n", major, minor);
         return 8;
     }
 
@@ -586,6 +586,7 @@ void build_for_GPU(
         cl_program&         cpProgram,
         unsigned int        dev_id,
         const char*         compileOptions,
+        const char*         preamble,
         string              name
     ) {
         cl_platform_id  cpPlatform;  // OpenCL platform
@@ -635,7 +636,7 @@ void build_for_GPU(
 
         size_t szKernelLength; // Byte size of kernel code
         assert(cl_name.c_str() != NULL && "UNDEFINED cSourcePath");
-        char * kernel_code = oclLoadProgSource(cl_name.c_str(), "// My comment\n", &szKernelLength);
+        char * kernel_code = oclLoadProgSource(cl_name.c_str(), preamble, &szKernelLength);
 
         oclCheckError(kernel_code != NULL, shrTRUE);
         cpProgram = clCreateProgramWithSource(cxGPUContext, 1, (const char **)&kernel_code, &szKernelLength, &ciErr1);
@@ -652,7 +653,7 @@ void build_for_GPU(
         // 7. check errors!
         if (ciErr1 != CL_SUCCESS) {
             // write out standard error, Build Log and PTX, then cleanup and exit
-            shrLog(stdlog, "BUILDING ERROR: %d", ciErr1);
+            shrLog(stdlog, "BUILDING ERROR: %d\n", ciErr1);
             oclLogBuildInfo(cpProgram, oclGetFirstDev(cxGPUContext));
 
             oclLogPtx(cpProgram, oclGetFirstDev(cxGPUContext), ptx_name.c_str());

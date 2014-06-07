@@ -25,10 +25,13 @@
 /************************************/
 typedef struct {
     int*    sobol_dirvcts;  // [sobol_bit_count][num_under*num_dates]
+    int*    sobol_dirvctsT; // [num_under*num_dates][sobol_bit_count]
     UCHAR*  sobol_fix_ind;  // [chunk-1]
 
     void cleanup() {
-        free(sobol_dirvcts);  free(sobol_fix_ind);
+        free(sobol_dirvctsT);
+        free(sobol_dirvcts);  // allocated together with sobol_fix_ind
+//      free(sobol_fix_ind);
     }
 } SobolArrays __attribute__ ((aligned (16)));
 
@@ -47,12 +50,12 @@ typedef struct {
     REAL* md_vols;    // [num_models, num_dates, num_under]
     REAL* md_drifts;  // [num_models, num_dates, num_under]
     REAL* md_starts;  // [num_models, num_under]
-    REAL* md_detvals; // [num_models, num_det_pricers]
     REAL* md_discts;  // [num_models, num_cash_flows]
+    REAL* md_detvals; // [num_models, num_det_pricers]
 
     void cleanup() {
-        free(md_c);         free(md_vols);      free(md_drifts);    
-        free(md_starts);    free(md_discts);    free(md_detvals);
+        free(md_c); // all allocated together, hence free the first one         
+//        free(md_vols); free(md_drifts); free(md_starts); free(md_discts); free(md_detvals);
     }
 } ModelArrays  __attribute__ ((aligned (16)));
 
@@ -64,6 +67,11 @@ UINT do_padding(const UINT& n) {
     return (((n / 64) * 64) + 64);
 }
 
+void initROscals(LoopROScalars& scals) { 
+    scals.chunk = 64; // must be a power of two!
+    scals.sob_norm_fact = 1.0 / (1<<scals.sobol_bits); 
+    scals.sobol_count_ini = 0;
+}
 /************************************/
 /*** Parsing The Current DataSet  ***/           
 /************************************/
@@ -80,7 +88,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         fprintf(stderr, "Syntax error when reading the first four ints params.\n");
         exit(1);
     }
-    scals.init();
+    initROscals(scals);
 
     int64_t shape[3];
 
@@ -97,18 +105,20 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         bool ok = ( shape[1] == scals.sobol_bits ) && 
                   ( shape[0] == scals.num_under*scals.num_dates );
         assert(ok && "Incorrect shape of sobol direction vectors!");
+        sob_arrs.sobol_dirvctsT = sob_mat;
 
-        // Transpose the sobol direction vectors!
-        int sob_dim = scals.num_under * scals.num_dates;
-        sob_arrs.sobol_dirvcts = static_cast<int*> ( malloc( do_padding( sob_dim* scals.sobol_bits ) * sizeof(int) ) );
+        // 2. Transpose the sobol direction vectors!
+        int sob_dim    = scals.num_under * scals.num_dates;
+        int alloc_size = do_padding ( (sob_dim * scals.sobol_bits) + (1 << logMAX_CHUNK) );
+        sob_arrs.sobol_dirvcts = static_cast<int*> ( malloc( do_padding( alloc_size ) * sizeof(int) ) );
         for( int j = 0; j < scals.sobol_bits; j++ ) {
             for( int i = 0; i< sob_dim; i++ ) {
                 sob_arrs.sobol_dirvcts[j*sob_dim + i] = sob_mat[i*scals.sobol_bits + j];
             }
         }
-        free(sob_mat);
 
-        sob_arrs.sobol_fix_ind = NULL;
+        sob_arrs.sobol_fix_ind = (UCHAR*) (sob_arrs.sobol_dirvcts + sob_dim * scals.sobol_bits);
+        for ( int j; j < (1<<logMAX_CHUNK); j ++ ) sob_arrs.sobol_fix_ind[j] = 0;
     }
 
     { // reading the market (models) data
@@ -176,6 +186,59 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         ok = ( shape[0] == scals.num_models );
         assert(ok && "Incorrect shape of md_discts!");
         scals.num_cash_flows  = shape[1];
+
+        { // put all of them in a contiguous memory:
+            int   alloc_size, offset;
+            REAL* flat_arr;
+            alloc_size  = scals.num_under * ( scals.num_under + 2*scals.num_dates + 1);
+            alloc_size += scals.num_cash_flows + scals.num_det_pricers;
+            alloc_size *= scals.num_models;
+            alloc_size  = do_padding( alloc_size );
+
+            flat_arr = static_cast<REAL*> ( malloc( alloc_size * sizeof(REAL) ) );
+
+            // copy md_c
+            offset     = 0; 
+            alloc_size = scals.num_models * scals.num_under * scals.num_under;
+            for( int k = 0; k < alloc_size; k ++ ) {
+                flat_arr[k+offset] = md_arrs.md_c[k];
+            }
+            free(md_arrs.md_c);     md_arrs.md_c = flat_arr + offset;
+            // copy md_vols
+            offset    += alloc_size; 
+            alloc_size = scals.num_models * scals.num_under * scals.num_dates;
+            for( int k = 0; k < alloc_size; k ++ ) {
+                flat_arr[k+offset] = md_arrs.md_vols[k];
+            }
+            free(md_arrs.md_vols);  md_arrs.md_vols = flat_arr + offset;
+            // copy md_drifts
+            offset    += alloc_size; 
+            for( int k = 0; k < alloc_size; k ++ ) {
+                flat_arr[k+offset] = md_arrs.md_drifts[k];
+            }
+            free(md_arrs.md_drifts); md_arrs.md_drifts = flat_arr + offset;
+            // copy md_starts
+            offset    += alloc_size; 
+            alloc_size = scals.num_models * scals.num_under;
+            for( int k = 0; k < alloc_size; k ++ ) {
+                flat_arr[k+offset] = md_arrs.md_starts[k];
+            }
+            free(md_arrs.md_starts); md_arrs.md_starts = flat_arr + offset;
+            // copy md_discts
+            offset    += alloc_size; 
+            alloc_size = scals.num_models * scals.num_cash_flows;
+            for( int k = 0; k < alloc_size; k ++ ) {
+                flat_arr[k+offset] = md_arrs.md_discts[k];
+            }
+            free(md_arrs.md_discts); md_arrs.md_discts = flat_arr + offset;
+            // copy md_detvals
+            offset    += alloc_size; 
+            alloc_size = scals.num_models * scals.num_det_pricers;
+            for( int k = 0; k < alloc_size; k ++ ) {
+                flat_arr[k+offset] = md_arrs.md_detvals[k];
+            }
+            free(md_arrs.md_detvals); md_arrs.md_detvals = flat_arr + offset;        
+        }
     }
 
     { // Brownian Bridge Indirect Arrays and Data

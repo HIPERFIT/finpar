@@ -80,13 +80,13 @@ double* run_CPUkernel(  const int&                Ps,
                                 md_vct,             trj_vct         );
 
 #if 0
-                if (k==1) {
-                    int bim1 = bb_arrs.bb_inds[0]-1;
+                if (k==0) {
+                    //int bim1 = bb_arrs.bb_inds[0]-1;
                     //printf("First ind: %d, data: %lf\n", bim1, trj_vct[ bim1 * scals.num_under + 0 ]);
 
                     printf("\n\nBB vector: [ ");
                     for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
-                        printf("%8f, ",  trj_vct[ii]);
+                        printf("%8f, ",  trj_vct[ii]);   printf("%8f, ",  md_vct[ii]);
                     }
                     printf(" ]\n\n");
                 }
@@ -195,15 +195,15 @@ int main() {
 
         { // do work and cleanup
             prices = run_CPUkernel( Ps, scals, sob_arrs, md_arrs, bb_arrs );
-
-            md_arrs .cleanup();
-            bb_arrs .cleanup();
-            sob_arrs.cleanup();
         }
 
         gettimeofday(&t_end, NULL);
         timeval_subtract(&t_diff, &t_end, &t_start);
         elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+
+        md_arrs .cleanup();
+        bb_arrs .cleanup();
+        sob_arrs.cleanup();
     }
 
     {   // validation and writeback of the result
