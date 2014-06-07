@@ -4,6 +4,12 @@
 #include "Optimizations.h"
 #include "SDK_stub.h"
 
+#if (_OPTIMIZATION_USE_FLOATS)
+    #define TILE    GPU_TILE
+#else
+    #define TILE    GPU_TILE/2
+#endif
+
 /****************************/
 /*** GPU-Allocated Arrays ***/
 /****************************/
@@ -37,7 +43,7 @@ struct oclLoopArrays {
     cl_mem  model_vhat;  // WO; ~ [num_models]x[num_contracts]x[num_iter/(chunk*BLOCK)]
 
     /*** local tiled space ***/
-    cl_mem 	local_space;  // TILE * WARP * sizeof(REAL) + TILE * WARP * sizeof(char)
+    cl_mem 	local_space; 
 
     void cleanupPRIV() {
         clReleaseMemObject(ro_scals);
@@ -145,20 +151,26 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
     // If not-enough GPU resources => sequentialize 
     //  the loop into big chunks that execute on GPU.
     if(!is_priv) { 
-        // get device memory size info
+        // get device memory size info 
         cl_ulong glob_mem_size;
         clGetDeviceInfo(device,CL_DEVICE_GLOBAL_MEM_SIZE,sizeof(glob_mem_size),&glob_mem_size,NULL);
-//        fprintf(stderr, "GLOB MEM SIZE: %lu\n\n\n", glob_mem_size);
+        { // check global mem matches the user-declared one
+            const size_t USER_MEM = ((size_t)GPU_GLB_MEM) << 30;
+            const size_t ub       = static_cast<size_t>( USER_MEM * 101.0 / 100.0 );
+            const size_t lb       = static_cast<size_t>( USER_MEM *  99.0 / 100.0 );
+            if ( !(glob_mem_size >= lb && glob_mem_size <= ub) ) {
+                fprintf(stderr, "WARNING! Querried GPU global memory %lu DIFFERS from what user declared: [%ld,%ld]!\n", 
+                                 glob_mem_size, lb, ub);
+                glob_mem_size = static_cast<cl_ulong>(USER_MEM);
+                fprintf(stderr, "Using user-declared size for global memory: %lu\n", glob_mem_size);
+            }
+        } 
 
         // check if there is enough memory
-//        UINT perit_mem_size = size_vct*( 2*sizeof(REAL) + sizeof(UINT) ) + 
-//                              ro_scal.num_models * sizeof(REAL);
     	UINT perit_mem_size = size_vct*( ro_scal.num_models + 1 ) + ro_scal.num_models;
     	perit_mem_size *= sizeof(REAL);
 
-
-
-        UINT max_mc_iter_num = ( (glob_mem_size * 3)/4 ) / perit_mem_size;  // 3/4;
+        UINT max_mc_iter_num = ( (glob_mem_size * 3)/4 ) / perit_mem_size;
 
         UINT BLOCK = ro_scal.BLOCK;
         if(max_mc_iter_num % BLOCK != 0)
@@ -186,7 +198,12 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
         tot_cuda_cores = compute_units *
             ConvertSMVer2CoresCopy(comp_capabil_major, comp_capabil_minor);
 
-//        fprintf(stderr, "Compute units: %d, tot_core_num: %d\n", compute_units, tot_cuda_cores);
+        if( tot_cuda_cores != GPU_CORES ) {
+            fprintf(stderr, "WARNING! Querried GPU number of cores %u DIFFERS from what user declared: %d!\n", 
+                             tot_cuda_cores, GPU_CORES );
+            tot_cuda_cores = GPU_CORES;
+            fprintf(stderr, "Using user-declared GPU number of cores: %u\n", tot_cuda_cores);
+        }
 
         UINT div = (1 << logNextPow2(tot_cuda_cores)) * 64;
         ro_scal.log_chunk = logNextPow2(ro_scal.num_gpuits / div );  // was div*2
@@ -201,25 +218,6 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
 
     return tot_cuda_cores;
 }
-
-void computeSobolFixIndex( SobolArrays& sob_arrs, const UINT& chunk ) {
-    // this should have been allocated in ParseInput!
-    assert( (sob_arrs.sobol_fix_ind != NULL) && "Array sobol_fix_ind should be already allocated in ParseInput!" );
-    
-    // Given `chunk', the most-significant zero of iterations 
-    // {1 .. chunk-1} mod chunk is the same.
-    for( int k = 1; k < chunk-1; k ++ ) {
-        UINT gs  = k;
-        UINT ell = 0;
-        while(gs & 1) {
-            ell++;
-            gs >>= 1;
-        }
-        sob_arrs.sobol_fix_ind[k] = ell;
-        //printf("SOB_FI[%d]=%d,   ", k, ell);
-	}
-}
-
 
 /*********************************/
 /*** Allocating GPU Buffers &  ***/
@@ -550,8 +548,6 @@ void runGPU_VECT(
         ckGenPricing_traj = (optim_kernel) ?
                 clCreateKernel(cpProgram, "mlfi_comp_traj1",      &ciErr1) :
                 clCreateKernel(cpProgram, "mlfi_comp_traj_unopt", &ciErr1) ;
-
-        if(!optim_kernel) printf("AHAHAHHA!\n");
 
         ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, sizeof(cl_mem), (void*)&dev_arr.ro_scals);
         ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, sizeof(cl_mem), (void*)&dev_arr.md_c    );

@@ -72,6 +72,23 @@ void initROscals(LoopROScalars& scals) {
     scals.sob_norm_fact = 1.0 / (1<<scals.sobol_bits); 
     scals.sobol_count_ini = 0;
 }
+
+void computeSobolFixIndex( SobolArrays& sob_arrs, const UINT& chunk ) {
+    // this should have been allocated in ParseInput!
+    assert( (sob_arrs.sobol_fix_ind != NULL) && "Array sobol_fix_ind should be already allocated in ParseInput!" );
+    
+    // Given `chunk', the most-significant zero of iterations 
+    // {1 .. chunk-1} mod chunk is the same.
+    for( int k = 1; k < chunk-1; k ++ ) {
+        UINT gs  = k;
+        UINT ell = 0;
+        while(gs & 1) {
+            ell++;
+            gs >>= 1;
+        }
+        sob_arrs.sobol_fix_ind[k] = ell;
+	}
+}
 /************************************/
 /*** Parsing The Current DataSet  ***/           
 /************************************/

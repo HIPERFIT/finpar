@@ -364,8 +364,8 @@ __kernel void mlfi_comp_traj1(
     UINT dim_paths = dim*ro_scal->num_dates;
     ULONG cur_it   = get_global_id (0) << ro_scal->log_chunk;
 
-    UINT UB = (cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ? 
-                cur_it + (1<<ro_scal->log_chunk) : ro_scal->num_gpuits; 
+    UINT UB = ( cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ? 
+                cur_it+(1<<ro_scal->log_chunk) : ro_scal->num_gpuits  ; 
     {
         offset = ( (get_global_id (0) >> lgWARP) << (ro_scal->log_chunk+lgWARP) );
         md_z   = md_z   + offset*dim_paths                      + (get_global_id(0) & (WARP-1));
@@ -451,16 +451,14 @@ __kernel void mlfi_comp_traj_unopt(
     // WO (GLOBAL) traj
     __global   REAL*          trajWF
 ) {    
-
-    //__global REAL*    trajWF;
     UINT offset;
     UINT dim       = ro_scal->num_under;
     UINT dim_sq    = dim*dim;
     UINT dim_paths = dim*ro_scal->num_dates;
     ULONG cur_it = get_global_id (0) << ro_scal->log_chunk;
 
-    UINT UB = (cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ? 
-                cur_it + (1<<ro_scal->log_chunk) : ro_scal->num_gpuits; 
+    UINT UB = ( cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits ) ? 
+                cur_it+(1<<ro_scal->log_chunk) : ro_scal->num_gpuits   ; 
     {
         offset = ( (get_global_id (0) >> lgWARP) << (ro_scal->log_chunk+lgWARP) );
         md_z   = md_z   + offset*dim_paths                      + (get_global_id(0) & (WARP-1));
@@ -501,7 +499,7 @@ __kernel void mlfi_comp_traj_unopt(
                     temp = exp(temp * md_vols[ind + j] + md_drifts[ind + j]);
 
                     trajWF[(ind+j) << lgWARP] = (i > 0) ?  trajWF[(ind + j - dim) << lgWARP] * temp : 
-                                                            md_starts[ j ]                     * temp ;
+                                                md_starts[ j ]                    * temp ;
                 }
             }
 

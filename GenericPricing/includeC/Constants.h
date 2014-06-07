@@ -5,7 +5,6 @@
 
 #define WARP            (1<<lgWARP) 
 #define logMAX_CHUNK    8
-#define TILE            8
 
 #if (_OPTIMIZATION_USE_FLOATS)
     typedef float        REAL;

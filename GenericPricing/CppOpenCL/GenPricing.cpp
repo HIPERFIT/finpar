@@ -45,7 +45,7 @@ run_GPUkernel (
     { // build the OpenCL program
         const char* preamble =  makeGPUprogPreamble( ro_scal, kernel_type );
         char  compile_opts[128];
-        sprintf( compile_opts, "-D lgWARP=%d", lgWARP );
+        sprintf( compile_opts, "-D lgWARP=%d -D TILE=%d", lgWARP, TILE );
         build_for_GPU(  cxGPUContext, cqCommandQueue, nDevice, 
                         cdDevices,    cpProgram,      GPU_DEV_ID,
                         compile_opts, preamble,       kernel_name  );

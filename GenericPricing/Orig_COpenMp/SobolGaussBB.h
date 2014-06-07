@@ -63,6 +63,20 @@ void sobolRec(  const int&  sobol_dim,  // size of the quasi-random vector
 	}
 }
 
+inline static void
+sobolRecOpt(    const int&  sobol_dim,  // size of the quasi-random vector
+                const int&  bit_count,  // number of bits of Sobol numbers
+                const int*  dir_matrix, // [bit_count, sobol_dim]: Sobol's
+                                        //    direction vectors
+                const UINT& f_ind,      // lookup-table index
+                UINT*       res         // in-out param-result    
+) {
+    const UINT f_ind_dim = f_ind * sobol_dim;
+    for( int i = 0; i < sobol_dim; i ++ )
+	    res[i] ^= dir_matrix[ f_ind_dim + i];
+}
+
+
 /******************************************************/
 /*** Normal-to-Gaussian Distribution Transformation ***/
 /******************************************************/

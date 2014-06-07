@@ -54,8 +54,9 @@ inline void mlfi_genmatrix_uniformGPUrecOpt(
 ) {
 	UINT j;
     UINT sob_dim = ro_scal->num_under * ro_scal->num_dates;
+    f_ind *= sob_dim;
 	for(j=0; j < sob_dim; j++) {
-	    sobol_last_num_vec[j] ^= sobol_v_dir[ f_ind*sob_dim + j];
+	    sobol_last_num_vec[j] ^= sobol_v_dir[ f_ind + j ]; //f_ind * sob_dim
 		md_zd[j]               = sobol_last_num_vec[j] * ro_scal->sob_norm_fact;
 	}
 }

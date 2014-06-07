@@ -42,12 +42,29 @@ double* run_CPUkernel(  const int&                Ps,
             unsigned bound = std::min(i + scals.chunk, scals.num_mcits);
 
             for( int k = i; k < bound; k ++ ) {
-//            new_trajectoryGPU(k, k==i, ro_scal, ro_arr, priv_arr);
 
-                // generate the next Sobol quasi-random vector: 1st iter uses
-                // the independent formula; the others the recurrent formula.
-                if ( k == i)    sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
-                else            sobolRec( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+#ifndef _OPTIMIZATION_SOBOL_STRENGTH_RED_RECURR
+            sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+#else
+
+#if 1
+            // generate the next Sobol quasi-random vector: 1st iter uses
+            // the independent formula; the others the recurrent formula.
+            if ( k == i)    sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+            else            sobolRec( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+#endif
+            // Gives slowdown on CPU
+            if( k == i ) {
+                sobolInd   ( sob_dim, scals.sobol_bits, sob_matT, k,     sob_vct );
+            } else if ( k == bound-1 ) {
+                sobolRec   ( sob_dim, scals.sobol_bits, sob_matT, k,     sob_vct );
+            } else {
+                UINT f_ind = sob_arrs.sobol_fix_ind[k-i];
+                sobolRecOpt( sob_dim, scals.sobol_bits, sob_matT, f_ind, sob_vct );
+            }
+#endif
+
+
 
 #if 0
                 if (k==0) {
@@ -191,6 +208,7 @@ int main() {
         struct timeval t_start, t_end, t_diff;
         gettimeofday(&t_start, NULL);
 
+        computeSobolFixIndex( sob_arrs, scals.chunk );
         { // do work and cleanup
             prices = run_CPUkernel( Ps, scals, sob_arrs, md_arrs, bb_arrs );
         }
