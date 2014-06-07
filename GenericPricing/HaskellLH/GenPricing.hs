@@ -82,13 +82,29 @@ xorInds bits_num n dir_vs = reduce xor 0 $ map (dir_vs!!) is
 
 sobolIndI :: Int -> [[Int]] -> Int -> [Int]
 sobolIndI bits_num dir_vs n =
-  map (xorInds bits_num n) dir_vs
+    map (xorInds bits_num n) dir_vs
 
 sobolIndR :: Int -> [[Int]] -> Int -> [Double]
 sobolIndR bits_num dir_vs n =
   map ((/divisor) . fromIntegral) arri
   where arri = sobolIndI bits_num dir_vs n
         divisor = 2.0 ** fromIntegral bits_num
+
+
+lsb0 n = lsb0_help 0 n
+    where lsb0_help ell c | (c .&. 1 == 0) = ell
+                          | otherwise = lsb0_help (ell+1) (c `shiftR` 1)
+
+sobolRecI :: Int -> [[Int]] -> [Int] -> Int -> [Int]
+sobolRecI bits_num sob_dir_vs prev n = zipWith xor prev dir_vs
+  where dir_vs = map ( !! bit ) sob_dir_vs
+        bit    = lsb0 n -- rmt n
+
+sobolRecMap :: Double -> Int -> [[Int]] -> (Int,Int) -> [[Double]]
+sobolRecMap sob_fact bits_num dir_vs (l, u) =
+  let a = sobolIndI bits_num dir_vs l
+      norm = ( * sob_fact ) . fromIntegral
+  in  map (map norm) (scanl (sobolRecI bits_num dir_vs) a [l..u-1])
 
 
 ------------------------------------------
@@ -289,10 +305,17 @@ payoff3 md_disc xss =
 trajInner :: Double -> Int -> [Double] -> Double
 trajInner amount i disc = amount * disc !! i
 
+--------------------------------------------
+--------------------------------------------
+--------------------------------------------
+
+
 
 -------------------------------------------
 --- Main Entry Point: price computation ---
 -------------------------------------------
+
+--- Using only the (not very efficient) Sobol formula! ---
 compute :: Int -> Int -> Int -> Int -> Int -> Int -> [[Int]] 
         -> [[[Double]]] -> [[[Double]]] -> [[[Double]]] 
         ->  [[Double]]  ->  [[Double]]  ->  [[Double]]
@@ -315,8 +338,42 @@ compute contract  num_mc_it num_dates num_under num_models num_bits
                          )
                          md_cvdsmat 
 
---      bs_mats'  = trace (show bs_mats ++ show md_discts ++ show md_detvals ++ show contract) bs_mats 
---      bs_mats'  = trace (show bs_mats) bs_mats
+      md_discmat= zip3 md_discts md_detvals bs_mats
+      payoffs   = map    (\disc_bs -> let (disc, detvals, bsmat) = disc_bs
+                                      in  map (payoff contract disc detvals) bsmat
+                         )
+                         md_discmat
+
+      sum_prices= map (\payoff -> reduce (+) 0.0 payoff) payoffs
+      prices    = map (\sp -> sp / fromIntegral num_mc_it) sum_prices
+  in  prices
+
+
+--- Chunking the computation and using sobol-independent formula   ---
+---   for the first element and the more efficient sobol-recurrent ---
+--    formula for the rest of elements                             ---
+compute_chunk :: Int -> Int -> Int -> Int -> Int -> Int -> [[Int]] 
+              -> [[[Double]]] -> [[[Double]]] -> [[[Double]]] 
+              ->  [[Double]]  ->  [[Double]]  ->  [[Double]]
+              ->  [[Int   ]]  ->  [[Double]]  -> (Int,Int) 
+              -> [Double]
+compute_chunk contract  num_mc_it num_dates num_under num_models num_bits 
+              dir_vs    md_cs     md_vols   md_drifts md_starts  md_detvals 
+              md_discts bb_inds   bb_data   (lb,ub) =
+  let num_det_pricers = length $ head md_detvals
+      num_cash_flows  = length $ head md_discts
+
+      sob_factor      = 1.0 / (2.0 ** fromIntegral num_bits)
+
+      sobol_mat = sobolRecMap sob_factor num_bits dir_vs (lb,ub)
+      gauss_mat = map     ugaussian sobol_mat
+      bb_mat    = map    (brownianBridge num_under num_dates bb_inds bb_data) gauss_mat
+
+      md_cvdsmat= zip5 md_cs md_vols md_drifts md_starts (replicate num_models bb_mat)
+      bs_mats   = map    (\cvdsmat -> let (c, vol, drift, start, bb_mat) = cvdsmat
+                                      in  map (blackScholes num_under c vol drift start) bb_mat 
+                         )
+                         md_cvdsmat 
 
       md_discmat= zip3 md_discts md_detvals bs_mats
       payoffs   = map    (\disc_bs -> let (disc, detvals, bsmat) = disc_bs
@@ -324,12 +381,16 @@ compute contract  num_mc_it num_dates num_under num_models num_bits
                          )
                          md_discmat
 
---      payoffs'  = trace (show payoffs) payoffs 
-
       sum_prices= map (\payoff -> reduce (+) 0.0 payoff) payoffs
       prices    = map (\sp -> sp / fromIntegral num_mc_it) sum_prices
   in  prices
 
+tiledSkeleton :: Int -> Int -> Int -> ((Int,Int) -> [Double]) -> [Double]
+tiledSkeleton sob_dim num_mc_its chunk fun =
+  let divides = num_mc_its `mod` chunk == 0
+      extra   = if (divides) then [] else [num_mc_its]
+      iv = zip [1,chunk+1..] ([chunk, 2*chunk .. num_mc_its] ++ extra )
+  in (reduce (zipWith (+)) (replicate sob_dim 0.0) . map fun) iv 
 ----------------------------------------------
 --- Formatting the Output of the Benchmark ---
 ----------------------------------------------
@@ -368,21 +429,40 @@ main = do s <- getContents
                                  putStrLn (msg_lst !! 5)
                                  -- print $ validate pr p i 
 --          either (error . show) print $ parse run "input" s
-  where run = do contract <- readInt
-                 num_mc_it<- readInt
-                 num_dates<- readInt
-                 num_under<- readInt
+  where run = do contract  <- readInt
+                 num_mc_it <- readInt
+                 num_dates <- readInt
+                 num_under <- readInt
+--                 v <- compute contract num_mc_it num_dates num_under <$>
+--                      readInt <*> readInt <*> readInt2d <*>
+--                      readDouble3d <*> readDouble3d <*> readDouble3d <*>
+--                      readDouble2d <*> readDouble2d <*> readDouble2d <*>
+--                      readInt2d    <*> readDouble2d
 
-                 v <- compute contract num_mc_it num_dates num_under <$>
-                        readInt <*> readInt <*> readInt2d <*>
-                        readDouble3d <*> readDouble3d <*> readDouble3d <*>
-                        readDouble2d <*> readDouble2d <*> readDouble2d <*>
-                        readInt2d    <*> readDouble2d
+                 num_models<- readInt
+                 num_bits  <- readInt
+                 sob_dirvs <- readInt2d
+                 md_cs     <- readDouble3d     
+                 md_vols   <- readDouble3d
+                 md_drifts <- readDouble3d 
+                 md_starts <- readDouble2d 
+                 md_detvals<- readDouble2d 
+                 md_discts <- readDouble2d 
+                 bb_inds   <- readInt2d
+                 bb_data   <- readDouble2d
+                 
+                 let tiled_skel = tiledSkeleton (num_under*num_dates) num_mc_it 128 
+                 let v = tiled_skel $ 
+                            compute_chunk 
+                                contract  num_mc_it num_dates num_under num_models num_bits
+                                sob_dirvs md_cs     md_vols   md_drifts md_starts  md_detvals
+                                md_discts bb_inds   bb_data
+                 
 
                  r <- readDouble1d
                  return (v, r, (contract,num_mc_it, num_dates, num_under))
 
-        readInt2d = readArray $ readArray readInt
+        readInt2d    = readArray $ readArray readInt
         readDouble1d = readArray readDouble
         readDouble2d = readArray $ readArray readDouble
         readDouble3d = readArray $ readArray $ readArray readDouble
