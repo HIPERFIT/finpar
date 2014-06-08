@@ -1,4 +1,4 @@
-#define FAST_BB                     1
+#define FAST_BB
 
 #include "ParseInput.h"
 #include "TimeHelper.h"
@@ -44,72 +44,36 @@ double* run_CPUkernel(  const int&                Ps,
             for( int k = i; k < bound; k ++ ) {
 
 #ifndef _OPTIMIZATION_SOBOL_STRENGTH_RED_RECURR
-            sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+                sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
 #else
 
-#if 1
-            // generate the next Sobol quasi-random vector: 1st iter uses
-            // the independent formula; the others the recurrent formula.
-            if ( k == i)    sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
-            else            sobolRec( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
-#endif
-            // Gives slowdown on CPU
-            if( k == i ) {
-                sobolInd   ( sob_dim, scals.sobol_bits, sob_matT, k,     sob_vct );
-            } else if ( k == bound-1 ) {
-                sobolRec   ( sob_dim, scals.sobol_bits, sob_matT, k,     sob_vct );
-            } else {
-                UINT f_ind = sob_arrs.sobol_fix_ind[k-i];
-                sobolRecOpt( sob_dim, scals.sobol_bits, sob_matT, f_ind, sob_vct );
-            }
-#endif
-
-
-
-#if 0
-                if (k==0) {
-                    printf("\n\nSobol vector: [ ");
-                    for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
-                        printf("%8f, ",  ((REAL)sob_vct[ii])/(1<<30) );
-                    }
-                    printf(" ]\n\n");
+    #if 1
+                // generate the next Sobol quasi-random vector: 1st iter uses
+                // the independent formula; the others the recurrent formula.
+                if ( k == i)    sobolInd( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+                else            sobolRec( sob_dim, scals.sobol_bits, sob_matT, k, sob_vct );
+    #else
+                // Gives slowdown on CPU
+                if( k == i ) {
+                    sobolInd   ( sob_dim, scals.sobol_bits, sob_matT, k,     sob_vct );
+                } else if ( k == bound-1 ) {
+                    sobolRec   ( sob_dim, scals.sobol_bits, sob_matT, k,     sob_vct );
+                } else {
+                    UINT f_ind = sob_arrs.sobol_fix_ind[k-i];
+                    sobolRecOpt( sob_dim, scals.sobol_bits, sob_matT, f_ind, sob_vct );
                 }
+    #endif
 #endif
-
 
                 // transform the normal [0,1) to gaussian distribution [-inf, +inf]
                 uGaussian( scals.sob_norm_fact, sob_dim, sob_vct, md_vct );
-
-#if 0
-                if (k==1) {
-                    printf("\n\nGaussian vector: [ ");
-                    for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
-                        printf("%8f, ",  md_vct[ii]);
-                    }
-                    printf(" ]\n\n");
-                }
-#endif
-
 
                 // correlate the dates on each path using a Brownian Bridge
                 brownianBridge( scals.num_under,    scals.num_dates, 
                                 bb_arrs.bb_inds,    bb_arrs.bb_data, 
                                 md_vct,             trj_vct         );
 
-#if 0
-                if (k==0) {
-                    //int bim1 = bb_arrs.bb_inds[0]-1;
-                    //printf("First ind: %d, data: %lf\n", bim1, trj_vct[ bim1 * scals.num_under + 0 ]);
-
-                    printf("\n\nBB vector: [ ");
-                    for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
-                        printf("%8f, ",  trj_vct[ii]);   printf("%8f, ",  md_vct[ii]);
-                    }
-                    printf(" ]\n\n");
-                }
-#endif
-
-#if FAST_BB
+#ifdef FAST_BB
                 REAL* traj = md_vct;
 #else
                 REAL* traj = trj_vct; //md_vct;
@@ -128,7 +92,7 @@ double* run_CPUkernel(  const int&                Ps,
                             int k = i*scals.num_under + j;
 
                             for ( int l = 0; l <= j; l ++ ) {
-#if FAST_BB
+#ifdef FAST_BB
                                 REAL md_val = trj_vct[i*scals.num_under + l];
 #else
                                 REAL md_val = md_vct [i*scals.num_under + l];
@@ -143,29 +107,15 @@ double* run_CPUkernel(  const int&                Ps,
                                             traj[k - scals.num_under] * temp ;
                         }
                     }
-#if 0
-                if (k==0) {
-                    printf("\n\nTrajectory vector: [ ");
-                    for ( int ii = 0; ii < scals.num_dates * scals.num_under; ii ++ ) {
-                        printf("%8f, ", traj[ii]);
-                    }
-                    printf(" ]\n\n");
-                }
-#endif
+
                     aggregDiscountedPayoff( m,  scals.contract,  
                                                 scals.num_under,      
                                                 scals.num_cash_flows, 
                                                 scals.num_det_pricers,   
                                                 md_arrs.md_discts,  
                                                 md_arrs.md_detvals,   
-                                                traj,   vhat      );
-#if 0
-                if (k==0) {
-                    printf("Estimated price it %d: %lf\n", k, vhat[0]);
-                }
-#endif
-                
-                }            
+                                                traj,   vhat      );                
+                }        
             }
         } 
     }

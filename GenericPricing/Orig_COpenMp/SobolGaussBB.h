@@ -220,7 +220,7 @@ void brownianBridge(
     }
 
     const UINT S = num_under * num_dates;
-#if FAST_BB
+#ifdef FAST_BB
 	for ( int i = S - 1; i >= num_under; i -- ) {
         res[i] -= res[i - num_under];
 	}
