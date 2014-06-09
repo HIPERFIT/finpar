@@ -13,5 +13,14 @@ EXECUTABLE  =CalibVol
 default: 
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
+run_small: $(EXECUTABLE)
+	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt
+
+run_medium: $(EXECUTABLE)
+	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE) 2> Debug.txt
+
+run_large: $(EXECUTABLE)
+	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
+
 clean:
-	rm -f $(EXECUTABLE) $(OBJECTS)
+	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)

@@ -318,7 +318,7 @@ int main()
         if(is_valid) {
             elapsed = mlfi_diff_time(t_end,t_start);
             cout<<"\nValid Result, CPU Parallel Runtime Without IO on "
-                <<get_tot_num_threads()<<" threads : "<<elapsed<<" ms."<<endl;
+                <<get_CPU_num_threads()<<" threads : "<<elapsed<<" ms."<<endl;
         }
     }
 

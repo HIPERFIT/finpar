@@ -356,7 +356,7 @@ validate res_ref res info=
     in ["// Generic Pricing Haskell Benchmark (List-Homomorphism Style):",
         "// OUTER: " ++ show outer ++ ", NUM_X: " ++ show num_x ++
          ", NUM_Y: " ++ show num_y ++ ", NUM_T: " ++ show num_t,
-        ( if err <= 0.0005 
+        ( if err <= 0.00001 -- 0.0005 
           then "1\t\t// VALID   Result,"
           else "0\t\t// INVALID Result," ), 
         "0\t\t// Runtime in microseconds,",
