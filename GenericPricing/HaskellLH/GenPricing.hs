@@ -17,8 +17,10 @@ import Data.Bits
 import Data.List hiding (tail)
 import Prelude hiding (tail)
 
-import Payoff3Cond
 import Debug.Trace
+
+import Data.Vector.Unboxed(Vector) -- for gaussian approx
+import qualified Data.Vector.Unboxed as V
 
 ------------------------------
 --- Parser-related Helpers ---
@@ -117,6 +119,67 @@ polyAppr x a0 a1 a2 a3 a4 a5 a6 a7 b0 b1 b2 b3 b4 b5 b6 b7 =
   (x*(x*(x*(x*(x*(x*(x*a7+a6)+a5)+a4)+a3)+a2)+a1)+a0) /
   (x*(x*(x*(x*(x*(x*(x*b7+b6)+b5)+b4)+b3)+b2)+b1)+b0)
 
+
+-- same functionality as "polyAppr", but using vectors for constants
+approx :: Double -> Vector Double -> Vector Double -> Double
+approx x as bs = let reduce xs = V.foldr (\b c -> b + x*c) 0 xs
+                 in reduce as / reduce bs
+
+smallcase q = q * approx (0.180625 - q*q) small_as small_bs
+small_as = V.fromList [  3.387132872796366608
+                      ,  133.14166789178437745
+                      ,  1971.5909503065514427
+                      ,  13731.693765509461125
+                      ,  45921.953931549871457
+                      ,  67265.770927008700853
+                      ,  33430.575583588128105
+                      ,  2509.0809287301226727 ]
+small_bs = V.fromList [  1.0
+                      , 42.313330701600911252
+                      , 687.1870074920579083
+                      , 5394.1960214247511077
+                      , 21213.794301586595867
+                      , 39307.89580009271061
+                      , 28729.085735721942674
+                      , 5226.495278852854561  ]
+
+intermediate q = approx (q-1.6) interm_as interm_bs
+interm_as = V.fromList [ 1.42343711074968357734
+                       , 4.6303378461565452959
+                       , 5.7694972214606914055
+                       , 3.64784832476320460504
+                       , 1.27045825245236838258
+                       , 0.24178072517745061177
+                       , 0.0227238449892691845833
+                       , 7.7454501427834140764e-4]
+interm_bs = V.fromList [ 1.0
+                       , 2.05319162663775882187
+                       , 1.6763848301838038494
+                       , 0.68976733498510000455
+                       , 0.14810397642748007459
+                       , 0.0151986665636164571966
+                       , 5.475938084995344946e-4
+                       , 1.05075007164441684324e-9]
+
+tail q = approx (q - 5.0) tail_as tail_bs
+tail_as   = V.fromList [ 6.6579046435011037772
+                       , 5.4637849111641143699
+                       , 1.7848265399172913358
+                       , 0.29656057182850489123
+                       , 0.026532189526576123093
+                       , 0.0012426609473880784386
+                       , 2.71155556874348757815e-5
+                       , 2.01033439929228813265e-7]
+tail_bs = V.fromList [ 1.0
+                     , 0.59983220655588793769
+                     , 0.13692988092273580531
+                     , 0.0148753612908506148525
+                     , 7.868691311456132591e-4
+                     , 1.8463183175100546818e-5
+                     , 1.4215117583164458887e-7
+                     , 2.04426310338993978564e-15]
+
+{- 
 smallcase :: Double -> Double
 smallcase q =
   q *
@@ -181,6 +244,7 @@ tail r =
   1.8463183175100546818e-5
   1.4215117583164458887e-7
   2.04426310338993978564e-5
+-}
 
 ugaussianEl :: Double -> Double
 ugaussianEl p =
@@ -282,8 +346,15 @@ payoff3 :: [Double] -> [[Double]] -> Double
 payoff3 md_disc xss =
     let underlyings (i,j) = (xss !! i) !! j
 
-        goto_50 = payoff3Cond xss
-        x3309   = goto_50 || ( underlyings(366,1) <= 8288.0 )
+-- Test:  (underlyings(n,0) <= 2630.6349999999998) || 
+--        (underlyings(n,2) <= 840.0) || 
+--        (underlyings(n,1) <= 8288.0)
+--      for any n <- [0..366]
+        x3309 = any (\ [x,y,z] -> or [ x <= 2630.6349999999998 
+                                     , y <= 8288.0
+                                     , z <= 840.0])
+                                  xss
+
         goto_40 = x3309 && 
                   ( (underlyings(366,0) < 3758.05) || 
                     (underlyings(366,2) < 1200.0 ) ||
