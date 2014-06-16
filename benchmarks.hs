@@ -133,7 +133,7 @@ benchnames = [ "CalibVolDiff"
 
 -- code directories inside benchmark directories; kind-of ad-hoc standardised
 codenames = ["Orig_COpenMP", "Original"
-            , "VectAll", "VectOuters"
+            , "All_COpenMPCL", "Outer_COpenMPCL"
             , "HaskellLH"
             ] 
 
