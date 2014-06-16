@@ -39,8 +39,8 @@ BENCHMARKS =GenericPricing #CalibVolDiff #CalibGA
 
 VERSIONS_GenericPricing =GenericPricing/Orig_COpenMp GenericPricing/HaskellLH GenericPricing/CppOpenCL
 
-VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/VectAll \
-                         CalibVolDiff/Original CalibVolDiff/VectOuters
+VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/All_COpenCLMP \
+                         CalibVolDiff/Original CalibVolDiff/Outer_COpenCLMP
 VERSIONS_CalibGA        =CalibGA/CppAndGPU CalibGA/python CalibGA/OCaml
 
 include platform.mk
