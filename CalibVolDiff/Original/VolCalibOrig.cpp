@@ -293,17 +293,17 @@ int main()
 
     unsigned long int elapsed = 0;
     {   // Main Computational Kernel
-
-        mlfi_timeb  t_start, t_end;        
-        mlfi_ftime(&t_start);
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
 
     	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i) {
 	    	res[i] = value( s0, strikes[i], t, alpha, nu, beta,
                             NUM_X, NUM_Y, NUM_T );
         }
 
-        mlfi_ftime(&t_end);
-        elapsed = mlfi_diff_time(t_end,t_start);
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
 
     {   // validation and writeback of the result

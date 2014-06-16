@@ -1,7 +1,6 @@
 #define FAST_BB
 
 #include "ParseInput.h"
-#include "TimeHelper.h"
 #include "SobolGaussBB.h"
 #include "Contracts.h"
 #include <omp.h>

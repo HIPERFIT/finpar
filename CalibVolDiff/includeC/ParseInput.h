@@ -64,9 +64,6 @@ void readDataSet(   unsigned int& outer,
         atr_ok  = num_T > 0;
         assert(atr_ok && "NUM_T value less or equal to zero!!");
     }
-
-//    cout << " outer: "<< outer << " NUM_X: " << num_X 
-//         << " NUM_Y: "<< num_Y << " NUM_T: " << num_T << endl << endl;  
 }
 
 REAL* readOutput( const int& N ) {
@@ -99,8 +96,6 @@ bool validate( const REAL* res, const int& N ) {
         }
     }
 
-    //write_1Darr( res, N, "Volatility Calibration Result." );
-
     return is_valid;
 }
 
@@ -117,7 +112,7 @@ void writeStatsAndResult(   const bool& valid, const REAL* data,
     if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); } 
     else      { fprintf(stdout, "0\t\t// INVALID Result,\n"); }
 
-    fprintf(stdout, "%ld\t\t// Runtime in ms,\n", elapsed);
+    fprintf(stdout, "%ld\t\t// Runtime in microseconds,\n", elapsed);
     if(is_gpu) fprintf(stdout, "%d\t\t// GPU Threads,\n\n", P);
     else       fprintf(stdout, "%d\t\t// CPU Threads,\n\n", P);
 
