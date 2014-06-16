@@ -8,7 +8,7 @@ INCLUDES    += -I../includeC
 GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) 
 
 SOURCES_CPP =GenPricing.cpp
-HELPERS     =Contracts.h SobolGaussBB.h ../includeC/Constants.h ../includeC/Optimizations.h ../includeC/ParseInput.h ../includeC/TimeHelper.h
+HELPERS     =Contracts.h SobolGaussBB.h ../includeC/Constants.h ../includeC/Optimizations.h ../includeC/ParseInput.h
 # XXX what about the boilerplate in ../includeC ???
 OBJECTS     =GenPricing.o
 EXECUTABLE  =GenPricing

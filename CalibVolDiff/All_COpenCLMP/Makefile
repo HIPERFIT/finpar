@@ -10,23 +10,25 @@ GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) -D GPU_DEV_ID=$(GPU_DEVICE_ID) \
              -D GPU_REG_MEM=$(GPU_REG_MEM) -D GPU_GLB_MEM=$(GPU_DEVICE_MEM) \
              -D GPU_TILE=$(GPU_LOCAL_MEM_PER_TH) -D GPU_CORES=$(GPU_NUM_CORES)
 
-SOURCES_CPP =GenPricing.cpp
-HELPERS     =StructGPU.h ../includeC/Constants.h ../includeC/Optimizations.h ../includeC/ParseInput.h
-OBJECTS     =GenPricing.o  
-EXECUTABLE  =GenPricing
+SOURCES_CPP =VolCalibAll.cpp
+HELPERS     =PrepareKernels.h Vect_CPU.h Vect_GPU.h VectMain.cpp VolCalibInit.h ../includeC/Constants.h \
+              ../includeC/ParseInput.h ../includeC/DataStructConst.h ../includeC/ParPrefixUtil.h
+OBJECTS     =VolCalibAll.o  
+EXECUTABLE  =VolCalib
 
-#g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
-default: gpu
 
-.cpp.o: $(SOURCES_CPP) $(HELPERS)
-	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
+default: cpu
 
-gpu: $(OBJECTS) $(SOURCES_CPP) $(HELPERS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
+#.cpp.o: $(SOURCES_CPP) $(HELPERS)
+#	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
+#
+#$(OBJECTS)
+cpu: 
+	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
-# The CPU version is in: ../Orig_COpenMP. This folder is GPU only!
-cpu: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
+gpu: 
+	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+
 
 run_small: 
 	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt
@@ -36,10 +38,6 @@ run_medium:
 
 run_large: 
 	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
-
-
-#default: $(OBJECTS)
-#	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
 
 clean:
 	rm -f $(EXECUTABLE) $(OBJECTS) ./*.ptx ./Debug.txt

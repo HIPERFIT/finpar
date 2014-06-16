@@ -32,7 +32,7 @@ struct PrivGlobs {
 
     vector<vector<double> > myDy; 
     vector<vector<double> > myDyy;
-};
+} __attribute__ ((aligned (128)));
 
 
 
@@ -271,7 +271,7 @@ double value(   const double s0,
                 const unsigned int numY,
                 const unsigned int numT
 ) {	
-    PrivGlobs globs;
+    PrivGlobs   globs;
 	initGrid(s0,alpha,nu,t, numX, numY, numT, globs);
 	initOperator(globs.myX,globs.myDx,globs.myDxx);
 	initOperator(globs.myY,globs.myDy,globs.myDyy);
@@ -286,12 +286,33 @@ double value(   const double s0,
 	return globs.myResult[globs.myXindex][globs.myYindex];
 }
 
+double* run_CPUkernel(  
+                const unsigned int&     outer,
+                const unsigned int&     numX,
+                const unsigned int&     numY,
+                const unsigned int&     numT,
+                const double&           s0,
+                const double&           t, 
+                const double&           alpha, 
+                const double&           nu, 
+                const double&           beta,
+                const vector<double>&   strikes,
+                      vector<double>&   res
+) {
+#pragma omp parallel for default(shared) schedule(static) if(outer>4)
+    for( unsigned i = 0; i < outer; ++ i ) {
+        res[i] = value( s0, strikes[i], t, alpha, nu, beta,
+                        numX, numY, numT );
+    }
+}
+
+
 int main()
 {
     unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T; 
 	const double s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
 
-    cout<<"\nRunning Original Volatility-Calibration Benchmark"<<endl;
+    cout<<"\n// Running Original (Parallel) Volatility-Calibration Benchmark"<<endl;
 
     readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T ); 
 
@@ -300,26 +321,24 @@ int main()
 	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i)
 		strikes[i] = 0.001*i;
 
-    {    // start timer
-        mlfi_timeb  t_start, t_end;
-        unsigned long int elapsed;
-        mlfi_ftime(&t_start);
-        // the main computational kernel!
-#pragma omp parallel for default(shared) schedule(static) if(OUTER_LOOP_COUNT>4)
-    	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i) {
-	    	res[i] = value( s0, strikes[i], t, alpha, nu, beta,
-                            NUM_X, NUM_Y, NUM_T );
-        }
-        mlfi_ftime(&t_end);
+    const int Ps = get_CPU_num_threads();
 
-        //writeResult( res.data(), OUTER_LOOP_COUNT );
+    unsigned long int elapsed = 0;
+    {   // Main Computational Kernel
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
+
+        run_CPUkernel( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T, s0, t, alpha, nu, beta, strikes, res );
+
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+    }
+
+    {   // validation and writeback of the result
         bool is_valid = validate   ( res.data(), OUTER_LOOP_COUNT );
-
-        if(is_valid) {
-            elapsed = mlfi_diff_time(t_end,t_start);
-            cout<<"\nValid Result, CPU Parallel Runtime Without IO on "
-                <<get_CPU_num_threads()<<" threads : "<<elapsed<<" ms."<<endl;
-        }
+        writeStatsAndResult( is_valid, res.data(), OUTER_LOOP_COUNT, 
+                             NUM_X, NUM_Y, NUM_T, false, Ps, elapsed );        
     }
 
 	return 1;

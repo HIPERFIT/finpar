@@ -1,5 +1,4 @@
 #include "ParseInput.h"
-#include "TimeHelper.h"
 #include "StructGPU.h"
 //#include "Contracts.h"
 //#include <omp.h>

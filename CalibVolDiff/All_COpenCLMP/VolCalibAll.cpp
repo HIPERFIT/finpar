@@ -109,9 +109,6 @@ void whole_loop_nest (
 
 
 int main() {
-    mlfi_timeb  t_start, t_end;
-    unsigned long int elapsed;
-
     const REAL s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
     REAL *strikes, *res;
 
@@ -131,28 +128,30 @@ int main() {
     res     = new REAL[OUTER_LOOP_COUNT];
     allocGlobArrs();
 
-    { // Instrumenting Runtime and Validation!
-        mlfi_ftime(&t_start);
+    for(unsigned i=0; i<OUTER_LOOP_COUNT; ++i) {
+        strikes[i] = 0.001*i;
+    }
 
-        for(unsigned i=0; i<OUTER_LOOP_COUNT; ++i) {
-            strikes[i] = 0.001*i;
-        }
+    unsigned long int elapsed = 0;
+    { // Instrumenting Runtime and Validation!
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
 
         whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
 
-        mlfi_ftime(&t_end);
-    	elapsed = mlfi_diff_time(t_end,t_start);
-
-        { // validation & write back of the result
-        
-            bool is_valid   = validate   ( res, OUTER_LOOP_COUNT );
-            int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
-                                         get_CPU_num_threads() ;
-            writeStatsAndResult( is_valid, res, OUTER_LOOP_COUNT, 
-                                 NUM_X, NUM_Y, NUM_T, 
-                                 (IS_GPU!=0), num_threads, elapsed );
-            //writeResult( res, OUTER_LOOP_COUNT );
-        }
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+    }
+    
+    { // validation & write back of the result
+        bool is_valid   = validate   ( res, OUTER_LOOP_COUNT );
+        int num_threads = (IS_GPU) ? get_GPU_num_threads() : 
+                                     get_CPU_num_threads() ;
+        writeStatsAndResult( is_valid, res, OUTER_LOOP_COUNT, 
+                             NUM_X, NUM_Y, NUM_T, 
+                             (IS_GPU!=0), num_threads, elapsed );
+        //writeResult( res, OUTER_LOOP_COUNT );
     }
 
     delete[] strikes;

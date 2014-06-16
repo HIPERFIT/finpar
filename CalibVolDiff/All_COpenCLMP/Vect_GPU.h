@@ -110,9 +110,8 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
     // making command queue, building program, etc
     build_for_GPU(
             cxGPUContext, cqCommandQueue,
-            nDevice, cdDevices, cpProgram, dev_id, NULL, NULL, "CrankNicolson"
+            nDevice, cdDevices, cpProgram, dev_id, "", "", "CrankNicolson"
         );
-
 
     // allocate space for the RO and RW arrays on GPU!
     makeOclBuffers (
