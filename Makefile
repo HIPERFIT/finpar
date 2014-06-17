@@ -39,8 +39,8 @@ BENCHMARKS =GenericPricing #CalibVolDiff #CalibGA
 
 VERSIONS_GenericPricing =GenericPricing/Orig_COpenMp GenericPricing/HaskellLH GenericPricing/CppOpenCL
 
-VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/VectAll \
-                         CalibVolDiff/Original CalibVolDiff/VectOuters
+VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/All_COpenCLMP \
+                         CalibVolDiff/Original CalibVolDiff/Outer_COpenCLMP
 VERSIONS_CalibGA        =CalibGA/CppAndGPU CalibGA/python CalibGA/OCaml
 
 include platform.mk
@@ -60,7 +60,8 @@ run_all ::
 
 GenericPricing: $(VERSIONS_GenericPricing)
 
-#CalibVolDiff: $(VERSIONS_CalibVolDiff)
+CalibVolDiff: $(VERSIONS_CalibVolDiff)
+
 #CalibGA: $(VERSIONS_CalibGA)
 
 
@@ -107,7 +108,8 @@ endef
 ################## constructing the targets ################
 
 $(foreach B,$(VERSIONS_GenericPricing),$(eval $(call mkStdRule,$(B))))
+$(foreach B,$(VERSIONS_CalibVolDiff),$(eval $(call mkStdRule,$(B))))
+
 # $(foreach B,$(VERSIONS_CalibGA),$(eval $(call mkStdRule,$(B))))
-# $(foreach B,$(VERSIONS_CalibVolDiff),$(eval $(call mkStdRule,$(B))))
 
 # custom rules would go here as well
