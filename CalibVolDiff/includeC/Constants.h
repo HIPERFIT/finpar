@@ -9,21 +9,18 @@
 #if (WITH_FLOATS)
     typedef float        REAL;
     typedef unsigned int ULONG;
-    #define TILE 16
 #else
     #pragma OPENCL EXTENSION cl_khr_fp64: enable
     typedef double         REAL;
     typedef unsigned long  ULONG;
-    #define TILE 8
 #endif
 
-#define BLOCK_DIM 16
-#define logWORKGROUP_SIZE 8
-#define    WORKGROUP_SIZE 256 //256   // Put Back to 256 please!
+#define WARP            (1<<lgWARP) 
 
-#define LOG2_WARP_SIZE 5U
-#define WARP_SIZE (1U << LOG2_WARP_SIZE)
-
+#define BLOCK_DIM           16
+#define logWORKGROUP_SIZE   8
+#define    WORKGROUP_SIZE   (1<<logWORKGROUP_SIZE) 
+    
 typedef struct {
     REAL   nu;
     REAL   alpha;

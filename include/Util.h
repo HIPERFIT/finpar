@@ -53,8 +53,18 @@ int get_CPU_num_threads() {
     return procs;
 }
 
-int get_GPU_num_threads() {
-    return 1024;
+//int get_GPU_num_threads() {
+//    return 1024;
+//}
+
+bool is_pow2(int atr_val) {
+    int x = 1;
+
+    for(int i = 0; i < 31; i++) {
+        if(x == atr_val) return true;
+        x = (x << 1);
+    }
+    return false;
 }
 
 #endif //GENERIC_UTILITIES

@@ -1,30 +1,35 @@
-OPENCL_ROOTDIR    ?= /usr/local/cuda
-OPENCL_LIBDIR     := $(OPENCL_ROOTDIR)/lib64
-OPENCL_INCDIR	  ?= $(OPENCL_ROOTDIR)/include
+include ../../setup.mk
 
-CXX        = g++
-INCLUDES   = -I$(CUDA_INCDIR) -I. -I../../include
-LIB        = -L$(OPENCL_LIBDIR) -L/usr/lib/ -lOpenCL
-CXXFLAGS   = -O3 -ffast-math -fopenmp
+ifndef ($(HAVE_GPU))
+include ../../platform.mk
+endif
 
-SOURCES_CPP =VectMain.cpp
-OBJECTS     =VectMain.o  
-EXECUTABLE  =CalibVol
+INCLUDES  += -I../includeC
+GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) -D GPU_DEV_ID=$(GPU_DEVICE_ID) \
+             -D GPU_LOC_MEM=$(GPU_LOCAL_MEM) -D GPU_CONST_MEM=$(GPU_CONST_MEM) \
+             -D GPU_REG_MEM=$(GPU_REG_MEM) -D GPU_GLB_MEM=$(GPU_DEVICE_MEM) \
+             -D GPU_TILE=$(GPU_LOCAL_MEM_PER_TH) -D GPU_CORES=$(GPU_NUM_CORES)
 
-#g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
+SOURCES_CPP =VolCalibOuter.cpp
+HELPERS     =PrepareKernels.h Vect_CPU.h Vect_GPU.h VolCalibInit.h ../includeC/Constants.h \
+              ../includeC/ParseInput.h ../includeC/DataStructConst.h ../includeC/ParPrefixUtil.h
+OBJECTS     =VolCalibOuter.o  
+EXECUTABLE  =VolCalib
 
 
-.cpp.o:
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+default: cpu
+
+
+#.cpp.o:
+#	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+
+#$(OBJECTS)
+cpu: 
+	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(GPU_OPTS) $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
 gpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(GPU_OPTS) $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
-cpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
-
-default: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
 run_small: 
 	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt
@@ -35,8 +40,8 @@ run_medium:
 run_large: 
 	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
 
-#default: $(OBJECTS)
-#	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
-
 clean:
-	rm -f $(EXECUTABLE) $(OBJECTS)
+	rm -f $(EXECUTABLE) $(OBJECTS) ./*.ptx ./Debug.txt
+	@# clean nVidia compiler cache
+	rm -rf $(HOME)/.nv/ComputeCache/*
+

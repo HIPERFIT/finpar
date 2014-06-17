@@ -2,6 +2,7 @@
 #include <cmath>
 
 typedef double REAL;
+#define WORKGROUP_SIZE  512 
 
 #include "Util.h"
 #include "../includeC/ParseInput.h"

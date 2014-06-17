@@ -32,20 +32,20 @@ inline void tridag_seq(
     y[0] = d[0];
     u[0] = b[0];
 
-    UB = n << LOG2_WARP_SIZE;
-    for(i=WARP_SIZE; i<UB; i+=WARP_SIZE) {
-        beta = a[i] / u[i-WARP_SIZE];
+    UB = n << lgWARP;
+    for(i=WARP; i<UB; i+=WARP) {
+        beta = a[i] / u[i-WARP];
 
-        u[i] = b[i] - beta*c[i-WARP_SIZE];
-        y[i] = d[i] - beta*y[i-WARP_SIZE];
+        u[i] = b[i] - beta*c[i-WARP];
+        y[i] = d[i] - beta*y[i-WARP];
     }
 
-    UB -= WARP_SIZE;
+    UB -= WARP;
     y[UB] = y[UB] / u[UB];
 
-    UB = (n-2) << LOG2_WARP_SIZE;
-    for(i=UB; i>=0; i-=WARP_SIZE) {
-        y[i] = (y[i] - c[i]*y[i+WARP_SIZE]) / u[i];
+    UB = (n-2) << lgWARP;
+    for(i=UB; i>=0; i-=WARP) {
+        y[i] = (y[i] - c[i]*y[i+WARP]) / u[i];
     }
 }
 
@@ -87,9 +87,9 @@ __kernel void nordea_kernel_x (
     }
 
     { // adjust arrays: except for `res_arr' and `v' which are accesses as `v[i,j]', hence memory is already coalesced!
-        unsigned int offset =  (get_global_id(0)>>LOG2_WARP_SIZE); //<<LOG2_WARP_SIZE );
-        offset *= ( ro_scals->NUM_X << LOG2_WARP_SIZE );
-        offset += ( get_global_id(0) & (WARP_SIZE-1) );
+        unsigned int offset =  (get_global_id(0)>>lgWARP); 
+        offset *= ( ro_scals->NUM_X << lgWARP );
+        offset += ( get_global_id(0) & (WARP-1) );
 
         a       += offset;
         b       += offset;
@@ -108,8 +108,8 @@ __kernel void nordea_kernel_x (
     }
 
 
-    ind_rev  = (get_global_id(0)/ro_scals->NUM_Y)*ro_scals->NUM_XY + (get_global_id(0) & (ro_scals->NUM_Y - 1)); // should step with `NUM_Y'
-    for( i=0, ind=0; i<ro_scals->NUM_X; i++, ind+=WARP_SIZE, ind_rev+=ro_scals->NUM_Y ) {
+    ind_rev  = (get_global_id(0)/ro_scals->NUM_Y)*ro_scals->NUM_XY + (get_global_id(0) & (ro_scals->NUM_Y - 1)); 
+    for( i=0, ind=0; i<ro_scals->NUM_X; i++, ind+=WARP, ind_rev+=ro_scals->NUM_Y ) {
         myDy_el.w = 0.0;
 
         { // comput cur_myMy and cur_myVar
@@ -181,9 +181,9 @@ __kernel void nordea_kernel_y (
     }
 
     { // adjust arrays! except for `u' whose access pattern is `u[j,i]' which is already coalesced!
-        unsigned int offset = (get_global_id(0)>>LOG2_WARP_SIZE); //<<LOG2_WARP_SIZE );
-        offset *= ( ro_scals->NUM_Y << LOG2_WARP_SIZE );
-        offset += ( get_global_id(0) & (WARP_SIZE-1) );
+        unsigned int offset = (get_global_id(0)>>lgWARP); 
+        offset *= ( ro_scals->NUM_Y << lgWARP );
+        offset += ( get_global_id(0) & (WARP-1) );
 
         a       += offset;
         b       += offset;
@@ -193,7 +193,7 @@ __kernel void nordea_kernel_y (
     }
 
     ind_rev  = (get_global_id(0)/ro_scals->NUM_X)*ro_scals->NUM_XY + (get_global_id(0) & (ro_scals->NUM_X - 1)); // should step with `NUM_Y*32'
-    for( i=0, ind=0; i<ro_scals->NUM_Y; i++, ind+=WARP_SIZE, ind_rev+=ro_scals->NUM_X) {
+    for( i=0, ind=0; i<ro_scals->NUM_Y; i++, ind+=WARP, ind_rev+=ro_scals->NUM_X) {
         unsigned int im3 = REAL3_CT*i;
 
         a[ind] =              0.0 - 0.5*(cur_myMu*myDy[im3  ] + 0.5*cur_myVar*myDyy[im3  ]); // a[i*NUM_Y+j] = ...
@@ -213,9 +213,8 @@ __kernel void nordea_kernel_y (
 /*********************************************/
 
 // This kernel is optimized to ensure all global reads and writes are coalesced,
-// and to avoid bank conflicts in shared memory.  This kernel is up to 11x faster
-// than the naive kernel below.  Note that the shared memory array is sized to 
-// (BLOCK_DIM+1)*BLOCK_DIM.  This pads each row of the 2D block in shared memory 
+// and to avoid bank conflicts in shared memory.  The shared memory array is sized  
+// to (BLOCK_DIM+1)*BLOCK_DIM.  This pads each row of the 2D block in shared memory 
 // so that bank conflicts do not occur when threads address the array column-wise.
 inline void transposeMatrix(
         __global REAL *odata, 
@@ -258,7 +257,7 @@ __kernel void transpose(
         __global REAL *idata, 
         //int offset, 
         unsigned int width, 
-        unsigned int height, 
+        unsigned int height,  
         __local REAL* block)
 {
     transposeMatrix( odata, idata, width, height, block );
@@ -275,8 +274,6 @@ __kernel void transposeUpdateScalars(
         __constant REAL*        timeline
 ) {
     transposeMatrix( odata, idata, width, height, block );
-    //odata[get_global_id(2)*get_global_size(1)*get_global_size(0) + get_global_id(1)*get_global_size(0) + get_global_id(0)] 
-    //    = 33.33;
 
     // update time-loop-variant scalars
     if(get_global_id(2) + get_global_id(1) + get_global_id(0) == 0) {

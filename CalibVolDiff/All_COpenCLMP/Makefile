@@ -11,7 +11,7 @@ GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) -D GPU_DEV_ID=$(GPU_DEVICE_ID) \
              -D GPU_TILE=$(GPU_LOCAL_MEM_PER_TH) -D GPU_CORES=$(GPU_NUM_CORES)
 
 SOURCES_CPP =VolCalibAll.cpp
-HELPERS     =PrepareKernels.h Vect_CPU.h Vect_GPU.h VectMain.cpp VolCalibInit.h ../includeC/Constants.h \
+HELPERS     =PrepareKernels.h Vect_CPU.h Vect_GPU.h VolCalibInit.h ../includeC/Constants.h \
               ../includeC/ParseInput.h ../includeC/DataStructConst.h ../includeC/ParPrefixUtil.h
 OBJECTS     =VolCalibAll.o  
 EXECUTABLE  =VolCalib
@@ -21,13 +21,13 @@ default: cpu
 
 #.cpp.o: $(SOURCES_CPP) $(HELPERS)
 #	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
-#
+
 #$(OBJECTS)
 cpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+	$(CXX) $(CXXFLAGS) -D IS_GPU=0 $(GPU_OPTS) $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
 gpu: 
-	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
+	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(GPU_OPTS) $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
 
 run_small: 

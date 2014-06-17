@@ -21,16 +21,6 @@ using std::endl;
 
 const float EPS = 0.00001;
 
-bool is_pow2(int atr_val) {
-    int x = 1;
-
-    for(int i = 0; i < 31; i++) {
-        if(x == atr_val) return true;
-        x = (x << 1);
-    }
-    return false;
-}
-
 /***********************************/
 /********** READ DATA SET **********/
 /***********************************/
@@ -55,10 +45,10 @@ void readDataSet(   unsigned int& outer,
         atr_ok  = outer > 0;
         assert(atr_ok && "Outer loop count less than 0!");
 
-        atr_ok  = (num_X > 0) && (num_X <= 512) && is_pow2(num_X); 
+        atr_ok  = (num_X > 0) && (num_X <= WORKGROUP_SIZE) && is_pow2(num_X); 
         assert(atr_ok && "Illegal NUM_X value!");
 
-        atr_ok  = (num_Y > 0) && (num_Y <= 512) && is_pow2(num_Y); 
+        atr_ok  = (num_Y > 0) && (num_Y <= WORKGROUP_SIZE) && is_pow2(num_Y); 
         assert(atr_ok && "Illegal NUM_X value!");
 
         atr_ok  = num_T > 0;

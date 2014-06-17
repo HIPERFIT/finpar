@@ -1,7 +1,8 @@
 #include <vector>
 #include <cmath>
 
-#define WITH_FLOATS 0
+#define WITH_FLOATS     0
+#define WORKGROUP_SIZE  512 
 
 typedef double REAL;
 

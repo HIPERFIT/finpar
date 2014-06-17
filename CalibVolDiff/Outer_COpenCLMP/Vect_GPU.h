@@ -8,6 +8,26 @@
 //// OpenCL internals!
 ////////////////////////////////////////////////////////////
 
+void verifyEnoughResources(cl_device_id device) {
+    cl_ulong glob_mem_size;
+    clGetDeviceInfo(device,CL_DEVICE_GLOBAL_MEM_SIZE,sizeof(glob_mem_size),&glob_mem_size,NULL);
+    { // check global mem matches the user-declared one
+        const size_t USER_MEM = ((size_t)GPU_GLB_MEM) << 30;
+        const size_t ub       = static_cast<size_t>( USER_MEM * 101.0 / 100.0 );
+        const size_t lb       = static_cast<size_t>( USER_MEM *  99.0 / 100.0 );
+        if ( !(glob_mem_size >= lb && glob_mem_size <= ub) ) {
+            fprintf(stderr, "WARNING! Querried GPU global memory %lu DIFFERS from what user declared: [%ld,%ld]!\n", 
+                             glob_mem_size, lb, ub);
+            glob_mem_size = static_cast<cl_ulong>(USER_MEM);
+            fprintf(stderr, "Using user-declared size for global memory: %lu\n", glob_mem_size);
+        }
+    }
+
+    cl_ulong glob_mem_required = 8 * OUTER_LOOP_COUNT * NUM_X * NUM_Y * sizeof(REAL);
+    assert( glob_mem_required <= glob_mem_size && "Not Enough Global Memory. A possible fix is to strip-mine all kernels.\n" );
+    //fprintf(stderr, "GPU global memory: %lu, needed: %lu bytes\n", glob_mem_size, glob_mem_required);
+}
+
 void makeOclBuffers (
         cl_context          cxGPUContext,
         cl_command_queue&   cqCommandQueue,
@@ -90,7 +110,9 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
     cl_device_id* cdDevices;                        // OpenCL device list
     cl_program cpProgram;                           // OpenCL program
     GPUkernels  kernels;                            // OpenCL kernel
-    unsigned int dev_id = 0;
+    unsigned int dev_id = GPU_DEV_ID;
+
+    assert(GPU_DEV_ID >= 0 && "GPU DEVICE ID < 0 !\n");
 
     { // initialize the loop-variant scalars!
         ro_scal.t_ind      = NUM_T - 2;
@@ -98,12 +120,17 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
         ro_scal.timeline_i = cpu_arrs.timeline[ro_scal.t_ind];
     }
 
-    // making command queue, building program, etc
-    build_for_GPU(
+    { // making command queue, building program, etc
+        char  compile_opts[128];
+        sprintf( compile_opts, "-D lgWARP=%d", lgWARP );
+
+        build_for_GPU(
             cxGPUContext, cqCommandQueue,
-            nDevice, cdDevices, cpProgram, dev_id, NULL, NULL, "CrankNicolson"
+            nDevice, cdDevices, cpProgram, dev_id, compile_opts, "", "CrankNicolson"
         );
 
+        verifyEnoughResources(cdDevices[dev_id]);
+    }
 
     // allocate space for the RO and RW arrays on GPU!
     makeOclBuffers (
@@ -129,22 +156,6 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
                 );
         oclCheckError(ciErr, CL_SUCCESS);
 
-#if 0
-        { // transpose res_arr!
-        	REAL* res_arr = cpu_arrs.res_arr, *y = cpu_arrs.y;
-        	for( int k=0; k<OUTER_LOOP_COUNT; ++k ) {  // segmented transpose followed by copy out!
-        		const unsigned int glb_ind = k*NUM_X*NUM_Y;
-
-        		for(int i=0; i<NUM_X; i++) {
-        			for(int j=0; j<NUM_Y; j++) {
-        				y[glb_ind + j*NUM_X + i] = res_arr[glb_ind + i*NUM_Y + j];
-        			}
-        		}
-
-        		for(int i=0; i<NUM_X*NUM_Y; i++) res_arr[glb_ind + i] = y[glb_ind + i];
-        	}
-        }
-#endif
         // RELEASE ALL GPU RESOURCES
         release_all_GPU_resources (
                 cqCommandQueue[dev_id], cxGPUContext, cpProgram, cdDevices, ocl_arrs, kernels

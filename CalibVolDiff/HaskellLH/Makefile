@@ -20,8 +20,10 @@ run_small: $(EXECUTABLE)
 run_medium:  $(EXECUTABLE)
 	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
 
+# the Large dataset runs out of memory on the current Haskell implementation!
 run_large:  $(EXECUTABLE)
-	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
+	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE)
+#	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE)
 
 
 #-------------------------------------------------------------------------

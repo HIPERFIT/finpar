@@ -83,7 +83,6 @@ inline REAL4 load4(unsigned int ind, volatile __local REAL4* cache) {
 /**************************************************************************/
 /*********** PREPARE FOR TRIDAG X *****************************************/
 /**************************************************************************/
-
 __kernel void prepare_tridag_x (
         /*** Read-Only Scalars ***/
         __global RWScalars*   ro_scals,   // __constant
@@ -125,8 +124,6 @@ __kernel void prepare_tridag_x (
                                 (get_global_id(1) != get_global_size(1)-1) ? res_arr[ind + get_global_size(0)] : 0.0
                             );
  
-        //myDy_elem  = myDy[ get_global_id(1) ]; 
-        //myDyy_elem = myDyy[ get_global_id(1) ];
         myDy_elem  = (REAL3)( myDy[get_global_id(1)<<2], myDy[ (get_global_id(1)<<2)+1], myDy[(get_global_id(1)<<2)+2] );
         myDyy_elem = (REAL3)( myDyy[get_global_id(1)<<2], myDyy[(get_global_id(1)<<2)+1], myDyy[(get_global_id(1)<<2)+2] );
 
@@ -135,7 +132,6 @@ __kernel void prepare_tridag_x (
         tmp += myDy_elem.x + myDy_elem.y + myDy_elem.z;
 
         v[glob_ind + get_global_id(0)*get_global_size(1) + get_global_id(1)] = tmp;
-        //v[ind] = tmp;
     }
 
     glob_ind = get_local_id(2)*get_local_size(1)*get_local_size(0) + get_local_id(1)*get_local_size(0) + get_local_id(0);
@@ -174,18 +170,18 @@ __kernel void prepare_tridag_x (
         tmp += myDyy_elem.x + myDyy_elem.y + myDyy_elem.z;
     }    
 
-    u[ind] = tmp; //u[j*NUM_X + i] = tmp1 + tmp2; //u[j][i] = tmp1 + tmp2;
+    u[ind] = tmp; 
 
     
 
-    tmp = ro_scals->dtInv - myDy_elem.y;      //b[ind] = tmp;    // COMMENT THIS: i.e., b[ind] = tmp;!!!!
+    tmp = ro_scals->dtInv - myDy_elem.y;  
 
     // third loop 
     if( get_global_id(0) > 0 ) { 
         scan_tmp[ind] = (REAL4) ( tmp, myDy_elem.x * c[ind-1], 1.0, 0.0 );
     } else { // i == get_global_id(0) == 0
         y[ind] = tmp;    // = b [ind]
-        scan_tmp[ind] = (REAL4) ( tmp, 0.0, 0.0, tmp ); //(REAL4) ( 1.0, 0.0, 0.0, 1.0 );
+        scan_tmp[ind] = (REAL4) ( tmp, 0.0, 0.0, tmp ); 
     }
 } 
 
@@ -282,8 +278,8 @@ inline REAL4 matmult2(REAL4 a, REAL4 b) {
 
  
 
-#define LOG2_WARP_SIZE 5U
-#define WARP_SIZE (1U << LOG2_WARP_SIZE)
+//#define LOG2_WARP_SIZE 5U
+//#define WARP_SIZE (1U << LOG2_WARP_SIZE)
  
 #if WITH_INTERLEAVED_BANKS4
 inline REAL4 warpScanInclMatMult(REAL4 idata, volatile __local REAL4 *l_Data4, uint size){
@@ -298,8 +294,9 @@ inline REAL4 warpScanInclMatMult(REAL4 idata, volatile __local REAL4 *l_Data4, u
     if(size >=  4) { REAL4 tmp = matmult2( load4(pos, l_Data),load4(pos-2, l_Data) ); store4(tmp, pos, l_Data); }
     if(size >=  8) { REAL4 tmp = matmult2( load4(pos, l_Data),load4(pos-4, l_Data) ); store4(tmp, pos, l_Data); }
     if(size >= 16) { REAL4 tmp = matmult2( load4(pos, l_Data),load4(pos-8, l_Data) ); store4(tmp, pos, l_Data); }
+#if WARP == 32
     if(size >= 32) { REAL4 tmp = matmult2( load4(pos, l_Data),load4(pos-16,l_Data) ); store4(tmp, pos, l_Data); }
-
+#endif
     return load4(pos, l_Data);
 }
 #else
@@ -309,12 +306,13 @@ inline REAL4 warpScanInclMatMult(REAL4 idata, volatile __local REAL4 *l_Data, ui
     pos += size;
     l_Data[pos] = idata;  
 
-    if(size >=  2) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-1] );  //l_Data[pos] += l_Data[pos -  1];
-    if(size >=  4) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-2] );  //l_Data[pos] += l_Data[pos -  2];
-    if(size >=  8) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-4] );   //l_Data[pos] += l_Data[pos -  4];
-    if(size >= 16) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-8] );   //l_Data[pos] += l_Data[pos -  8];
-    if(size >= 32) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-16]);  //l_Data[pos] += l_Data[pos - 16];
-
+    if(size >=  2) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-1] );  
+    if(size >=  4) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-2] );  
+    if(size >=  8) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-4] );  
+    if(size >= 16) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-8] );  
+#if WARP == 32
+    if(size >= 32) l_Data[pos] = matmult2( l_Data[pos], l_Data[pos-16]);  
+#endif
     return l_Data[pos];
 }
 #endif
@@ -322,32 +320,32 @@ inline REAL4 warpScanInclMatMult(REAL4 idata, volatile __local REAL4 *l_Data, ui
 //Vector scan: the array to be scanned is stored
 //in work-item private memory as uint4
 inline REAL4 scanMatMultInclLocal(REAL4 idata4, __local REAL4 *l_Data, uint size){
-    if(size > WARP_SIZE){
+    if(size > WARP){
         //Bottom-level inclusive warp scan
-        REAL4 warpResult = warpScanInclMatMult(idata4, l_Data, WARP_SIZE);
+        REAL4 warpResult = warpScanInclMatMult(idata4, l_Data, WARP);
  
         //Save top elements of each warp for exclusive warp scan
         //sync to wait for warp scans to complete (because l_Data is being overwritten)
         barrier(CLK_LOCAL_MEM_FENCE);
-        if( (get_local_id(0) & (WARP_SIZE - 1)) == (WARP_SIZE - 1) ) {
+        if( (get_local_id(0) & (WARP - 1)) == (WARP - 1) ) {
 #if WITH_INTERLEAVED_BANKS4
-            store4(warpResult, get_local_id(0) >> LOG2_WARP_SIZE, (__local REAL*)l_Data);
+            store4(warpResult, get_local_id(0) >> lgWARP, (__local REAL*)l_Data);
 #else
-            l_Data[get_local_id(0) >> LOG2_WARP_SIZE] = warpResult;
+            l_Data[get_local_id(0) >> lgWARP] = warpResult;
 #endif
         }
         //wait for warp scans to complete
         barrier(CLK_LOCAL_MEM_FENCE); 
      
-        if( get_local_id(0) < (WORKGROUP_SIZE / WARP_SIZE) ){
+        if( get_local_id(0) < (WORKGROUP_SIZE >> lgWARP) ){
 #if WITH_INTERLEAVED_BANKS4
             REAL4 val = load4(get_local_id(0), (__local REAL*)l_Data);    
-            store4( warpScanInclMatMult(val, l_Data, size >> LOG2_WARP_SIZE), get_local_id(0), (__local REAL*)l_Data);
+            store4( warpScanInclMatMult(val, l_Data, size >> lgWARP), get_local_id(0), (__local REAL*)l_Data);
 #else
             //grab top warp elements
             REAL4 val = l_Data[get_local_id(0)];
             //calculate inclusive scan and write back to shared memory
-            l_Data[get_local_id(0)] = warpScanInclMatMult(val, l_Data, size >> LOG2_WARP_SIZE);
+            l_Data[get_local_id(0)] = warpScanInclMatMult(val, l_Data, size >> lgWARP);
 #endif
         }
     
@@ -355,12 +353,12 @@ inline REAL4 scanMatMultInclLocal(REAL4 idata4, __local REAL4 *l_Data, uint size
         barrier(CLK_LOCAL_MEM_FENCE);
 
         //if( (get_local_id(0) >> LOG2_WARP_SIZE) > 0 )
-        if( ( (get_local_id(0) & (size-1)) >> LOG2_WARP_SIZE ) > 0 ) {
+        if( ( (get_local_id(0) & (size-1)) >> lgWARP ) > 0 ) {
 #if WITH_INTERLEAVED_BANKS4
-            REAL4 tmp = load4( (get_local_id(0) >> LOG2_WARP_SIZE) - 1,   (__local REAL*)l_Data );   
+            REAL4 tmp = load4( (get_local_id(0) >> lgWARP) - 1,   (__local REAL*)l_Data );   
             warpResult = matmult2( warpResult, tmp );
 #else
-            warpResult = matmult2( warpResult, l_Data[ (get_local_id(0) >> LOG2_WARP_SIZE) - 1] );
+            warpResult = matmult2( warpResult, l_Data[ (get_local_id(0) >> lgWARP) - 1] );
 #endif
         }
 
@@ -383,7 +381,7 @@ void scanMatMultIncl(
     REAL4 odata4  = scanMatMultInclLocal( idata4, l_Data, size );
 
     //Write back
-    data[get_global_id(0)] = odata4; //(REAL4)(33.33,33.33,33.33,33.33);//odata4;
+    data[get_global_id(0)] = odata4; 
 }
 
 
@@ -411,8 +409,9 @@ inline REAL2 warpScanInclLinFunComp(REAL2 idata, volatile __local REAL2 *l_Data2
     if(size >=  4) { REAL2 tmp = linfuncomp( load2(pos, l_Data),load2(pos-2, l_Data) ); store2(tmp, pos, l_Data); }
     if(size >=  8) { REAL2 tmp = linfuncomp( load2(pos, l_Data),load2(pos-4, l_Data) ); store2(tmp, pos, l_Data); }
     if(size >= 16) { REAL2 tmp = linfuncomp( load2(pos, l_Data),load2(pos-8, l_Data) ); store2(tmp, pos, l_Data); }
+#if WARP == 32
     if(size >= 32) { REAL2 tmp = linfuncomp( load2(pos, l_Data),load2(pos-16,l_Data) ); store2(tmp, pos, l_Data); }
-
+#endif
     return load2(pos, l_Data);
 }
 #else
@@ -426,52 +425,53 @@ inline REAL2 warpScanInclLinFunComp(REAL2 idata, volatile __local REAL2 *l_Data,
     if(size >=  4) l_Data[pos] = linfuncomp( l_Data[pos], l_Data[pos-2] );  
     if(size >=  8) l_Data[pos] = linfuncomp( l_Data[pos], l_Data[pos-4] );   
     if(size >= 16) l_Data[pos] = linfuncomp( l_Data[pos], l_Data[pos-8] );
+#if WARP == 32
     if(size >= 32) l_Data[pos] = linfuncomp( l_Data[pos], l_Data[pos-16]);
-
+#endif
     return l_Data[pos];
 }
 #endif
 
 inline REAL2 scanLinFunCompInclLocal(REAL2 idata4, __local REAL2 *l_Data, uint size){
-    if(size > WARP_SIZE){
+    if(size > WARP){
         //Bottom-level inclusive warp scan
-        REAL2 warpResult = warpScanInclLinFunComp(idata4, l_Data, WARP_SIZE);
+        REAL2 warpResult = warpScanInclLinFunComp(idata4, l_Data, WARP);
 
         //Save top elements of each warp for exclusive warp scan
         //sync to wait for warp scans to complete (because l_Data is being overwritten)
         barrier(CLK_LOCAL_MEM_FENCE);
-        if( (get_local_id(0) & (WARP_SIZE - 1)) == (WARP_SIZE - 1) ) {
+        if( (get_local_id(0) & (WARP - 1)) == (WARP - 1) ) { 
 #if WITH_INTERLEAVED_BANKS2
-            store2(warpResult, get_local_id(0) >> LOG2_WARP_SIZE, (__local REAL*)l_Data);
+            store2(warpResult, get_local_id(0) >> lgWARP, (__local REAL*)l_Data);
 #else
-            l_Data[get_local_id(0) >> LOG2_WARP_SIZE] = warpResult;
+            l_Data[get_local_id(0) >> lgWARP] = warpResult;
 #endif
         }
  
         //wait for warp scans to complete
         barrier(CLK_LOCAL_MEM_FENCE);
   
-        if( get_local_id(0) < (WORKGROUP_SIZE / WARP_SIZE) ){
+        if( get_local_id(0) < (WORKGROUP_SIZE / WARP) ){
 #if WITH_INTERLEAVED_BANKS2
             REAL2 val = load2(get_local_id(0), (__local REAL*)l_Data);    
-            store2( warpScanInclLinFunComp(val, l_Data, size >> LOG2_WARP_SIZE), get_local_id(0), (__local REAL*)l_Data);
+            store2( warpScanInclLinFunComp(val, l_Data, size >> lgWARP), get_local_id(0), (__local REAL*)l_Data);
 #else
             //grab top warp elements
             REAL2 val = l_Data[get_local_id(0)];
             //calculate inclusive scan and write back to shared memory
-            l_Data[get_local_id(0)] = warpScanInclLinFunComp(val, l_Data, size >> LOG2_WARP_SIZE);
+            l_Data[get_local_id(0)] = warpScanInclLinFunComp(val, l_Data, size >> lgWARP);
 #endif
         }
 
         //return updated warp scans with exclusive scan results
         barrier(CLK_LOCAL_MEM_FENCE);
 
-        if( ( (get_local_id(0) & (size-1)) >> LOG2_WARP_SIZE ) > 0 ) {
+        if( ( (get_local_id(0) & (size-1)) >> lgWARP ) > 0 ) {
 #if WITH_INTERLEAVED_BANKS2
-            REAL2 tmp = load2( (get_local_id(0) >> LOG2_WARP_SIZE) - 1,   (__local REAL*)l_Data );   
+            REAL2 tmp = load2( (get_local_id(0) >> lgWARP) - 1,   (__local REAL*)l_Data );   
             warpResult = linfuncomp( warpResult, tmp );
 #else
-            warpResult = linfuncomp( warpResult, l_Data[ (get_local_id(0) >> LOG2_WARP_SIZE) - 1] );
+            warpResult = linfuncomp( warpResult, l_Data[ (get_local_id(0) >> lgWARP) - 1] );
 #endif
         }
         return warpResult;
@@ -621,9 +621,8 @@ __kernel void post_bwd_fun_comp (
 /*********************************************/
 
 // This kernel is optimized to ensure all global reads and writes are coalesced,
-// and to avoid bank conflicts in shared memory.  This kernel is up to 11x faster
-// than the naive kernel below.  Note that the shared memory array is sized to 
-// (BLOCK_DIM+1)*BLOCK_DIM.  This pads each row of the 2D block in shared memory 
+// and to avoid bank conflicts in shared memory.  The shared memory array is sized  
+// to (BLOCK_DIM+1)*BLOCK_DIM.  This pads each row of the 2D block in shared memory 
 // so that bank conflicts do not occur when threads address the array column-wise.
 inline void transposeMatrix(
         __global REAL *odata, 
@@ -723,26 +722,17 @@ inline void tridag_inline_local (
     { // SCAN with matrix multiplication
         __local REAL4*  l_data = (__local REAL4*)cache_tmp;
 
-        //Load data -- moved as a parameter!
-        //REAL4 data4 = scan_tmp4[ get_global_id(0) ];
-
         //Calculate exclusive scan
         data4  = scanMatMultInclLocal( data4, l_data, SIZE );
         barrier(CLK_LOCAL_MEM_FENCE); // IMPORTANT!
-
-        // compute `u[get_global_id(0)]`, i.e., `u[ind]` in cache_tmp
-        //b0   = u[first_id]; //b[ ind ];
-        //b0 = scan_tmp4[first_id].x;
         
         REAL  data = map_matmult( data4, b0 );
         cache_tmp[get_local_id(0)] = data;
         barrier(CLK_LOCAL_MEM_FENCE);
-        //u[get_global_id(0)] = data;
     }
 
     { // Forward scan with linear function composition
         REAL2 data2;
-        //d0 = d[first_id];
         // prepare for scan
         if(get_global_id(0) == first_id) {
             //y[get_global_id(0)] = d0; //d[get_global_id(0)];  // y[ind] = d[ind];
@@ -866,7 +856,7 @@ void nordea_kernel_x (
         myres_elem = (REAL3)( myDyy[ind_y<<2], myDyy[(ind_y<<2)+1], myDyy[(ind_y<<2)+2] );
         myD_elem   = (REAL3)( myDy [ind_y<<2], myDy [(ind_y<<2)+1], myDy [(ind_y<<2)+2] );
 
-        myD_elem   = cur_myMu*myD_elem + 0.5*cur_myVar*myres_elem; // i.e., myD_elem = cur_myMu*myDy[ ind_y ] + 0.5*cur_myVar * myDyy[ ind_y ];
+        myD_elem   = cur_myMu*myD_elem + 0.5*cur_myVar*myres_elem; 
 
         myres_elem = (REAL3)(   (ind_y != 0) ? res_arr[get_global_id(0) - ro_scals->NUM_X] : 0.0, 
                                  res_arr[get_global_id(0)], 
@@ -876,7 +866,6 @@ void nordea_kernel_x (
         myD_elem *= myres_elem;
         tmp += myD_elem.x + myD_elem.y + myD_elem.z;
 
-        //v[glob_ind + get_global_id(0)*get_global_size(1) + get_global_id(1)] = tmp;
 #if TRANSPOSE_UV
         v[ get_global_id(0) ] = tmp;
 #else

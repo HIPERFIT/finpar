@@ -1,10 +1,10 @@
 #include "../../include/Util.h"
 #include "../includeC/Constants.h"
 #include "../includeC/DataStructConst.h"
-#include "../includeC/ParseInput.h"
 #include "VolCalibInit.h"
 #include "Vect_CPU.h"
 #include "Vect_GPU.h"
+#include "../includeC/ParseInput.h"
 
 
 void whole_loop_nest (
@@ -16,14 +16,12 @@ void whole_loop_nest (
         const REAL  nu,
         const REAL  beta
 ) {
-    // loop index
     unsigned int i;
-    //const unsigned int NUM_XY = NUM_X*NUM_Y;
+    unsigned long int elapsed;
 
     // arrays:
     REAL *a = NULL, *b = NULL, *c = NULL,
-         *y = NULL, *u = NULL, *v = NULL,
-         *scan_tmp = NULL;
+         *y = NULL, *u = NULL, *v = NULL;
 
     { // allocate arrays
         a = new REAL __attribute__ ((aligned (32))) [OUTER_LOOP_COUNT*NUM_XY];
@@ -33,11 +31,9 @@ void whole_loop_nest (
         y = new REAL[OUTER_LOOP_COUNT*NUM_XY];
         u = new REAL[OUTER_LOOP_COUNT*NUM_XY];
         v = new REAL[OUTER_LOOP_COUNT*NUM_XY];
-
-        scan_tmp = new REAL[4*OUTER_LOOP_COUNT*NUM_XY];
     }
 
-    // parallel!
+    // init
     whole_loop_nest_init ( s0, t, alpha, nu, beta );
 
     // parallel!
@@ -46,8 +42,8 @@ void whole_loop_nest (
         setPayoff_expanded(strikes[i], res_arr);
     }
 
-    if( IS_GPU > 0 ) {
-        RWScalars         ro_scal;
+    if ( IS_GPU > 0 ) {
+    	RWScalars         ro_scal;
         NordeaArrays      cpu_arrs;
         oclNordeaArrays   ocl_arrs;
 
@@ -57,7 +53,6 @@ void whole_loop_nest (
             cpu_arrs.timeline = myTimeline;
             cpu_arrs.a = a; cpu_arrs.b = b; cpu_arrs.c = c;
             cpu_arrs.y = y; cpu_arrs.u = u; cpu_arrs.v = v;
-            cpu_arrs.tmp = scan_tmp;
             cpu_arrs.res_arr  = &myResArr[0];
         }
 
@@ -67,27 +62,36 @@ void whole_loop_nest (
         }
 
         { // SAFETY CHECK!
-            bool is_safe =  (NUM_X <= WORKGROUP_SIZE) && (NUM_Y <= WORKGROUP_SIZE) &&
-                            is_pow2(NUM_X) && is_pow2(NUM_Y) &&
-                            (WORKGROUP_SIZE % NUM_X == 0) && (WORKGROUP_SIZE % NUM_Y == 0);
+            bool is_safe =  ( (OUTER_LOOP_COUNT*NUM_X) % NUM_Y == 0          ) &&
+            				( (OUTER_LOOP_COUNT*NUM_Y) % NUM_X == 0          ) &&
+              				( (OUTER_LOOP_COUNT*NUM_X) % WORKGROUP_SIZE == 0 ) &&
+              				( (OUTER_LOOP_COUNT*NUM_Y) % WORKGROUP_SIZE == 0 ) &&
+              				( is_pow2(NUM_X)  && is_pow2(NUM_Y) )              &&
+               				( NUM_X % 32 == 0 && NUM_Y % 32 == 0)                ;
+
             assert(is_safe && "NOT SAFE TO PARALLELISE ON GPU!");
         }
 
         runOnGPU ( ro_scal, cpu_arrs, ocl_arrs );
-    } else {
-        // parallel!
-        for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
 
-            iteration_expanded_CPU (
-                    t_ind, alpha, beta, nu,
-                    a, b, c, y, u, v, scan_tmp
-                );
+        for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
+            REAL* res_arr = myResArr+i*NUM_X*NUM_Y;
+            res[i] = res_arr[myXindex*NUM_Y+myYindex];
         }
-    }
 
-    for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
-        REAL* res_arr = myResArr+i*NUM_X*NUM_Y;
-        res[i] = res_arr[myYindex*NUM_X+myXindex];
+    } else {
+    	// CPU code!
+    	for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
+    		iteration_expanded_CPU (
+    				t_ind, alpha, beta, nu,
+    				a, b, c, y, u, v
+    			);
+    	}
+
+        for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
+            REAL* res_arr = myResArr+i*NUM_X*NUM_Y;
+            res[i] = res_arr[myYindex*NUM_X+myXindex];
+        }
     }
 
     { // de-allocate the arrays
@@ -98,24 +102,24 @@ void whole_loop_nest (
         delete[] y;
         delete[] u;
         delete[] v;
-
-        delete[] scan_tmp;
     }
 }
 
 
 int main() {
+    mlfi_timeb  t_start, t_end;
+    unsigned long int elapsed;
+
     const REAL s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
     REAL *strikes, *res;
 
     if( IS_GPU ) { 
-        fprintf(stdout, "\n// GPU All-Level Massively-Parallel ");
+        fprintf(stdout, "\n// GPU Outer-Level Massively-Parallel ");
         fprintf(stdout, "Execution of Volatility Calibration Benchmark:\n"); 
     } else { 
-        fprintf(stdout, "\n// CPU All-Level Multi-Threaded     ");
+        fprintf(stdout, "\n// CPU Outer-Level Multi-Threaded     ");
         fprintf(stdout, "Execution of Volatility Calibration Benchmark:\n"); 
     }
-
 
     readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T );
     NUM_XY = NUM_X*NUM_Y;
@@ -128,7 +132,7 @@ int main() {
         strikes[i] = 0.001*i;
     }
 
-    unsigned long int elapsed = 0;
+
     { // Instrumenting Runtime and Validation!
         struct timeval t_start, t_end, t_diff;
         gettimeofday(&t_start, NULL);
@@ -139,15 +143,14 @@ int main() {
         timeval_subtract(&t_diff, &t_end, &t_start);
         elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
-    
+
     { // validation & write back of the result
         bool is_valid   = validate   ( res, OUTER_LOOP_COUNT );
         int num_threads = (IS_GPU) ? GPU_CORES : get_CPU_num_threads() ;
-
         writeStatsAndResult( is_valid, res, OUTER_LOOP_COUNT, 
                              NUM_X, NUM_Y, NUM_T, 
                              (IS_GPU!=0), num_threads, elapsed );
-        //writeResult( res, OUTER_LOOP_COUNT );
+        //writeResult( res.data(), OUTER_LOOP_COUNT );
     }
 
     delete[] strikes;
