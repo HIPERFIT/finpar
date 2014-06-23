@@ -114,8 +114,8 @@ runMake verbose dir targets = do
 -- names of target directories (only those with code)
 dirnames = ["CalibVolDiff" </> "Orig_COpenMP"
            , "CalibVolDiff" </> "Original"
-           , "CalibVolDiff" </> "VectAll"
-           , "CalibVolDiff" </> "VectOuters"
+           , "CalibVolDiff" </> "All_COpenMPCL"
+           , "CalibVolDiff" </> "Outer_COpenMPCL"
            , "CalibVolDiff" </> "HaskellLH"
 --           , "CalibGA/CppAndGPU"
 --           , "CalibGA/python"
@@ -132,7 +132,7 @@ benchnames = [ "CalibVolDiff"
              ]
 
 -- code directories inside benchmark directories; kind-of ad-hoc standardised
-codenames = ["Orig_COpenMP", "Original"
+codenames = ["Orig_COpenMP", "Original", "CppOpenCL"
             , "All_COpenMPCL", "Outer_COpenMPCL"
             , "HaskellLH"
             ] 

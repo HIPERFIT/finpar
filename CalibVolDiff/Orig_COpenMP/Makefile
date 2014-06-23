@@ -19,10 +19,9 @@ default: cpu
 	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
 
 # The GPU version is in: ../VectAll and ../VectOuters. This folder is CPU only!
-gpu: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
 
-cpu: $(OBJECTS)
+cpu: $(EXECUTABLE)
+$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
 
 
