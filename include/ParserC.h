@@ -238,7 +238,19 @@ void write_1Darr( const T* ptr, const int& N, const char* msg ) {
     }
     write_scal(&ptr[N-1], NULL);
     if (msg) fprintf(stdout, " ]\t//%s\n\n", msg);
-    else     fprintf(stdout, " ]\n\n");
+    else     fprintf(stdout, " ]");
+}
+
+template<class T>
+void write_2Darr( const T* ptr, const int& Nouter, const int& Ninner, const char* msg ) {
+    fprintf(stdout, "\n[ ");
+    for( int i = 0; i < Nouter-1; i ++ ) {
+        write_1Darr( ptr + i*Ninner, Ninner, NULL );
+        fprintf(stdout, ",");
+    }
+    write_1Darr( ptr + (Nouter-1)*Ninner, Ninner, NULL );
+    if (msg) fprintf(stdout, "\n]\t//%s\n\n", msg);
+    else     fprintf(stdout, "\n]\n");
 }
 
 #endif // DATASET_PARSER
