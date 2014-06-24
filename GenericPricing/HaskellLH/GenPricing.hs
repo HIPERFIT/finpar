@@ -290,7 +290,7 @@ brownianBridge num_paths num_dates bb_inds bb_data gaussian_arr =
 ------------------------------------------
 fftmp :: Int -> [[Double]] -> [Double] -> [Double]
 fftmp num_paths md_c zi = map f [0..num_paths-1]
-  where f j = sum $ zipWith (*) (take (j+1) zi) (take (j+1) $ md_c!!j)
+  where f j = reduce (+) 0.0 $ zipWith (*) (take (j+1) zi) (take (j+1) $ md_c!!j)
 
 correlateDeltas :: Int -> [[Double]] -> [[Double]] -> [[Double]]
 correlateDeltas num_paths md_c = map $ fftmp num_paths md_c
