@@ -16,8 +16,13 @@ HELPERS     =PrepareKernels.h Vect_CPU.h Vect_GPU.h VolCalibInit.h ../includeC/C
 OBJECTS     =VolCalibAll.o  
 EXECUTABLE  =VolCalib
 
-
-default: cpu
+ifeq ($(HAVE_GPU),1)
+default: gpu
+else
+# cannot build this one...
+no-gpu:	
+	@echo "\n*** No GPU configured, cannot build `pwd` ***\n"
+endif
 
 #.cpp.o: $(SOURCES_CPP) $(HELPERS)
 #	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
