@@ -310,6 +310,10 @@ rollback g  myX  myY  myTimeline  myResult
 ---------------------------------------------
 ---------------------------------------------
 
+-------------------------------------------------
+--- Cosmin ToDo: make MyX & MyY & myTimeline  ---
+---                  vectors instead of lists ---
+-------------------------------------------------
 
 value ::    (Double, Double, Double, Double, Double)
         ->  (Int,    Int,    Int,    Int) -> Double
@@ -374,14 +378,8 @@ main = do s <- getContents
           case parse run "input" s of
             Left  e        -> error $ show e
             Right (p,pr,i) -> do let msg_lst = validate pr p i
-                                 putStrLn (msg_lst !! 0)  
-                                 putStrLn (msg_lst !! 1)
-                                 putStrLn (msg_lst !! 2)
-                                 putStrLn (msg_lst !! 3)
-                                 putStrLn (msg_lst !! 4)
-                                 putStrLn (msg_lst !! 5)
-                                 -- print $ validate pr p i 
---          either (error . show) print $ parse run "input" s
+                                 _ <- mapM putStrLn msg_lst  
+                                 putStrLn ""
   where run = do outer <- readInt
                  num_x <- readInt
                  num_y <- readInt
