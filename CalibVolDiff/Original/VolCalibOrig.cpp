@@ -314,7 +314,7 @@ int main()
 //        writeResult( res.data(), OUTER_LOOP_COUNT );
     }
 
-	return 1;
+	return 0;
 }
 
 //#pragma omp parallel for default(shared) schedule(static) if(OUTER_LOOP_COUNT>4)

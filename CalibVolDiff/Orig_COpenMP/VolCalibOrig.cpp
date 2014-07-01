@@ -342,6 +342,6 @@ int main()
                              NUM_X, NUM_Y, NUM_T, false, Ps, elapsed );        
     }
 
-	return 1;
+    return 0;
 }
 

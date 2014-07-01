@@ -1,5 +1,6 @@
 module Main where
 
+import Control.DeepSeq
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
@@ -150,7 +151,9 @@ doLoop i bound loop_ros loop_variants  =
 
              loop_variants' = (myResult', myMuX', myVarX', myMuY', myVarY')
 
-         in  doLoop (i+1) bound loop_ros loop_variants'
+         in  -- Hack to avoid space leak
+          myResult' `deepseq` myMuX' `deepseq` myVarX' `deepseq` myMuY' `deepseq` myVarY' `deepseq`
+          doLoop (i+1) bound loop_ros loop_variants'
 
 ---------------------------------------------
 ---------------------------------------------

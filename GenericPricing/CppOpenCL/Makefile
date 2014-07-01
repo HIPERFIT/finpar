@@ -15,8 +15,15 @@ HELPERS     =StructGPU.h ../includeC/Constants.h ../includeC/Optimizations.h ../
 OBJECTS     =GenPricing.o  
 EXECUTABLE  =GenPricing
 
+
+ifeq ($(HAVE_GPU),1)
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 default: gpu
+else
+# cannot build this one... but proceed (return 0)
+no-gpu:	
+	@echo "$(HAVE_GPU) \n*** No GPU configured, cannot build `pwd` ***\n"
+endif
 
 .cpp.o: $(SOURCES_CPP) $(HELPERS)
 	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<

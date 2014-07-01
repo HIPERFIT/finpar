@@ -5,7 +5,6 @@ include ../../platform.mk
 endif
 
 INCLUDES    += -I../includeC
-GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) 
 
 SOURCES_CPP =VolCalibOrig.cpp
 HELPERS     =../includeC/ParseInput.h
@@ -18,11 +17,9 @@ default: cpu
 .cpp.o: $(SOURCES_CPP) $(HELPERS)
 	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
 
-# The GPU version is in: ../VectAll and ../VectOuters. This folder is CPU only!
-gpu: $(OBJECTS)
-	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
+cpu: $(EXECUTABLE)
 
-cpu: $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
 
 

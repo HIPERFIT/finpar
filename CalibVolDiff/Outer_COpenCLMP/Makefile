@@ -17,7 +17,13 @@ OBJECTS     =VolCalibOuter.o
 EXECUTABLE  =VolCalib
 
 
-default: cpu
+ifeq ($(HAVE_GPU),1)
+default: gpu
+else
+# cannot build this one...
+no-gpu:	
+	@echo "\n*** No GPU configured, cannot build `pwd` ***\n"
+endif
 
 
 #.cpp.o:
