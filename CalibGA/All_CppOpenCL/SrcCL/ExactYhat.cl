@@ -53,7 +53,7 @@ REAL2 rootFinding_Brent(         bool   iddle,
         iddle = true;
     } 
 
-    if( fabs(fa) < fabs(fb) ) { REAL tmp = fa; fa = fb; fb = tmp; }
+    if( fabs(fa) < fabs(fb) ) { REAL tmp = fa; fa = fb; fb = tmp; tmp = a; a = b; b = tmp; }
     
     REAL c = a, fc = fa;
     bool mflag = true;
@@ -91,8 +91,6 @@ REAL2 rootFinding_Brent(         bool   iddle,
                     REAL s3 = (c*fa*fb)/( (fc-fa)*(fc-fb) );
                     s = s1 + s2 + s3;
                 }
-
-                REAL smb = fabs(s - b), bmc = fabs(b - c), cmd = fabs(c - d), atol = fabs(tol);
 
                 bool big_cond = 
                      ( (3.0 * a + b) /4.0 > s || s > b)        ||

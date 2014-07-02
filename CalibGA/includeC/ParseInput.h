@@ -5,6 +5,7 @@
 #include <assert.h>
 #include <math.h>
 #include <algorithm>
+#include "GenAlgUtil.h"
 
 //using namespace std;
 
@@ -18,7 +19,9 @@
 /********** READ DATA SET **********/
 /***********************************/
 
-void readDataSet(   UINT&  num_swap_quotes, 
+void readDataSet(   UINT&  pop_size,
+                    UINT&  num_conv_iters,   
+                    UINT&  num_swap_quotes, 
                     REAL*& swaption_quotes,  // [num_swap_quotes,4]
                     
                     UINT&  num_hermitians,
@@ -30,6 +33,15 @@ void readDataSet(   UINT&  num_swap_quotes,
 ) {
     int64_t shape[3];
     bool atr_ok = true;
+
+    if ( read_int( static_cast<UINT*>( &pop_size       ) ) ||
+         read_int( static_cast<UINT*>( &num_conv_iters ) )  ) {
+            fprintf(stderr, "Syntax error when reading population size or convergence-loop count!\n");
+            exit(1);
+    }
+    atr_ok  = (pop_size >= 64) && (num_conv_iters >= 100);
+    assert(atr_ok && "Population size < 64 OR convergence-loop count < 100!\n");
+
     { // swaption quotes
         if ( read_int( static_cast<UINT*>( &num_swap_quotes ) ) ) {
             fprintf(stderr, "Syntax error when reading NUM_SWAP_QUOTES.\n");
@@ -122,21 +134,23 @@ bool validate( const REAL& logLik, const REAL* res, const int& N ) {
         fprintf(stderr, "Difference in logLikelihood > 1.0: result logLik %f, reference logLik = %f!\n", 
                         logLik, ref_logLik );
         return is_valid;
-    } else if ( logLik < ref_logLik && fabs(ref_logLik - logLik) > 0.3 ) {
+    } else if ( logLik < ref_logLik && fabs(ref_logLik - logLik) > 0.5 ) {
         is_valid = false;
-        fprintf(stderr, "Result likelihood is worse than reference with more than 0.3: result logLik %f, reference logLik = %f!\n", 
+        fprintf(stderr, "Result likelihood is worse than reference with more than 0.5: result logLik %f, reference logLik = %f!\n", 
                         logLik, ref_logLik );
         return is_valid;
     }
 
-    const float PERC_ERR = 1.9;
     for ( int i = 0; i < N; i ++ ) {
-        float ok_deviation = (5000.0 / ref_res[3*i+1]) * PERC_ERR;
-        float err = ( res[3*i+2] < ref_res[3*i+2] ) ? 0.0 : 
-                            fabs(ref_res[3*i+2] - res[3*i+2]);
-        if ( err > ok_deviation ) {
+        REAL lgLik_cur = logLikelihood(    res[3*i+1],    res[3*i]);
+        REAL lgLik_ref = logLikelihood(ref_res[3*i+1],ref_res[3*i]);
+        REAL diff_curr_lgLik = (lgLik_cur > lgLik_ref) ? 
+                                0.0 : lgLik_ref - lgLik_cur ;
+
+        if (diff_curr_lgLik > 0.7) {
             is_valid = false;
-            fprintf(stderr, "Error[%d] = %f, EPS = %f!\n", i, err, ok_deviation);
+            fprintf(stderr, "Error[%d] = %f, Acceptable = 1.1!\n", 
+                            i, diff_curr_lgLik );
             break;
         }
     }
@@ -144,11 +158,6 @@ bool validate( const REAL& logLik, const REAL* res, const int& N ) {
     return is_valid;
 }
 
-/*
-writeStatsAndResult(    is_valid, wg_a, wg_b, wg_sigma, wg_nu, wg_rho, 
-                                wg_logLik, calib_arr, NUM_SWAP_QUOTES, 
-                                false, Ps, elapsed );  
-*/
 void writeStatsAndResult(   const bool& valid,
                             const REAL& wg_a, 
                             const REAL& wg_b, 
