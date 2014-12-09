@@ -37,9 +37,13 @@ run_GPUkernel (
     for( int i = 0; i < ro_scal.num_models; i++ ) vhat_fin[i] = 0.0;
 
     GPU_KERNEL  kernel_type = priv_or_vect_kernel( ro_scal );
+#ifdef _OPTIMIZATION_MEM_COALES_ON
     const char* kernel_name = (kernel_type == PRIV) ?
-        		                    "GenericPricingPrivOpt" :   // .cl
+        		            "GenericPricingPrivOpt" :   // .cl
                                     "GenericPricingVectOpt" ;   // .cl
+#else
+    const char* kernel_name = "GenericPricingVectUncoalesced";
+#endif
 
     { // build the OpenCL program
         const char* preamble =  makeGPUprogPreamble( ro_scal, kernel_type );

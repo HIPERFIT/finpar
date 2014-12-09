@@ -1,14 +1,22 @@
 /************************************/
 /************* MACROS ***************/
 /************************************/
-#include "Constants.h"
 
-//#define SOBOL_BIT_COUNT 30
-
-#define underlyings(i,j)   \
-		(inst_traj[(i*ro_scal->md_dim + j)])  
+#define TYPE REAL
+#define FLAG uchar
+#include "../../include/Utilities.cl"
 
 #define DUMMY 1
+
+/************************************/
+/************* MACROS ***************/
+/************************************/
+//#include "Constants.h"
+//
+//#define underlyings(i,j)   \
+//		(inst_traj[(i*ro_scal->md_dim + j)])  
+//
+//#define DUMMY 1
  
 /********************************************/
 /********** SOBOL NUMER GENERATOR ***********/
