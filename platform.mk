@@ -14,11 +14,11 @@ GPU_LOCAL_MEM = 48
 GPU_CONST_MEM = 64
 GPU_REG_MEM   = 64
 # device memory in gigabyte
-GPU_DEVICE_MEM= 3
+GPU_DEVICE_MEM= 2
 # ``Optimal'' Amount of Local/Fast Memory Per Thread 
 GPU_LOCAL_MEM_PER_TH=8
 # Number of GPU cores
-GPU_NUM_CORES = 2880
+GPU_NUM_CORES = 1440
 
 # CPU and memory spec.
 NCORES = 32

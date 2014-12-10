@@ -497,7 +497,6 @@ void runGPU_VECT(
 
     int  counter = 0;
 
-
     { // SOBOL KERNEL!
         counter = 0;
         ckGenPricing_sobol = clCreateKernel(cpProgram, "mlfi_genmatrix_uniform2", &ciErr1);
@@ -545,24 +544,33 @@ void runGPU_VECT(
     { // compute trajectory
         bool optim_kernel = (2*ro_scals.num_under <= TILE);
         counter = 0;
+
+#ifdef _OPTIMIZATION_MEM_COALES_ON
         ckGenPricing_traj = (optim_kernel) ?
                 clCreateKernel(cpProgram, "mlfi_comp_traj1",      &ciErr1) :
                 clCreateKernel(cpProgram, "mlfi_comp_traj_unopt", &ciErr1) ;
+#else
+        ckGenPricing_traj = clCreateKernel(cpProgram, "mlfi_comp_traj1", &ciErr1);
+#endif
 
         ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, sizeof(cl_mem), (void*)&dev_arr.ro_scals);
         ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, sizeof(cl_mem), (void*)&dev_arr.md_c    );
 
+#ifdef _OPTIMIZATION_MEM_COALES_ON
         if( optim_kernel ) {
             assert( ( 2*ro_scals.num_under <= TILE) && "Illegal dataset: num_under > 4" );
             UINT priv_sz = TILE * ro_scals.BLOCK * sizeof(REAL);
             ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, priv_sz, NULL); // local_space!
         }
+#endif
 
         ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, sizeof(cl_mem), (void*)&dev_arr.md_z );
         ciErr1 |= clSetKernelArg(ckGenPricing_traj, counter++, sizeof(cl_mem), (void*)&dev_arr.md_zd);
 
         ciErr1 |= clEnqueueNDRangeKernel(   cqCommandQueue, ckGenPricing_traj, 1, NULL,
                                             globalWorkSize, localWorkSize, 0, NULL, NULL );
+
+        
         oclCheckError(ciErr1, CL_SUCCESS);
     }
 
