@@ -18,7 +18,7 @@ GPU_DEVICE_MEM= 2
 # ``Optimal'' Amount of Local/Fast Memory Per Thread 
 GPU_LOCAL_MEM_PER_TH=8
 # Number of GPU cores
-GPU_NUM_CORES = 1440
+GPU_NUM_CORES = 1536
 
 # CPU and memory spec.
 NCORES = 32
