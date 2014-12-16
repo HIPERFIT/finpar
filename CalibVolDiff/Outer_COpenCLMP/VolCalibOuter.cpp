@@ -7,7 +7,8 @@
 #include "../includeC/ParseInput.h"
 
 
-void whole_loop_nest (
+unsigned long int 
+whole_loop_nest (
         REAL*       res,
         const REAL* strikes,
         const REAL  s0,
@@ -72,7 +73,7 @@ void whole_loop_nest (
             assert(is_safe && "NOT SAFE TO PARALLELISE ON GPU!");
         }
 
-        runOnGPU ( ro_scal, cpu_arrs, ocl_arrs );
+        elapsed = runOnGPU ( ro_scal, cpu_arrs, ocl_arrs );
 
         for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
             REAL* res_arr = myResArr+i*NUM_X*NUM_Y;
@@ -80,13 +81,21 @@ void whole_loop_nest (
         }
 
     } else {
-    	// CPU code!
+    	// CPU code: instrumentation here:
+
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
+
     	for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
     		iteration_expanded_CPU (
     				t_ind, alpha, beta, nu,
     				a, b, c, y, u, v
     			);
     	}
+
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
 
         for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
             REAL* res_arr = myResArr+i*NUM_X*NUM_Y;
@@ -103,6 +112,8 @@ void whole_loop_nest (
         delete[] u;
         delete[] v;
     }
+
+    return elapsed;
 }
 
 
@@ -134,14 +145,18 @@ int main() {
 
 
     { // Instrumenting Runtime and Validation!
-        struct timeval t_start, t_end, t_diff;
-        gettimeofday(&t_start, NULL);
+      // since OpenCL compilation or device querring hangs 
+      // for a long time many time we measure the runtime of 
+      // the time-series only in both CPU and GPU cases!
 
-        whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
+//        struct timeval t_start, t_end, t_diff;
+//        gettimeofday(&t_start, NULL);
 
-        gettimeofday(&t_end, NULL);
-        timeval_subtract(&t_diff, &t_end, &t_start);
-        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+        elapsed = whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
+
+//        gettimeofday(&t_end, NULL);
+//        timeval_subtract(&t_diff, &t_end, &t_start);
+//        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
 
     { // validation & write back of the result

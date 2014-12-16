@@ -103,7 +103,8 @@ void makeOclBuffers (
 }
 
 //extern "C"
-void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs ) {
+unsigned long int
+runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs ) {
     cl_context cxGPUContext;                        // OpenCL context
     cl_command_queue cqCommandQueue[16];            // OpenCL command que
     cl_uint nDevice;                                // OpenCL device count
@@ -141,26 +142,37 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
     // make all kernels!
     make_kernels( cqCommandQueue[dev_id], cpProgram, ro_scal, ocl_arrs, kernels );
 
-    // now execute kernels!
-    for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
-        run_GPUkernels_one_time_iteration ( cqCommandQueue[dev_id], kernels );
-    } // END TIME LOOP!
+    unsigned long int elapsed;
+    { // now execute kernels!
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
+
+        for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
+            run_GPUkernels_one_time_iteration ( cqCommandQueue[dev_id], kernels );
+        } // END TIME LOOP!
 
 
-    { // WRITE BACK THE RESULT ARRAY TO CPU !!! //
-        cl_int  ciErr;
-        const unsigned int ARR_SIZE = NUM_X * NUM_Y * OUTER_LOOP_COUNT * sizeof(REAL);
-        ciErr = clEnqueueReadBuffer (
-                            cqCommandQueue[dev_id], ocl_arrs.res_arr, CL_TRUE,
-                            0, ARR_SIZE, cpu_arrs.res_arr, 0, NULL, NULL
+        { // WRITE BACK THE RESULT ARRAY TO CPU !!! //
+            cl_int  ciErr;
+            const unsigned int ARR_SIZE = NUM_X * NUM_Y * OUTER_LOOP_COUNT * sizeof(REAL);
+            ciErr = clEnqueueReadBuffer (
+                                cqCommandQueue[dev_id], ocl_arrs.res_arr, CL_TRUE,
+                                0, ARR_SIZE, cpu_arrs.res_arr, 0, NULL, NULL
+                    );
+            oclCheckError(ciErr, CL_SUCCESS);
+
+            // RELEASE ALL GPU RESOURCES
+            release_all_GPU_resources (
+                    cqCommandQueue[dev_id], cxGPUContext, cpProgram, cdDevices, ocl_arrs, kernels
                 );
-        oclCheckError(ciErr, CL_SUCCESS);
+        }
 
-        // RELEASE ALL GPU RESOURCES
-        release_all_GPU_resources (
-                cqCommandQueue[dev_id], cxGPUContext, cpProgram, cdDevices, ocl_arrs, kernels
-            );
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
+
+    return elapsed;
 }
 
 #endif // end include NORDEA_GPU
