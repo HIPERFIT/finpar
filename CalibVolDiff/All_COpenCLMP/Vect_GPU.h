@@ -113,7 +113,8 @@ void makeOclBuffers (
 #define USE_GPU_ITER 1
 
 //extern "C"
-void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs ) {
+unsigned long int
+runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs ) {
     cl_context cxGPUContext;                        // OpenCL context
     cl_command_queue cqCommandQueue[16];            // OpenCL command que
     cl_uint nDevice;                                // OpenCL device count
