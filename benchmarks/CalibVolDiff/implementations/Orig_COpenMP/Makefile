@@ -1,19 +1,13 @@
-include ../../setup.mk
+include setup.mk
 
 ifndef ($(HAVE_GPU))
-include ../../platform.mk
+include platform.mk
 endif
-
-INCLUDES    += -I../includeC
-GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) 
 
 SOURCES_CPP =VolCalibOrig.cpp
 HELPERS     =../includeC/ParseInput.h
-OBJECTS     =VolCalibOrig.o  
+OBJECTS     =VolCalibOrig.o
 EXECUTABLE  =VolCalib
-
-
-default: cpu
 
 .cpp.o: $(SOURCES_CPP) $(HELPERS)
 	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<

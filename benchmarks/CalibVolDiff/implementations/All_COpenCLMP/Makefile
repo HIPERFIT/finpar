@@ -1,7 +1,7 @@
-include ../../setup.mk
+include setup.mk
 
 ifndef ($(HAVE_GPU))
-include ../../platform.mk
+include platform.mk
 endif
 
 INCLUDES  += -I../includeC
@@ -22,6 +22,7 @@ else
 # cannot build this one...
 no-gpu:	
 	@echo "\n*** No GPU configured, cannot build `pwd` ***\n"
+	exit 1
 endif
 
 #.cpp.o: $(SOURCES_CPP) $(HELPERS)

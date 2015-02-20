@@ -8,7 +8,18 @@ cp $FINPAR_LIB_DIR/include/ParserC.h .
 cp $FINPAR_LIB_DIR/include/Util.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/include/Constants.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/include/ParseInput.h .
-cp $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/Makefile $FINPAR_IMPLEMENTATION/run .
+cp $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/Makefile .
+
 $FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT outer num_x num_y num_t > input.data
+$FINPAR_LIB_DIR/generate_platform_mk.py $FINPAR_PLATFORM > platform.mk
+NCORES=$($FINPAR_LIB_DIR/json_get.py $FINPAR_PLATFORM num_cores)
+
+cat > run <<EOF
+#!/bin/sh
+export OMP_NUM_THREADS=$NCORES
+cat input.data | ./VolCalib
+EOF
+
+chmod +x run
 
 make

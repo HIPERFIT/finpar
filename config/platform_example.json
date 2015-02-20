@@ -1,0 +1,14 @@
+{
+    "gpu" : {
+        "device_id" : 0,
+        "warp_size" : 32,
+        "local_memory" : 48,
+        "constant_memory" : 64,
+        "register_memory" : 64,
+        "device_memory" : 2097152,
+        "local_memory_per_thread" : 8,
+        "num_cores" : 192
+    },
+    "num_cores" : 4,
+    "main_memory" : 4194304
+}

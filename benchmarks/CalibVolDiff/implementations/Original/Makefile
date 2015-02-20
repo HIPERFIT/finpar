@@ -1,7 +1,7 @@
-include ../../setup.mk
+include setup.mk
 
 ifndef ($(HAVE_GPU))
-include ../../platform.mk
+include platform.mk
 endif
 
 INCLUDES    += -I../includeC

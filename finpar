@@ -22,14 +22,12 @@ class Implementation:
         self.finpar_lib_dir = finpar_lib_dir
         self.benchmark_lib_dir = benchmark_lib_dir
 
-        runfile = os.path.join(self.directory, "run")
         instantiatefile = os.path.join(self.directory, "instantiate")
-        if not executable(runfile):
-            raise Exception("%s is not an executable file" % runfile)
         if not executable(instantiatefile):
             raise Exception("%s is not an executable file" % instantiatefile)
+        self.instantiatefile = instantiatefile
 
-    def instantiate(self, where, input_data):
+    def instantiate(self, where, input_data, platform_file):
         if not os.path.isdir(where):
             os.mkdir(where)
 
@@ -40,8 +38,9 @@ class Implementation:
         instantiate_env["FINPAR_BENCHMARK_LIB_DIR"] = self.benchmark_lib_dir
         instantiate_env["FINPAR_IMPLEMENTATION"] = self.directory
         instantiate_env["FINPAR_INPUT"] = input_data
+        instantiate_env["FINPAR_PLATFORM"] = platform_file
 
-        proc = subprocess.Popen(os.path.join(self.directory, "instantiate"),
+        proc = subprocess.Popen(self.instantiatefile,
                                 env=instantiate_env,
                                 stdout=subprocess.PIPE,
                                 stderr=subprocess.PIPE,
@@ -118,7 +117,7 @@ def note_result(results, benchmark, implementation, dataset, runtime):
           (desc_triple(benchmark, implementation, dataset), status))
     results[(benchmark,implementation,dataset)] = runtime
 
-def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir):
+def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir, platform):
     b = Benchmark(finpar_dir, os.path.basename(benchmarkdir), benchmarkdir)
     insts = []
     results = {}
@@ -128,7 +127,7 @@ def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir):
             instdir = os.path.join(workdir,
                                    "%s-%s-%s" % (b.name, impl.name, dataset))
             print("Instantiating in %s" % instdir)
-            (retcode, stdout, stderr) = impl.instantiate(instdir, b.datasets[dataset]['input_file'])
+            (retcode, stdout, stderr) = impl.instantiate(instdir, b.datasets[dataset]['input_file'], platform)
             if retcode != 0:
                 print("Instantiation failed with exit code %d.\nStdout:\n%s\nStderr:\n%s" %
                       (retcode, stdout, stderr))
@@ -148,62 +147,68 @@ def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir):
         with open(stdoutpath, "w") as stdout:
             with open(stderrpath, "w") as stderr:
                 print("Output can be found in %s and %s" % (stdoutpath, stderrpath))
-                proc = subprocess.Popen(os.path.join(instdir, "run"),
-                                        stdout=stdout,
-                                        stderr=stderr,
-                                        stdin=subprocess.PIPE,
-                                        close_fds=True,
-                                        cwd=instdir)
-                proc.stdin.close() # Make sure stdin EOFs.
-                proc.wait()
-
-                if proc.returncode != 0:
-                    note_result(results,
-                                inst['benchmark'],
-                                inst['implementation'],
-                                inst['dataset'],
-                                "non-zero exit code")
-                    continue
-
                 try:
-                    runtime = read_runtime(instdir)
-                except IOError:
+                    proc = subprocess.Popen(os.path.join(instdir, "run"),
+                                            stdout=stdout,
+                                            stderr=stderr,
+                                            stdin=subprocess.PIPE,
+                                            close_fds=True,
+                                            cwd=instdir)
+                    proc.stdin.close() # Make sure stdin EOFs.
+                    proc.wait()
+                except:
                     note_result(results,
                                 inst['benchmark'],
                                 inst['implementation'],
                                 inst['dataset'],
-                                "no runtime measurement")
-                    continue
-                except ValueError:
-                    note_result(results,
-                                inst['benchmark'],
-                                inst['implementation'],
-                                inst['dataset'],
-                                "non-integer runtime measurement")
-                    continue
+                                "could not run")
 
-                try:
-                    result = read_json_file(os.path.join(instdir, "result.json"))
-                    expected = inst['expected_output']
-                    if compare_json(result, expected):
-                        note_result(results,
-                                    inst['benchmark'],
-                                    inst['implementation'],
-                                    inst['dataset'],
-                                    runtime)
-                    else:
-                        note_result(results,
-                                    inst['benchmark'],
-                                    inst['implementation'],
-                                    inst['dataset'],
-                                    "invalid result")
-                except (IOError, ValueError):
-                    note_result(results,
-                                inst['benchmark'],
-                                inst['implementation'],
-                                inst['dataset'],
-                                "cannot read result")
+        if proc.returncode != 0:
+            note_result(results,
+                        inst['benchmark'],
+                        inst['implementation'],
+                        inst['dataset'],
+                        "non-zero exit code")
+            continue
 
+        try:
+            runtime = read_runtime(instdir)
+        except IOError:
+            note_result(results,
+                        inst['benchmark'],
+                        inst['implementation'],
+                        inst['dataset'],
+                        "no runtime measurement")
+            continue
+        except ValueError:
+            note_result(results,
+                        inst['benchmark'],
+                        inst['implementation'],
+                        inst['dataset'],
+                        "non-integer runtime measurement")
+            continue
+
+        try:
+            result = read_json_file(os.path.join(instdir, "result.json"))
+            expected = inst['expected_output']
+            if compare_json(result, expected):
+                note_result(results,
+                            inst['benchmark'],
+                            inst['implementation'],
+                            inst['dataset'],
+                            runtime)
+            else:
+                note_result(results,
+                            inst['benchmark'],
+                            inst['implementation'],
+                            inst['dataset'],
+                            "invalid result")
+        except (IOError, ValueError):
+            note_result(results,
+                        inst['benchmark'],
+                        inst['implementation'],
+                        inst['dataset'],
+                        "cannot read result")
     return results
 
 def read_runtime(instdir):
@@ -248,19 +253,24 @@ def compare_json(json1, json2):
     return json1 == json2
 
 if __name__ == '__main__':
-    print "Assuming I am being run from finpar directory."
-    print "Will read benchmark benchmarks/CalibVolDiff."
-    print "Will instantiate in instantiations/."
+    benchmark="benchmarks/CalibVolDiff"
+    instantiations_dir = "instantiations"
+    platform_file = "config/platform_example.json"
+    print("Assuming I am being run from main finpar directory.")
+    print("Will run implementations of benchmark %s." % benchmark)
+    print("Will instantiate in %s." % instantiations_dir)
+    print("Will use platform configuration %s." % platform_file)
     finpar_dir = os.getcwd()
     results = run_all_benchmark_implementations(finpar_dir,
-                                                os.path.join(finpar_dir, 'instantiations'),
-                                                os.path.join(finpar_dir, 'benchmarks/CalibVolDiff'))
+                                                os.path.join(finpar_dir, instantiations_dir),
+                                                os.path.join(finpar_dir, benchmark),
+                                                os.path.join(finpar_dir, platform_file))
     successful = {}
     failed = {}
 
     for result in results:
         if type(results[result]) is int:
-            successful[result] = int(results[result])
+            successful[result] = results[result]
         else:
             failed[result] = results[result]
 
@@ -273,6 +283,7 @@ if __name__ == '__main__':
 
     print "\nSucceeded"
     for s in successful:
-        (benchmark, implementation, dataset) = f
-        print("%s: %s", (desc_triple(benchmark, implementation, dataset),
-                         successful[s]))
+        (benchmark, implementation, dataset) = s
+        print("%s: %s" %
+              (desc_triple(benchmark, implementation, dataset),
+               successful[s]))
