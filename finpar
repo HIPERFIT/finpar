@@ -110,7 +110,7 @@ def note_result(results, benchmark, implementation, dataset, runtime):
     if type(runtime) is int:
         status = str(runtime) + "ms"
     else:
-        status = runtime
+        status = "failed, " + runtime
     print("Benchmark %s, implementation %s, dataset %s: %s" %
           (benchmark, implementation, dataset, status))
     results[(benchmark,implementation,dataset)] = runtime
@@ -154,10 +154,13 @@ def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir):
                 proc.stdin.close() # Make sure stdin EOFs.
                 proc.wait()
 
-                if proc.returncode == 0:
-                    success = "success"
-                else:
-                    success = "failure"
+                if proc.returncode != 0:
+                    note_result(results,
+                                inst['benchmark'],
+                                inst['implementation'],
+                                inst['dataset'],
+                                "non-zero exit code")
+                    continue
 
                 try:
                     runtime = read_runtime(instdir)
@@ -245,3 +248,12 @@ def test():
     run_all_benchmark_implementations('/home/athas/repos/finpar',
                                       '/home/athas/repos/finpar/instantiations',
                                       '/home/athas/repos/finpar/benchmarks/CalibVolDiff')
+
+if __name__ == '__main__':
+    print "Assuming I am being run from finpar directory."
+    print "Will read benchmark benchmarks/CalibVolDiff."
+    print "Will instantiate in instantiations/."
+    finpar_dir = os.getcwd()
+    run_all_benchmark_implementations(finpar_dir,
+                                      os.path.join(finpar_dir, 'instantiations'),
+                                      os.path.join(finpar_dir, 'benchmarks/CalibVolDiff'))
