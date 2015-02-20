@@ -23,3 +23,5 @@ CalibVolDiff/Original/CalibVol
 # emacs backups
 *~
 
+# For development, we instantiate in this directory.
+instantiations/

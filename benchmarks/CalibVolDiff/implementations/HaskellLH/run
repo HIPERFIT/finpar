@@ -1,0 +1,5 @@
+#!/bin/sh
+
+set -e
+
+./VolCalib +RTS -K128m -RTS < input.data

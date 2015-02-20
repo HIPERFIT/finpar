@@ -10,11 +10,11 @@ ifeq ($(OS),Darwin)
   CXXFLAGS   = -fopenmp -O3 -fno-rtti
 else
   OPENCL_ROOTDIR    ?= /usr/local/cuda
-  OPENCL_LIBDIR     := $(OPENCL_ROOTDIR)/lib64
+  OPENCL_LIBDIR     ?= $(OPENCL_ROOTDIR)/lib64
   OPENCL_INCDIR	    ?= $(OPENCL_ROOTDIR)/include
   CXX        = g++
   LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
   CXXFLAGS   = -fopenmp -O3
 endif
 
-INCLUDES   = -I$(OPENCL_INCDIR) -I.
+INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../../include

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e # Die on error.
+
+impl_dir=$FINPAR_IMPLEMENTATION
+input=$FINPAR_INPUT
+
+cp $impl_dir/*hs .
+cp $impl_dir/run .
+cp $input input.data
+ghc -Wall -O2 -msse2 -rtsopts GenPricing.hs -o GenPricing

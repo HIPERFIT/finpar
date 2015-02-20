@@ -1,0 +1,32 @@
+include setup.mk
+
+ifndef ($(HAVE_GPU))
+include platform.mk
+endif
+
+INCLUDES    += -I../includeC
+GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) 
+
+SOURCES_CPP =GenPricing.cpp
+HELPERS     =Contracts.h SobolGaussBB.h ../includeC/Constants.h ../includeC/Optimizations.h ../includeC/ParseInput.h
+# XXX what about the boilerplate in ../includeC ???
+OBJECTS     =GenPricing.o
+EXECUTABLE  =GenPricing
+
+default: cpu
+
+# TODO need redesign, probably use different executable names (or
+# standardisation of "gpu" targets across all benchmarks)
+
+.cpp.o: $(SOURCES_CPP) $(HELPERS)
+	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
+
+# The GPU version is in: ../CppOpenCL. This folder is CPU only!
+gpu: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
+
+cpu: $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
+
+clean:
+	rm -f $(EXECUTABLE) $(OBJECTS)

@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e # Die on error.
+
+impl_dir=$FINPAR_IMPLEMENTATION
+input=$FINPAR_INPUT
+
+cp $impl_dir/*hs .
+cp $impl_dir/run .
+$FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT outer num_x num_y num_t > input.data
+ghc -Wall -O2 -msse2 -rtsopts VolCalib.hs -o VolCalib
