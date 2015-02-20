@@ -106,13 +106,16 @@ class Benchmark:
                                            'expected_output' : read_json_file(outputfile)
                                          }
 
+def desc_triple(benchmark, implementation, dataset):
+    return "Benchmark %s, implementation %s, dataset %s" % (benchmark, implementation, dataset)
+
 def note_result(results, benchmark, implementation, dataset, runtime):
     if type(runtime) is int:
         status = str(runtime) + "ms"
     else:
         status = "failed, " + runtime
-    print("Benchmark %s, implementation %s, dataset %s: %s" %
-          (benchmark, implementation, dataset, status))
+    print("%s: %s" %
+          (desc_triple(benchmark, implementation, dataset), status))
     results[(benchmark,implementation,dataset)] = runtime
 
 def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir):
@@ -244,16 +247,32 @@ def compare_json(json1, json2):
 
     return json1 == json2
 
-def test():
-    run_all_benchmark_implementations('/home/athas/repos/finpar',
-                                      '/home/athas/repos/finpar/instantiations',
-                                      '/home/athas/repos/finpar/benchmarks/CalibVolDiff')
-
 if __name__ == '__main__':
     print "Assuming I am being run from finpar directory."
     print "Will read benchmark benchmarks/CalibVolDiff."
     print "Will instantiate in instantiations/."
     finpar_dir = os.getcwd()
-    run_all_benchmark_implementations(finpar_dir,
-                                      os.path.join(finpar_dir, 'instantiations'),
-                                      os.path.join(finpar_dir, 'benchmarks/CalibVolDiff'))
+    results = run_all_benchmark_implementations(finpar_dir,
+                                                os.path.join(finpar_dir, 'instantiations'),
+                                                os.path.join(finpar_dir, 'benchmarks/CalibVolDiff'))
+    successful = {}
+    failed = {}
+
+    for result in results:
+        if type(results[result]) is int:
+            successful[result] = int(results[result])
+        else:
+            failed[result] = results[result]
+
+    print "\nFailed"
+    for f in failed:
+        (benchmark, implementation, dataset) = f
+        print("%s: %s" %
+              (desc_triple(benchmark, implementation, dataset),
+               failed[f]))
+
+    print "\nSucceeded"
+    for s in successful:
+        (benchmark, implementation, dataset) = f
+        print("%s: %s", (desc_triple(benchmark, implementation, dataset),
+                         successful[s]))
