@@ -318,8 +318,6 @@ if __name__ == '__main__':
                                            run_implementation_fn,
                                            use_dataset_fn)
     )
-    successful = {}
-    failed = {}
 
     for failed in failed_to_instantiate:
         print("Failed to instantiate implementation %s with dataset %s; exit code %d." %
@@ -329,6 +327,9 @@ if __name__ == '__main__':
         print("Stderr\n")
         print(failed['stderr'])
         print("")
+
+    successful = {}
+    failed = {}
 
     for result in results:
         if type(results[result]) is int:
