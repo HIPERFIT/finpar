@@ -389,7 +389,7 @@ main = do s <- getContents
                  return $ do
                    start <- getCPUTime -- In picoseconds; 1 millisecond == 10^9 picoseconds.
                    let v = compute (outer, num_x, num_y, num_t) params
-                   end <- v `seq` getCPUTime
+                   end <- v `deepseq` getCPUTime
                    return (v, (end - start) `div` 1000000000)
 
 -- ghc -O2 -msse2 -rtsopts  PricingLexiFi.hs
