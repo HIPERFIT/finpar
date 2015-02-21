@@ -3,6 +3,7 @@
 import os
 import subprocess
 import json
+import sys
 
 def executable(fpath):
     return os.path.isfile(fpath) and os.access(fpath, os.X_OK)
@@ -117,13 +118,22 @@ def note_result(results, benchmark, implementation, dataset, runtime):
           (desc_triple(benchmark, implementation, dataset), status))
     results[(benchmark,implementation,dataset)] = runtime
 
-def run_all_benchmark_implementations(finpar_dir, workdir, benchmarkdir, platform):
+def run_some_benchmark_implementations(finpar_dir,
+                                       workdir,
+                                       benchmarkdir,
+                                       platform,
+                                       run_implementation_fn,
+                                       use_dataset_fn):
     b = Benchmark(finpar_dir, os.path.basename(benchmarkdir), benchmarkdir)
     insts = []
     results = {}
 
     for impl in b.implementations:
+        if not run_implementation_fn(impl):
+            continue
         for dataset in b.datasets:
+            if not use_dataset_fn(dataset):
+                continue
             instdir = os.path.join(workdir,
                                    "%s-%s-%s" % (b.name, impl.name, dataset))
             print("Instantiating in %s" % instdir)
@@ -252,19 +262,59 @@ def compare_json(json1, json2):
 
     return json1 == json2
 
+def what_to_run():
+    if len(sys.argv) == 1:
+        return ("benchmarks/CalibVolDiff", None, None)
+    elif len(sys.argv) == 2:
+        return (sys.argv[1], None, None)
+    elif len(sys.argv) == 3:
+        return (sys.argv[1], sys.argv[2].split(','), None)
+    elif len(sys.argv) == 4:
+        return (sys.argv[1], sys.argv[2].split(','), sys.argv[3].split(','))
+    else:
+        exit("Usage: %s [benchmark] [implementation1,implementation2,...] [dataset1,dataset2,...]" %
+             sys.argv[0])
+
 if __name__ == '__main__':
-    benchmark="benchmarks/CalibVolDiff"
+    (benchmark, implementations, datasets) = what_to_run()
     instantiations_dir = "instantiations"
     platform_file = "config/platform_example.json"
+
     print("Assuming I am being run from main finpar directory.")
-    print("Will run implementations of benchmark %s." % benchmark)
+    print("Will run benchmark %s." % benchmark)
+
+    if implementations is None:
+        print("Will run all implementations.")
+    else:
+        print("Will run these implementations: %s" % implementations)
+
+    if datasets is None:
+        print("Will use all datasets.")
+    else:
+        print("Will use these datasets: %s" % datasets)
+
     print("Will instantiate in %s." % instantiations_dir)
     print("Will use platform configuration %s." % platform_file)
     finpar_dir = os.getcwd()
-    results = run_all_benchmark_implementations(finpar_dir,
-                                                os.path.join(finpar_dir, instantiations_dir),
-                                                os.path.join(finpar_dir, benchmark),
-                                                os.path.join(finpar_dir, platform_file))
+
+    def run_implementation_fn(impl):
+        if implementations is None:
+            return True
+        else:
+            return impl.name in implementations
+
+    def use_dataset_fn(dataset):
+        if datasets is None:
+            return True
+        else:
+            return dataset in datasets
+
+    results = run_some_benchmark_implementations(finpar_dir,
+                                                 os.path.join(finpar_dir, instantiations_dir),
+                                                 os.path.join(finpar_dir, benchmark),
+                                                 os.path.join(finpar_dir, platform_file),
+                                                 run_implementation_fn,
+                                                 use_dataset_fn)
     successful = {}
     failed = {}
 
@@ -274,14 +324,14 @@ if __name__ == '__main__':
         else:
             failed[result] = results[result]
 
-    print "\nFailed"
+    print "\nFailed:"
     for f in failed:
         (benchmark, implementation, dataset) = f
         print("%s: %s" %
               (desc_triple(benchmark, implementation, dataset),
                failed[f]))
 
-    print "\nSucceeded"
+    print "\nSucceeded:"
     for s in successful:
         (benchmark, implementation, dataset) = s
         print("%s: %s" %
