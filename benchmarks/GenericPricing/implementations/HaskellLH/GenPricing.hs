@@ -1,5 +1,6 @@
 module Main where
 
+import Control.DeepSeq
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
@@ -42,8 +43,11 @@ readInt = lexeme $ read <$> signed (many1 digit)
 readDouble :: Parser Double
 readDouble = lexeme $ read <$> signed (s2 <|> s1)
   where s1 = do bef <- many1 digit
-                aft <- fromMaybe "" <$> optional ((:) <$> char '.' <*> many1 digit)
-                return $ bef ++ aft
+                aft <- fromMaybe "" <$>
+                       optional ((:) <$> char '.' <*> many1 digit)
+                exp <- fromMaybe "" <$>
+                       optional ((:) <$> char 'e' <*> signed (many1 digit))
+                return $ bef ++ aft ++ exp
         s2 = (++) <$> (char '.' >> pure "0.") <*> many1 digit
 
 readArray :: Parser a -> Parser [a]
@@ -474,9 +478,10 @@ main = do s <- getContents
             Left  e -> error $ show e
             Right m -> do
               (v,runtime) <- m
-              writeFile "result.data" $ show v
+              writeFile "result.json" $ show v
               writeFile "runtime.txt" $ show runtime
   where run = do
+          whitespace
           contract  <- readInt
           num_mc_it <- readInt
           num_dates <- readInt
@@ -503,7 +508,7 @@ main = do s <- getContents
                     contract  num_mc_it num_dates num_under num_models num_bits
                     sob_dirvs md_cs     md_vols   md_drifts md_starts  md_detvals
                     md_discts bb_inds   bb_data
-            end <- v `seq` getCPUTime
+            end <- v `deepseq` getCPUTime
             return (v, (end - start) `div` 1000000000)
 
         readInt2d    = readArray $ readArray readInt

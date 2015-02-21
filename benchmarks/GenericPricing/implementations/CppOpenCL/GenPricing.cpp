@@ -3,9 +3,6 @@
 //#include "Contracts.h"
 //#include <omp.h>
 
-#include <iostream>
-#include <fstream>
-
 /*****************************************************/
 /*****************************************************/
 /*****************************************************/
@@ -17,7 +14,7 @@ run_GPUkernel (
         ModelArrays     &   md_arrs,
         BrowBridgeArrays&   bb_arrs,
         int             &   num_cores,
-        size_t          &   elapsed          
+        size_t          &   elapsed_usec
         
 
 ) {
@@ -122,7 +119,7 @@ run_GPUkernel (
 
     gettimeofday(&t_end, NULL);
     timeval_subtract(&t_diff, &t_end, &t_start);
-    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+    elapsed_usec = t_diff.tv_sec*1e6+t_diff.tv_usec;
 
     { // free allocated space
         shrLog(stderr, "Release CPU buffers and OpenCL objects...\n");
@@ -163,7 +160,7 @@ int main() {
     double* prices;
     unsigned long int elapsed_usec;
     { // run kernel
-        prices = run_GPUkernel( scals, sob_arrs, md_arrs, bb_arrs, num_cores, elapsed );
+        prices = run_GPUkernel( scals, sob_arrs, md_arrs, bb_arrs, num_cores, elapsed_usec );
 
         sob_arrs.cleanup();
          md_arrs.cleanup();
@@ -171,13 +168,14 @@ int main() {
     }
 
     {
-        std::ofstream runtime("runtime.txt");
-        runtime << elapsed_usec / 1000;
-        std::ofstream result("result.data");
-        result << *prices;
-
-        free(prices);       
+          FILE* runtime = fopen("runtime.txt", "w");
+          FILE* result = fopen("result.json", "w");
+          fprintf(runtime, "%d\n", elapsed_usec / 1000);
+          fclose(runtime);
+          write_1Darr(result, prices, scals.num_models);
+          fclose(result);
     }
+    return 0;
 }
 
 

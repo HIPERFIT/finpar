@@ -278,23 +278,4 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
     }
 }
 
-/**************************************/
-/*** Format the Result & Other Info ***/           
-/**************************************/
-void writeStatsAndResult(   const bool&   valid,  const int & num_models, 
-                            const double* prices, const bool& is_gpu,
-                            const int& P,         const unsigned long int& elapsed  
-) {
-    if(valid) { fprintf(stdout, "1\t\t// VALID   Result,\n"); } 
-    else      { fprintf(stdout, "0\t\t// INVALID Result,\n"); }
-
-    fprintf(stdout, "%ld\t\t// Runtime in micro seconds,\n", elapsed);
-    if(is_gpu) fprintf(stdout, "%d\t\t// GPU Threads,\n", P);
-    else       fprintf(stdout, "%d\t\t// CPU Threads,\n", P);
-
-    // write the result
-    write_1Darr( prices, num_models, "Generic Pricing Result." );
-    //write_scal(&price, "Generic Pricing Result.");
-}
-
 #endif // PARSE_INPUT

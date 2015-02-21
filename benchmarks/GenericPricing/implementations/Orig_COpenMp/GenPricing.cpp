@@ -168,10 +168,14 @@ int main() {
         gettimeofday(&t_end, NULL);
         timeval_subtract(&t_diff, &t_end, &t_start);
         elapsed_usec = t_diff.tv_sec*1e6+t_diff.tv_usec;
-        std::ofstream runtime("runtime.txt");
-        runtime << elapsed_usec / 1000;
-        std::ofstream result("result.data");
-        result << *prices;
+        {
+          FILE* runtime = fopen("runtime.txt", "w");
+          FILE* result = fopen("result.json", "w");
+          fprintf(runtime, "%d\n", elapsed_usec / 1000);
+          fclose(runtime);
+          write_1Darr(result, prices, scals.num_models);
+          fclose(result);
+        }
 
         md_arrs .cleanup();
         bb_arrs .cleanup();
