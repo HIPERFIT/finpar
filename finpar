@@ -110,12 +110,6 @@ def desc_triple(benchmark, implementation, dataset):
     return "Benchmark %s, implementation %s, dataset %s" % (benchmark, implementation, dataset)
 
 def note_result(results, benchmark, implementation, dataset, runtime):
-    if type(runtime) is int:
-        status = str(runtime) + "ms"
-    else:
-        status = "failed, " + runtime
-    print("%s: %s" %
-          (desc_triple(benchmark, implementation, dataset), status))
     results[(benchmark,implementation,dataset)] = runtime
 
 def run_some_benchmark_implementations(finpar_dir,
@@ -126,6 +120,7 @@ def run_some_benchmark_implementations(finpar_dir,
                                        use_dataset_fn):
     b = Benchmark(finpar_dir, os.path.basename(benchmarkdir), benchmarkdir)
     insts = []
+    failed_insts = []
     results = {}
 
     for impl in b.implementations:
@@ -139,8 +134,14 @@ def run_some_benchmark_implementations(finpar_dir,
             print("Instantiating in %s" % instdir)
             (retcode, stdout, stderr) = impl.instantiate(instdir, b.datasets[dataset]['input_file'], platform)
             if retcode != 0:
-                print("Instantiation failed with exit code %d.\nStdout:\n%s\nStderr:\n%s" %
-                      (retcode, stdout, stderr))
+                failed_insts.append({ 'benchmark' : b.name,
+                                      'implementation' : impl.name,
+                                      'dataset' : dataset,
+                                      'instantiation_directory' : instdir,
+                                      'retcode' : retcode,
+                                      'stdout' : stdout,
+                                      'stderr' : stderr})
+                print("Spoiler: failed")
             else:
                 insts.append({ 'benchmark' : b.name,
                                'implementation' : impl.name,
@@ -219,7 +220,7 @@ def run_some_benchmark_implementations(finpar_dir,
                         inst['implementation'],
                         inst['dataset'],
                         "cannot read result")
-    return results
+    return (results, failed_insts)
 
 def read_runtime(instdir):
     with open(os.path.join(instdir, "runtime.txt"), "r") as file:
@@ -309,14 +310,25 @@ if __name__ == '__main__':
         else:
             return dataset in datasets
 
-    results = run_some_benchmark_implementations(finpar_dir,
-                                                 os.path.join(finpar_dir, instantiations_dir),
-                                                 os.path.join(finpar_dir, benchmark),
-                                                 os.path.join(finpar_dir, platform_file),
-                                                 run_implementation_fn,
-                                                 use_dataset_fn)
+    (results, failed_to_instantiate) = (
+        run_some_benchmark_implementations(finpar_dir,
+                                           os.path.join(finpar_dir, instantiations_dir),
+                                           os.path.join(finpar_dir, benchmark),
+                                           os.path.join(finpar_dir, platform_file),
+                                           run_implementation_fn,
+                                           use_dataset_fn)
+    )
     successful = {}
     failed = {}
+
+    for failed in failed_to_instantiate:
+        print("Failed to instantiate implementation %s with dataset %s; exit code %d." %
+              (failed['implementation'], failed['dataset'], failed['retcode']))
+        print("Stdout\n")
+        print(failed['stdout'])
+        print("Stderr\n")
+        print(failed['stderr'])
+        print("")
 
     for result in results:
         if type(results[result]) is int:
