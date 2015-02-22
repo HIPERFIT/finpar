@@ -4,7 +4,7 @@
 
 #define TYPE REAL
 #define FLAG uchar
-#include "../../include/Utilities.cl"
+#include "Utilities.cl"
 
 #define DUMMY 1
  

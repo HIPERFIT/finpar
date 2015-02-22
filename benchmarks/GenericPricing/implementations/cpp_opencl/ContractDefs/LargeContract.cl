@@ -1,4 +1,4 @@
-#include "../includeC/Constants.h"
+#include "Constants.h"
 
 #ifdef VECT_KERNEL
     #define underlyings(i,j)   \

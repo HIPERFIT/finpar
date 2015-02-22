@@ -6,10 +6,11 @@ cp $FINPAR_LIB_DIR/setup.mk .
 cp $FINPAR_LIB_DIR/include/ParserC.h .
 cp $FINPAR_LIB_DIR/include/Util.h .
 cp $FINPAR_LIB_DIR/include/SDK_stub.h .
+cp $FINPAR_LIB_DIR/include/Utilities.cl .
 cp $FINPAR_BENCHMARK_LIB_DIR/Constants.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/Optimizations.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/ParseInput.h .
-cp -r $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/*h $FINPAR_IMPLEMENTATION/Makefile $FINPAR_IMPLEMENTATION/ContractDefs .
+cp -r $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/*h $FINPAR_IMPLEMENTATION/*cl $FINPAR_IMPLEMENTATION/Makefile $FINPAR_IMPLEMENTATION/ContractDefs .
 
 $FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > input.data
 $FINPAR_LIB_DIR/generate_platform_mk.py $FINPAR_PLATFORM > platform.mk

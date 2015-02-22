@@ -3,15 +3,15 @@
 set -e
 
 cp $FINPAR_LIB_DIR/setup.mk .
-cp $FINPAR_LIB_DIR/platform.mk .
 cp $FINPAR_LIB_DIR/include/ParserC.h .
 cp $FINPAR_LIB_DIR/include/Util.h .
 cp $FINPAR_LIB_DIR/include/SDK_stub.h .
+cp $FINPAR_LIB_DIR/include/Utilities.cl .
 cp $FINPAR_BENCHMARK_LIB_DIR/include/Constants.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/include/ParseInput.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/include/DataStructConst.h .
 cp $FINPAR_BENCHMARK_LIB_DIR/include/ParPrefixUtil.h .
-cp $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/*h $FINPAR_IMPLEMENTATION/Makefile .
+cp $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/*h $FINPAR_IMPLEMENTATION/*cl $FINPAR_IMPLEMENTATION/Makefile .
 
 $FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT outer num_x num_y num_t > input.data
 $FINPAR_LIB_DIR/generate_platform_mk.py $FINPAR_PLATFORM > platform.mk

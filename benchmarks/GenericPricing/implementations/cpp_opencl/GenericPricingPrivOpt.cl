@@ -6,7 +6,7 @@
 
 #define TYPE REAL
 #define FLAG uchar
-#include "../../include/Utilities.cl"
+#include "Utilities.cl"
 
 /********************************************/
 /********** SOBOL NUMER GENERATOR ***********/
