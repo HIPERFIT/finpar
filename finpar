@@ -173,6 +173,7 @@ def run_some_benchmark_implementations(finpar_dir,
                                 inst['implementation'],
                                 inst['dataset'],
                                 "could not run")
+                    continue
 
         if proc.returncode != 0:
             note_result(results,
