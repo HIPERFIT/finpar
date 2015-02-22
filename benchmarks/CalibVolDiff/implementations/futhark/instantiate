@@ -1,0 +1,10 @@
+#!/bin/sh
+
+set -e
+
+$FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT outer num_x num_y num_t > input.data
+
+cp $FINPAR_IMPLEMENTATION/run .
+
+futhark -s -fe --in-place-lowering -ae --compile-sequential $FINPAR_IMPLEMENTATION/CalibVolDiff.fut > CalibVolDiff.c
+gcc CalibVolDiff.c -O3 -o CalibVolDiff -lm
