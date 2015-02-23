@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+$FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > input.data
+
+cp $FINPAR_IMPLEMENTATION/run .
+
+futhark -s -fe -ae $FINPAR_IMPLEMENTATION/GenericPricing.fut > optimised.fut
+futhark -s -fe -ae --compile-sequential $FINPAR_IMPLEMENTATION/GenericPricing.fut > GenericPricing.c
+gcc GenericPricing.c -O3 -o GenericPricing -lm
