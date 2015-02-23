@@ -6,6 +6,5 @@ $FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT contract_number monte_carlo_iter
 
 cp $FINPAR_IMPLEMENTATION/run .
 
-futhark -s -fe -ae $FINPAR_IMPLEMENTATION/GenericPricing.fut > optimised.fut
 futhark -s -fe -ae --compile-sequential $FINPAR_IMPLEMENTATION/GenericPricing.fut > GenericPricing.c
 gcc GenericPricing.c -O3 -o GenericPricing -lm
