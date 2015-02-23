@@ -53,7 +53,7 @@ const REAL TODAY = static_cast<REAL>( date_of_gregorian( Date(2012, 1, 1, 12, 0)
 /*******      GRID PARAMS      *******/
 /*************************************/
 const uint WPTH     = 8;
-const uint lgLWG_FB = 7;
+const uint lgLWG_FB = 8;
 const uint   LWG_FB = 256;
 
 
@@ -120,11 +120,13 @@ const REAL LLHOOD_NORMAL_OFFS     = 1.0;
 
 
 // population
-const UINT POP_SIZE = 128;
+//const UINT POP_SIZE = 128;
+UINT POP_SIZE;
 
 // MCMC
-const UINT MCMC_LOOPS = (UINT) ( 100.0 * (1.0 + log(GENOME_SCALE)) * 
-                                         (2.0 + log(GENOME_DIM  )) );   //128;
+//const UINT MCMC_LOOPS = (UINT) ( 100.0 * (1.0 + log(GENOME_SCALE)) * 
+//                                         (2.0 + log(GENOME_DIM  )) + 64);//was 2.0+...
+UINT MCMC_LOOPS;
 const REAL MOVES_UNIF_AMPL_RATIO = 0.005 / GENOME_SCALE;
 
 // Generic Tuple

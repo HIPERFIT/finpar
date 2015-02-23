@@ -5,7 +5,9 @@ include ../../platform.mk
 endif
 
 INCLUDES    += -I../includeC
-GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) 
+GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP)
+#-fno-unsafe-math-optimizations -fno-finite-math-only 
+#-fmath-errno -ftrapping-math -fno-rounding-math -fsignaling-nans
 
 SOURCES_CPP =SwapCalib.cpp
 HELPERS     =../includeC/ParseInput.h

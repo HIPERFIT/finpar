@@ -256,6 +256,47 @@ tridag a b c r =
                     ) ur0' (zip3 (tail ur) (tail uur) (tail $ reverse c))
     in  (reverse ur', uu)
 
+
+tridagPar :: [Double] -> [Double] -> [Double] -> [Double] 
+          -> ( [Double], [Double] )
+tridagPar a b c r = 
+    let -- u0  = head r
+        -- uu0 = head b
+        u0  = head b
+        uu0 = head r 
+
+        -- creating the 2x2 matrices 
+        mats    = map (\(ai,bi,cim1)-> (bi, -ai*cim1, 1.0, 0.0)) (zip3 (tail a) (tail b) c)
+        -- scan with 2x2 matrix multiplication
+        scanmat = scanl (\(x1,y1,z1,w1) (x2,y2,z2,w2) -> 
+                            let dv = 1.0/(x1*x2)
+                            in  ( (x1*x2+y1*z2)*dv, 
+                                  (x1*y2+y1*w2)*dv,
+                                  (z1*x2+w1*z2)*dv,
+                                  (z1*y2+w1*w2)*dv )
+                        ) (1.0, 0.0, 0.0, 1.0) mats
+
+        -- compute the first recurrence result
+        uu = map (\(x,y,z,w) -> (x*u0 + y) / (z*u0 + w) ) scanmat
+
+        -- compute the second recurrence
+        pairs = map (\(ai,ri,uuim1)->(ri, -ai/uuim1)) (zip3 (tail a) (tail r) uu) 
+
+        scanpairs = scanl (\ (x1,y1) (x2,y2) -> (x2+y2*x1, y1*y2) ) (0.0,1.0) pairs 
+
+        u = map (\(x,y) -> x + u0*y) scanpairs
+
+        -- backwards recurrence
+        ur  = reverse u
+        uur = reverse uu
+        ur0'= (head ur) / (head uur)
+
+        pairsr = map (\(uri, uuri, cri)->(uri/uuri, -cri/uuri)) (zip3 (tail ur) (tail uur) (tail $ reverse c)) 
+        scanpairsr = scanl (\ (x1,y1) (x2,y2) -> (x2+y2*x1, y1*y2) ) (0.0,1.0) pairsr
+        ur' = map (\(x,y) -> x + ur0'*y) scanpairsr
+
+    in  (reverse ur', uu)
+
 ---------------------------------------------
 --- rollback: the brain of the program    ---
 ---------------------------------------------
@@ -289,7 +330,7 @@ rollback g  myX  myY  myTimeline  myResult
                                                             -0.5*(myMuX*dx2+0.5*myVarX*dxx2)          ) )
                                             (zip4 myDx myDxx myMuX myVarX)
 
-                            (uj', yy) = tridag a b c uj 
+                            (uj', yy) = tridag a b c uj  -- tridagPar a b c uj 
                         in  uj' )
                 (zip5 u1 (replicate numY myDx) (replicate numY myDxx) (transpose myMuX) (transpose myVarX))
 
@@ -305,13 +346,17 @@ rollback g  myX  myY  myTimeline  myResult
 
                         y = map (\ (u,v) -> dtInv * u - 0.5 * v) (zip ui vi)
 
-                        (ri, yy) = tridag a b c y
+                        (ri, yy) = tridag a b c y -- tridagPar a b c y 
                     in  ri )
             (zip6 (transpose u2) v0 (replicate numX myDy) (replicate numX myDyy) myMuY myVarY)
 
 ---------------------------------------------
 ---------------------------------------------
 
+-------------------------------------------------
+--- Cosmin ToDo: make MyX & MyY & myTimeline  ---
+---                  vectors instead of lists ---
+-------------------------------------------------
 
 value ::    (Double, Double, Double, Double, Double)
         ->  (Int,    Int,    Int,    Int) -> Double

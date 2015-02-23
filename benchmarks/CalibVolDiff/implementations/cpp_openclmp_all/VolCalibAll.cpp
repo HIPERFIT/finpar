@@ -8,7 +8,8 @@
 #include "Util.h"
 #include "ParseInput.h"
 
-void whole_loop_nest (
+unsigned long int 
+whole_loop_nest (
         REAL*       res,
         const REAL* strikes,
         const REAL  s0,
@@ -19,6 +20,7 @@ void whole_loop_nest (
 ) {
     // loop index
     unsigned int i;
+    unsigned long int  elapsed;
     //const unsigned int NUM_XY = NUM_X*NUM_Y;
 
     // arrays:
@@ -74,9 +76,13 @@ void whole_loop_nest (
             assert(is_safe && "NOT SAFE TO PARALLELISE ON GPU!");
         }
 
-        runOnGPU ( ro_scal, cpu_arrs, ocl_arrs );
+        elapsed = runOnGPU ( ro_scal, cpu_arrs, ocl_arrs );
     } else {
-        // parallel!
+        // CPU instrumentation here: 
+
+        struct timeval t_start, t_end, t_diff;
+        gettimeofday(&t_start, NULL);
+
         for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
 
             iteration_expanded_CPU (
@@ -84,6 +90,10 @@ void whole_loop_nest (
                     a, b, c, y, u, v, scan_tmp
                 );
         }
+
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
 
     for( i=0; i<OUTER_LOOP_COUNT; ++i ) {
@@ -102,6 +112,8 @@ void whole_loop_nest (
 
         delete[] scan_tmp;
     }
+
+    return elapsed;
 }
 
 
@@ -131,14 +143,11 @@ int main() {
 
     unsigned long int elapsed_usec = 0;
     { // Instrumenting Runtime and Validation!
-        struct timeval t_start, t_end, t_diff;
-        gettimeofday(&t_start, NULL);
+      // since OpenCL compilation or device querring hangs 
+      // for a long time many time we measure the runtime of 
+      // the time-series only in both CPU and GPU cases!
 
-        whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
-
-        gettimeofday(&t_end, NULL);
-        timeval_subtract(&t_diff, &t_end, &t_start);
-        elapsed_usec = t_diff.tv_sec*1e6+t_diff.tv_usec;
+        elapsed_usec = whole_loop_nest( res, strikes, s0, t, alpha, nu, beta );
     }
 
     {   FILE* runtime = fopen("runtime.txt", "w");

@@ -21,7 +21,8 @@ int main()
 
     printf("\n// Running Original (CPU Parallel) Swaption-Calibration Benchmark\n");
 
-    readDataSet(    NUM_SWAP_QUOTES, SwaptionQuotes, 
+    readDataSet(    POP_SIZE, MCMC_LOOPS,
+                    NUM_SWAP_QUOTES, SwaptionQuotes, 
                     NUM_HERMITE, HermiteCoeffs, HermiteWeights,
                     NUM_SOBOL_BITS, SobolDirVct
                ); 

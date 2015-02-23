@@ -23,7 +23,8 @@ int main()
 
     printf("\n// Running GPU-Parallel Swaption-Calibration Benchmark\n");
 
-    readDataSet(    NUM_SWAP_QUOTES, SwaptionQuotes, 
+    readDataSet(    POP_SIZE, MCMC_LOOPS,
+                    NUM_SWAP_QUOTES, SwaptionQuotes, 
                     NUM_HERMITE, HermiteCoeffs, HermiteWeights,
                     NUM_SOBOL_BITS, SobolDirVct
                ); 
@@ -41,11 +42,10 @@ int main()
     }
 
     {   // validation and writeback of the result
-        const int Ps = get_CPU_num_threads();
         bool is_valid = validate( wg_logLik, calib_arr, NUM_SWAP_QUOTES );
         writeStatsAndResult(    is_valid, wg_a, wg_b, wg_sigma, wg_nu, wg_rho, 
                                 wg_logLik, calib_arr, NUM_SWAP_QUOTES, 
-                                false, Ps, elapsed );        
+                                true, GPU_CORES, elapsed );        
     }
 
 	return 1;

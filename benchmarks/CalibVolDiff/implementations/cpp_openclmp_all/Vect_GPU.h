@@ -113,7 +113,8 @@ void makeOclBuffers (
 #define USE_GPU_ITER 1
 
 //extern "C"
-void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs ) {
+unsigned long int
+runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs ) {
     cl_context cxGPUContext;                        // OpenCL context
     cl_command_queue cqCommandQueue[16];            // OpenCL command que
     cl_uint nDevice;                                // OpenCL device count
@@ -141,6 +142,7 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
 
         verifyEnoughResources(cdDevices[dev_id]);
     }
+
     // allocate space for the RO and RW arrays on GPU!
     makeOclBuffers (
             cxGPUContext, cqCommandQueue[dev_id], ro_scal, cpu_arrs, ocl_arrs
@@ -151,11 +153,13 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
         make_kernels( cqCommandQueue[dev_id], cpProgram, ro_scal, ocl_arrs, kernels );
     }
 
-    // now execute kernels!
+    unsigned long int elapsed;
+    struct timeval t_start, t_end, t_diff;
+    gettimeofday(&t_start, NULL);
+    
+    // now execute kernels and record the time!
     for(int t_ind = NUM_T-2; t_ind>=0; --t_ind) {
-
             run_GPUkernels_one_time_iteration ( cqCommandQueue[dev_id], kernels );
-
     } // END TIME LOOP!
 
 
@@ -174,7 +178,11 @@ void runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl
             );
     }
 
+    gettimeofday(&t_end, NULL);
+    timeval_subtract(&t_diff, &t_end, &t_start);
+    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
 
+    return elapsed;
 }
 
 #endif // end include NORDEA_GPU
