@@ -295,6 +295,7 @@ bool validate( const int num_models, const double* prices ) {
     double err = 0.0;
     for( int i = 0; i < num_models; i++ ) {
         err = std::max( err, fabs(std_prices[i] - prices[i]) );
+        if ( isnan(prices[i]) || isinf(prices[i]) ) err = 1000000.0;
     }
 
     if ( err > EPS ) {
