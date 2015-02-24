@@ -38,6 +38,49 @@ void payoffFunction(
         __local    REAL*    vhat        // [model_num] Accumulated per-model price        
 ) {
 	REAL x50;
+    UINT date;
+    REAL amount;
+ 
+    if        ( 1. <= fmin( underlyings(0,1) / 11840., fmin( underlyings(0,2) / 1200., underlyings(0,0) / 3758.05 ) ) ) {
+        //goto L21;
+        date = 0; amount = 1150.;
+    } else if ( 1. <= fmin( underlyings(1,1) / 11840., fmin( underlyings(1,2) / 1200., underlyings(1,0) / 3758.05 ) ) ) {
+        //goto L22;
+        date = 1; amount = 1300.;
+    } else if ( 1. <= fmin( underlyings(2,1) / 11840., fmin( underlyings(2,2) / 1200., underlyings(2,0) / 3758.05 ) ) ) {
+        //goto L23;
+        date = 2; amount = 1450.;
+    } else if ( 1. <= fmin( underlyings(3,1) / 11840., fmin( underlyings(3,2) / 1200., underlyings(3,0) / 3758.05 ) ) ) {
+        //goto L24;
+        date = 3; amount = 1600.;
+    } else {
+        date = 4; 
+        x50 = fmin( underlyings(4,1) / 11840., fmin( underlyings(4,2) / 1200., underlyings(4,0) / 3758.05 ) );
+        if( 1. <= x50 )        { amount = 1750.;     }
+        else if ( 0.75 < x50 ) { amount = 1000.;     }
+        else                   { amount = x50*1000.; }
+    }
+
+    trajectory_inner( num_cash_flows, model_num, date, amount, md_discts, vhat );
+}
+
+#if 0
+inline 
+void payoffFunction( 
+        const      UINT     model_num,  // the index of the current model
+        const      UINT     num_under,  // the number of underlyings
+        const      UINT     num_cash_flows, // the number of discounts
+        const      UINT     num_pricers,// the number of deterministic procers 
+        __constant REAL*    md_discts,  // [num_models][num_cash_flows] discounts
+        __constant REAL*    md_detvals, // [num_models, num_det_pricers]  pricers 
+#ifdef VECT_KERNEL
+        __global   REAL*    inst_traj,
+#else
+        const      REAL*    inst_traj,  // [num_dates, num_under] current trajectory
+#endif
+        __local    REAL*    vhat        // [model_num] Accumulated per-model price        
+) {
+	REAL x50;
 
     if ((1. <= fmin((underlyings(0,1) / 11840.), fmin((underlyings(0,2) / 1200.), (underlyings(0,0) / 3758.05))))) goto L21;
     if ((1. <= fmin((underlyings(1,1) / 11840.), fmin((underlyings(1,2) / 1200.), (underlyings(1,0) / 3758.05))))) goto L22;
@@ -69,4 +112,5 @@ L21:
 	//model->notify_cash_flow(model, 0, 1150., 0 /*2013-02-01, 2013-01-27, EUR*/); return;
     trajectory_inner( num_cash_flows, model_num, 0, 1150., md_discts, vhat ); return;
 }
+#endif
 
