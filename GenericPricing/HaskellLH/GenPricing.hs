@@ -386,7 +386,7 @@ trajInner amount i disc = amount * disc !! i
 --- Main Entry Point: price computation ---
 -------------------------------------------
 
---- Using only the (not very efficient) Sobol formula! ---
+--- Using only the (not very efficient) Sobol independent formula! ---
 compute :: Int -> Int -> Int -> Int -> Int -> Int -> [[Int]] 
         -> [[[Double]]] -> [[[Double]]] -> [[[Double]]] 
         ->  [[Double]]  ->  [[Double]]  ->  [[Double]]
