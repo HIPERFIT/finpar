@@ -19,6 +19,8 @@ import Prelude hiding (tail)
 
 import Debug.Trace
 
+import Control.DeepSeq
+
 import Data.Vector.Unboxed(Vector) -- for gaussian approx
 import qualified Data.Vector.Unboxed as V
 
@@ -304,9 +306,9 @@ mkPrices md_starts md_vols md_drifts noises =
   drop 1 $ scanl (zipWith (*)) md_starts e_rows
   where e_rows = map (map exp) $ zipWith3 combineVs noises md_vols md_drifts
 
-blackScholes :: Int -> [[Double]] -> [[Double]] -> [[Double]]
-             -> [Double] -> [[Double]] -> [[Double]]
-blackScholes num_paths md_c md_vols md_drifts md_starts bb_arr =
+blackScholes :: Int -> [[Double]] -> [[Double]] -> [[Double]] 
+             -> [[Double]] -> [Double] -> [[Double]]
+blackScholes num_paths bb_arr md_c md_vols md_drifts md_starts =
   mkPrices md_starts md_vols md_drifts noises
   where noises = correlateDeltas num_paths md_c bb_arr
 
@@ -345,16 +347,13 @@ payoff2 md_disc xss
 payoff3 :: [Double] -> [[Double]] -> Double
 payoff3 md_disc xss =
     let underlyings (i,j) = (xss !! i) !! j
-
--- Test:  (underlyings(n,0) <= 2630.6349999999998) || 
---        (underlyings(n,2) <= 840.0) || 
---        (underlyings(n,1) <= 8288.0)
---      for any n <- [0..366]
+        x3309 = ( reduce (||) False . map (reduce (||) False . zipWith (>=) [2630.6349999999998, 8288.0, 840.0]) ) xss
+{-
         x3309 = any (\ [x,y,z] -> or [ x <= 2630.6349999999998 
                                      , y <= 8288.0
                                      , z <= 840.0])
                                   xss
-
+-}
         goto_40 = x3309 && 
                   ( (underlyings(366,0) < 3758.05) || 
                     (underlyings(366,2) < 1200.0 ) ||
@@ -386,7 +385,7 @@ trajInner amount i disc = amount * disc !! i
 --- Main Entry Point: price computation ---
 -------------------------------------------
 
---- Using only the (not very efficient) Sobol independent formula! ---
+--- Using only the (slightly inneficient) Sobol independent formula! ---
 compute :: Int -> Int -> Int -> Int -> Int -> Int -> [[Int]] 
         -> [[[Double]]] -> [[[Double]]] -> [[[Double]]] 
         ->  [[Double]]  ->  [[Double]]  ->  [[Double]]
@@ -396,26 +395,14 @@ compute contract  num_mc_it num_dates num_under num_models num_bits
         dir_vs    md_cs     md_vols   md_drifts md_starts  md_detvals 
         md_discts bb_inds   bb_data =
 
-  let num_det_pricers = length $ head md_detvals
-      num_cash_flows  = length $ head md_discts
-
-      sobol_mat = map    (sobolIndR num_bits dir_vs) [1..num_mc_it]
+  let sobol_mat = map    (sobolIndR num_bits dir_vs) [1..num_mc_it]
       gauss_mat = map     ugaussian sobol_mat
       bb_mat    = map    (brownianBridge num_under num_dates bb_inds bb_data) gauss_mat
 
-      md_cvdsmat= zip5 md_cs md_vols md_drifts md_starts (replicate num_models bb_mat)
-      bs_mats   = map    (\cvdsmat -> let (c, vol, drift, start, bb_mat) = cvdsmat
-                                      in  map (blackScholes num_under c vol drift start) bb_mat 
-                         )
-                         md_cvdsmat 
+      bs_mat    = map (\bb_row -> zipWith4 (blackScholes num_under bb_row) md_cs md_vols md_drifts md_starts) bb_mat
+      payoffs   = bs_mat  `deepseq` map (\bs_row -> zipWith3 (payoff contract) md_discts md_detvals bs_row) bs_mat
 
-      md_discmat= zip3 md_discts md_detvals bs_mats
-      payoffs   = map    (\disc_bs -> let (disc, detvals, bsmat) = disc_bs
-                                      in  map (payoff contract disc detvals) bsmat
-                         )
-                         md_discmat
-
-      sum_prices= map (\payoff -> reduce (+) 0.0 payoff) payoffs
+      sum_prices= payoffs `deepseq` reduce (zipWith (+)) (replicate num_models 0.0) payoffs
       prices    = map (\sp -> sp / fromIntegral num_mc_it) sum_prices
   in  prices
 
@@ -431,28 +418,14 @@ compute_chunk :: Int -> Int -> Int -> Int -> Int -> Int -> [[Int]]
 compute_chunk contract  num_mc_it num_dates num_under num_models num_bits 
               dir_vs    md_cs     md_vols   md_drifts md_starts  md_detvals 
               md_discts bb_inds   bb_data   (lb,ub) =
-  let num_det_pricers = length $ head md_detvals
-      num_cash_flows  = length $ head md_discts
-
-      sob_factor      = 1.0 / (2.0 ** fromIntegral num_bits)
+  let sob_factor = 1.0 / (2.0 ** fromIntegral num_bits)
 
       sobol_mat = sobolRecMap sob_factor num_bits dir_vs (lb,ub)
       gauss_mat = map     ugaussian sobol_mat
       bb_mat    = map    (brownianBridge num_under num_dates bb_inds bb_data) gauss_mat
-
-      md_cvdsmat= zip5 md_cs md_vols md_drifts md_starts (replicate num_models bb_mat)
-      bs_mats   = map    (\cvdsmat -> let (c, vol, drift, start, bb_mat) = cvdsmat
-                                      in  map (blackScholes num_under c vol drift start) bb_mat 
-                         )
-                         md_cvdsmat 
-
-      md_discmat= zip3 md_discts md_detvals bs_mats
-      payoffs   = map    (\disc_bs -> let (disc, detvals, bsmat) = disc_bs
-                                      in  map (payoff contract disc detvals) bsmat
-                         )
-                         md_discmat
-
-      sum_prices= map (\payoff -> reduce (+) 0.0 payoff) payoffs
+      bs_mat    = map (\bb_row -> zipWith4 (blackScholes num_under bb_row) md_cs md_vols md_drifts md_starts) bb_mat
+      payoffs   = bs_mat  `deepseq` map (\bs_row -> zipWith3 (payoff contract) md_discts md_detvals bs_row) bs_mat
+      sum_prices= payoffs `deepseq` reduce (zipWith (+)) (replicate num_models 0.0) payoffs
       prices    = map (\sp -> sp / fromIntegral num_mc_it) sum_prices
   in  prices
 
@@ -504,11 +477,13 @@ main = do s <- getContents
                  num_mc_it <- readInt
                  num_dates <- readInt
                  num_under <- readInt
---                 v <- compute contract num_mc_it num_dates num_under <$>
---                      readInt <*> readInt <*> readInt2d <*>
---                      readDouble3d <*> readDouble3d <*> readDouble3d <*>
---                      readDouble2d <*> readDouble2d <*> readDouble2d <*>
---                      readInt2d    <*> readDouble2d
+{-
+                 v <- compute contract num_mc_it num_dates num_under <$>
+                      readInt <*> readInt <*> readInt2d <*>
+                      readDouble3d <*> readDouble3d <*> readDouble3d <*>
+                      readDouble2d <*> readDouble2d <*> readDouble2d <*>
+                      readInt2d    <*> readDouble2d
+-}
 
                  num_models<- readInt
                  num_bits  <- readInt
@@ -528,7 +503,6 @@ main = do s <- getContents
                                 contract  num_mc_it num_dates num_under num_models num_bits
                                 sob_dirvs md_cs     md_vols   md_drifts md_starts  md_detvals
                                 md_discts bb_inds   bb_data
-                 
 
                  r <- readDouble1d
                  return (v, r, (contract,num_mc_it, num_dates, num_under))
