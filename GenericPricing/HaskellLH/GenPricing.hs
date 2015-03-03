@@ -1,5 +1,6 @@
 module Main where
 
+import qualified Data.List
 import Control.Applicative
 import Control.Monad
 import Data.Maybe
@@ -104,12 +105,36 @@ sobolRecI bits_num sob_dir_vs prev n = zipWith xor prev dir_vs
   where dir_vs = map ( !! bit ) sob_dir_vs
         bit    = lsb0 n -- rmt n
 
-sobolRecMap :: Double -> Int -> [[Int]] -> (Int,Int) -> [[Double]]
-sobolRecMap sob_fact bits_num dir_vs (l, u) =
+sobolRecMapSeq :: Double -> Int -> [[Int]] -> (Int,Int) -> [[Double]]
+sobolRecMapSeq sob_fact bits_num dir_vs (l, u) =
   let a = sobolIndI bits_num dir_vs l
       norm = ( * sob_fact ) . fromIntegral
   in  map (map norm) (scanl (sobolRecI bits_num dir_vs) a [l..u-1])
+                  -- this scanl is sequential (NOT parallel) 
 
+------------------------------------------
+------------------------------------------
+
+sobolRecMapPar :: Double -> Int -> [[Int]] -> (Int,Int) -> [[Double]]
+sobolRecMapPar sob_fact bits_num dir_vs (lb_inc, ub_exc) =
+  let contribs = map (\k -> if (k==lb_inc) 
+      	                    then sobolIndI bits_num dir_vs lb_inc
+			                else recM dir_vs (k-1)
+		             ) [lb_inc..ub_exc]
+      vct_ints :: [[Int]]
+      vct_ints = Data.List.tail $
+                    scanl (zipWith xor) (replicate (length dir_vs) 0) contribs
+                    -- this scanl is parallel (associative xor operator)!
+  in  map (map (\x -> (fromIntegral x) * sob_fact)) vct_ints 
+
+sobolRecI2 :: [[Int]] -> [Int] -> Int -> [Int]
+sobolRecI2 sob_dirs prev i =
+  zipWith xor prev (recM sob_dirs i)
+
+recM :: [[Int]] -> Int -> [Int]
+recM sob_dirs i =
+  let bit= lsb0 i 
+  in  map (\row -> row !! bit) sob_dirs
 
 ------------------------------------------
 --- To-Gaussian Distribution Transform.---
@@ -420,7 +445,7 @@ compute_chunk contract  num_mc_it num_dates num_under num_models num_bits
               md_discts bb_inds   bb_data   (lb,ub) =
   let sob_factor = 1.0 / (2.0 ** fromIntegral num_bits)
 
-      sobol_mat = sobolRecMap sob_factor num_bits dir_vs (lb,ub)
+      sobol_mat = sobolRecMapPar sob_factor num_bits dir_vs (lb,ub)
       gauss_mat = map     ugaussian sobol_mat
       bb_mat    = map    (brownianBridge num_under num_dates bb_inds bb_data) gauss_mat
       bs_mat    = map (\bb_row -> zipWith4 (blackScholes num_under bb_row) md_cs md_vols md_drifts md_starts) bb_mat
