@@ -117,7 +117,7 @@ whole_loop_nest (
 
 
 int main() {
-    const REAL s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
+    REAL s0, t, alpha, nu, beta;
     REAL *strikes, *res;
 
     if( IS_GPU ) { 
@@ -129,7 +129,7 @@ int main() {
     }
 
 
-    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T );
+    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T, s0, t, alpha, nu, beta );
     NUM_XY = NUM_X*NUM_Y;
 
     strikes = new REAL[OUTER_LOOP_COUNT];

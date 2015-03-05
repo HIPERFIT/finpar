@@ -18,7 +18,7 @@ import Data.Bits
 import Data.List hiding (tail)
 import Prelude hiding (tail)
 
-import Debug.Trace
+--import Debug.Trace
 
 import Control.DeepSeq
 
@@ -95,15 +95,15 @@ sobolIndR bits_num dir_vs n =
   where arri = sobolIndI bits_num dir_vs n
         divisor = 2.0 ** fromIntegral bits_num
 
-
+lsb0 :: Int -> Int
 lsb0 n = lsb0_help 0 n
     where lsb0_help ell c | (c .&. 1 == 0) = ell
                           | otherwise = lsb0_help (ell+1) (c `shiftR` 1)
 
 sobolRecI :: Int -> [[Int]] -> [Int] -> Int -> [Int]
 sobolRecI bits_num sob_dir_vs prev n = zipWith xor prev dir_vs
-  where dir_vs = map ( !! bit ) sob_dir_vs
-        bit    = lsb0 n -- rmt n
+  where dir_vs = map ( !! mybit ) sob_dir_vs
+        mybit  = min (lsb0 n) (bits_num-1) 
 
 sobolRecMapSeq :: Double -> Int -> [[Int]] -> (Int,Int) -> [[Double]]
 sobolRecMapSeq sob_fact bits_num dir_vs (l, u) =
@@ -133,8 +133,8 @@ sobolRecI2 sob_dirs prev i =
 
 recM :: [[Int]] -> Int -> [Int]
 recM sob_dirs i =
-  let bit= lsb0 i 
-  in  map (\row -> row !! bit) sob_dirs
+  let mybit = lsb0 i 
+  in  map (\row -> row !! mybit) sob_dirs
 
 ------------------------------------------
 --- To-Gaussian Distribution Transform.---
@@ -149,10 +149,13 @@ polyAppr x a0 a1 a2 a3 a4 a5 a6 a7 b0 b1 b2 b3 b4 b5 b6 b7 =
 
 -- same functionality as "polyAppr", but using vectors for constants
 approx :: Double -> Vector Double -> Vector Double -> Double
-approx x as bs = let reduce xs = V.foldr (\b c -> b + x*c) 0 xs
-                 in reduce as / reduce bs
+approx x as bs = let seqreduce xs = V.foldr (\b c -> b + x*c) 0.0 xs
+                 in  seqreduce as / seqreduce bs
 
+smallcase :: Double -> Double
 smallcase q = q * approx (0.180625 - q*q) small_as small_bs
+
+small_as ::  Vector Double
 small_as = V.fromList [  3.387132872796366608
                       ,  133.14166789178437745
                       ,  1971.5909503065514427
@@ -161,6 +164,8 @@ small_as = V.fromList [  3.387132872796366608
                       ,  67265.770927008700853
                       ,  33430.575583588128105
                       ,  2509.0809287301226727 ]
+
+small_bs ::  Vector Double
 small_bs = V.fromList [  1.0
                       , 42.313330701600911252
                       , 687.1870074920579083
@@ -170,7 +175,10 @@ small_bs = V.fromList [  1.0
                       , 28729.085735721942674
                       , 5226.495278852854561  ]
 
+intermediate :: Double -> Double
 intermediate q = approx (q-1.6) interm_as interm_bs
+
+interm_as ::  Vector Double
 interm_as = V.fromList [ 1.42343711074968357734
                        , 4.6303378461565452959
                        , 5.7694972214606914055
@@ -179,6 +187,8 @@ interm_as = V.fromList [ 1.42343711074968357734
                        , 0.24178072517745061177
                        , 0.0227238449892691845833
                        , 7.7454501427834140764e-4]
+
+interm_bs ::  Vector Double
 interm_bs = V.fromList [ 1.0
                        , 2.05319162663775882187
                        , 1.6763848301838038494
@@ -188,7 +198,10 @@ interm_bs = V.fromList [ 1.0
                        , 5.475938084995344946e-4
                        , 1.05075007164441684324e-9]
 
+tail :: Double -> Double
 tail q = approx (q - 5.0) tail_as tail_bs
+
+tail_as ::  Vector Double
 tail_as   = V.fromList [ 6.6579046435011037772
                        , 5.4637849111641143699
                        , 1.7848265399172913358
@@ -197,6 +210,8 @@ tail_as   = V.fromList [ 6.6579046435011037772
                        , 0.0012426609473880784386
                        , 2.71155556874348757815e-5
                        , 2.01033439929228813265e-7]
+
+tail_bs :: Vector Double
 tail_bs = V.fromList [ 1.0
                      , 0.59983220655588793769
                      , 0.13692988092273580531
@@ -206,72 +221,6 @@ tail_bs = V.fromList [ 1.0
                      , 1.4215117583164458887e-7
                      , 2.04426310338993978564e-15]
 
-{- 
-smallcase :: Double -> Double
-smallcase q =
-  q *
-  polyAppr
-  ( 0.180625 - q * q)
-  3.387132872796366608
-  133.14166789178437745
-  1971.5909503065514427
-  13731.693765509461125
-  45921.953931549871457
-  67265.770927008700853
-  33430.575583588128105
-  2509.0809287301226727
-
-  1.0
-  42.313330701600911252
-  687.1870074920579083
-  5394.1960214247511077
-  21213.794301586595867
-  39307.89580009271061
-  28729.085735721942674
-  5226.495278852854561
-
-intermediate :: Double -> Double
-intermediate r =
-  polyAppr (r - 1.6)
-  1.42343711074968357734
-  4.6303378461565452959
-  5.7694972214606914055
-  3.64784832476320460504
-  1.27045825245236838258
-  0.24178072517745061177
-  0.0227238449892691845833
-  7.7454501427834140764e-4
-
-  1.0
-  2.05319162663775882187
-  1.6763848301838038494
-  0.68976733498510000455
-  0.14810397642748007459
-  0.0151986665636164571966
-  5.475938084995344946e-4
-  1.05075007164441684324e-9
-
-tail :: Double -> Double
-tail r =
-  polyAppr (r - 5.0)
-  6.6579046435011037772
-  5.4637849111641143699
-  1.7848265399172913358
-  0.29656057182850489123
-  0.026532189526576123093
-  0.0012426609473880784386
-  2.71155556874348757815e-5
-  2.01033439929228813265e-7
-
-  1.0
-  0.59983220655588793769
-  0.13692988092273580531
-  0.0148753612908506148525
-  7.868691311456132591e-4
-  1.8463183175100546818e-5
-  1.4215117583164458887e-7
-  2.04426310338993978564e-5
--}
 
 ugaussianEl :: Double -> Double
 ugaussianEl p =
@@ -455,10 +404,10 @@ compute_chunk contract  num_mc_it num_dates num_under num_models num_bits
   in  prices
 
 tiledSkeleton :: Int -> Int -> Int -> ((Int,Int) -> [Double]) -> [Double]
-tiledSkeleton sob_dim num_mc_its chunk fun =
-  let divides = num_mc_its `mod` chunk == 0
+tiledSkeleton sob_dim num_mc_its chunk_sz fun =
+  let divides = num_mc_its `mod` chunk_sz == 0
       extra   = if (divides) then [] else [num_mc_its]
-      iv = zip [1,chunk+1..] ([chunk, 2*chunk .. num_mc_its] ++ extra )
+      iv = zip [1,chunk_sz+1..] ([chunk_sz, 2*chunk_sz .. num_mc_its] ++ extra )
   in (reduce (zipWith (+)) (replicate sob_dim 0.0) . map fun) iv 
 ----------------------------------------------
 --- Formatting the Output of the Benchmark ---

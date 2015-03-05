@@ -12,13 +12,12 @@ import Data.Maybe
 ------------------------------------
 
 import Text.Parsec hiding (optional, (<|>), token)
-import Text.Parsec.String
+import Text.Parsec.String 
 
-import Data.Bits
 import Data.List 
 import Prelude 
 
-import Debug.Trace
+--import Debug.Trace
 
 ------------------------------
 --- Parser-related Helpers ---
@@ -61,8 +60,7 @@ reduce bop ne lst = foldl bop ne lst
 
 initGrid :: Double -> Double -> Double -> Double
         ->  Int    -> Int    -> Int 
-        -> ( Int, Int, [Double], [Double], [Double], 
-             [[Double]], [[Double]], [[Double]], [[Double]] )
+        -> ( Int, Int, [Double], [Double], [Double])
 initGrid s0 alpha nu t num_x num_y num_t = 
     let logAlpha = log alpha
         myTimeline = map  (\i -> t * (fromIntegral i) / ((fromIntegral num_t) - 1.0)) [0..num_t-1]
@@ -72,9 +70,7 @@ initGrid s0 alpha nu t num_x num_y num_t =
         (myXindex, myYindex) = (truncate (s0 / dx), num_y `div` 2)
         myX = map (\i -> (fromIntegral i) * dx - (fromIntegral myXindex) * dx + s0      ) [0..num_x-1]
         myY = map (\i -> (fromIntegral i) * dy - (fromIntegral myYindex) * dy + logAlpha) [0..num_y-1]
-        xXy = replicate num_x (replicate num_y 0.0)
-        (myMuX, myVarX, myMuY, myVarY) = (xXy, xXy, xXy, xXy)
-    in  (myXindex, myYindex, myX, myY, myTimeline, myMuX, myVarX, myMuY, myVarY)
+    in  (myXindex, myYindex, myX, myY, myTimeline)
 
 ---------------------------------------------
 ---------------------------------------------
@@ -88,9 +84,8 @@ initOperator x =
     let n      = length x
         mid_x  = zip3 x (tail x) (tail (tail x))
 
-        dxu    = (x !! 1) - (x !! 0)
-        dxl    = 0.0
-        dxlow  = (0.0, -1.0 / dxu, 1.0 / dxu)
+        dxu0   = (x !! 1) - (x !! 0)
+        dxlow  = (0.0, -1.0 / dxu0, 1.0 / dxu0)
         dxxlow = (0.0, 0.0, 0.0)
 
         --- Implements a parallel loop such as:   ---
@@ -110,11 +105,10 @@ initOperator x =
                             dxlpxu     = dxl + dxu
                         in ( ( 2.0/dxl )            / dxlpxu,
                              -2.0*(1.0/dxl+1.0/dxu) / dxlpxu,
-                             ( 2.0/dxu )            / dxlpxu
+                             ( 2.0/dxu )            / dxlpxu 
                            ) 
                      ) mid_x
         dxll   = (x !! (n-1)) - (x !! (n-2))
-        dxul   = 0.0
         dxhigh = [(-1.0 / dxll, 1.0 / dxll, 0.0)]
         dxxhigh= [(0.0, 0.0, 0.0)]
     in ( dxlow : (dxmid++dxhigh), dxxlow : (dxxmid++dxxhigh) ) 
@@ -127,33 +121,29 @@ initOperator x =
 doLoop :: Int -> Int
        -> ( [Double], [(Double,Double,Double)], [(Double,Double,Double)], 
             [Double], [(Double,Double,Double)], [(Double,Double,Double)], 
-            [Double], Double, Double, Double )
-       -> ([[Double]], [[Double]], [[Double]], [[Double]], [[Double]])
-       -> ([[Double]], [[Double]], [[Double]], [[Double]], [[Double]])
-doLoop i bound loop_ros loop_variants  = 
+            [Double], Double, Double, Double ) 
+       -> [[Double]]
+       -> [[Double]]
+doLoop i bound loop_ros myResult  = 
     if  i == bound 
-    then loop_variants
-    else let (myResult, myMuX, myVarX, myMuY, myVarY) = loop_variants
-
-             ( myX, myDx, myDxx, myY, myDy, myDyy,
+    then myResult
+    else let ( myX, myDx, myDxx, myY, myDy, myDyy,
                myTimeline, alpha, beta, nu )          = loop_ros
 
              j = (bound-1-i)
 
-             (myMuX', myVarX', myMuY', myVarY')       =
+             (myMuX, myVarX, myMuY, myVarY)       =
                     updateParams myX myY myTimeline j alpha beta nu
 
              
 
-             myResult'= rollback j  myX  myY   myTimeline  myResult
-                                 myMuX'  myDx  myDxx       myVarX'
-                                 myMuY'  myDy  myDyy       myVarY' 
-
-             loop_variants' = (myResult', myMuX', myVarX', myMuY', myVarY')
+             myResult'= rollback j  myTimeline  myResult
+                                 myMuX  myDx  myDxx  myVarX
+                                 myMuY  myDy  myDyy  myVarY 
 
          in  -- Hack to avoid space leak
-          myResult' `deepseq` myMuX' `deepseq` myVarX' `deepseq` myMuY' `deepseq` myVarY' `deepseq`
-          doLoop (i+1) bound loop_ros loop_variants'
+          myResult' `deepseq` myMuX `deepseq` myVarX `deepseq` myMuY `deepseq` myVarY `deepseq`
+          doLoop (i+1) bound loop_ros myResult'
 
 ---------------------------------------------
 ---------------------------------------------
@@ -161,19 +151,131 @@ doLoop i bound loop_ros loop_variants  =
 updateParams :: [Double] -> [Double] -> [Double] -> Int -> Double -> Double -> Double 
              -> ( [[Double]], [[Double]], [[Double]], [[Double]] )
 updateParams myX myY myTimeline g alpha beta nu =
-    unzip4 $ map (\ xi -> unzip4 $
-                          map (\ yj -> let b = beta * log(xi) + yj
-                                           c = 0.5 * nu * nu * (myTimeline !! g)
-                                       in  ( 0.0, exp (2.0 * (b - c) ), 0.0, nu * nu )
-                              ) myY
-                 ) myX
+    let ( numX, numY ) = ( length myX, length myY )    
+        myMuY  = replicate numX (replicate numY (0.0*alpha))
+        myVarY = replicate numX (replicate numY (nu*nu)    )
+        myMuX  = replicate numY (replicate numX 0.0        )
+        myVarX = map (\ yj -> 
+                        map (\ xi -> 
+                                let b = beta * log(xi) + yj
+                                    c = 0.5 * nu * nu * (myTimeline !! g)
+                                in  exp (2.0 * (b - c))
+			                ) myX
+		             ) myY
+    in  ( myMuX, myVarX, myMuY, myVarY )
+
+------------------------------------------------------
+--- TRIDAG: tridiagonal solver.                    ---
+---         sequential and parallel implementation ---
+------------------------------------------------------
+
+tridagSeq :: [Double] -> [Double] -> [Double] -> [Double] 
+          -> [Double]
+tridagSeq a b c r = 
+    let u0  = head r
+        uu0 = head b
+ 
+        -- sequential scanl: binary operator is NOT associative
+        uu  = scanl (\ uuim1 (ai, bi, cim1) -> 
+                        let beta = ai / uuim1
+                        in  bi - beta*cim1
+                    ) uu0 (zip3 (tail a) (tail b) c)
+ 
+        -- sequential scanl: binary operator is NOT associative
+        u   = scanl (\ uim1 (ai, ri, uuim1) ->
+                        let beta = ai / uuim1
+                        in  ri - beta*uim1
+                    ) u0  (zip3 (tail a) (tail r) uu)
+
+        ur  = reverse u
+        uur = reverse uu
+        ur0'= (head ur) / (head uur)
+        ur' = scanl (\ uip1 (uri, uuri, cri) -> 
+                            (uri - cri*uip1) / uuri
+                    ) ur0' (zip3 (tail ur) (tail uur) (tail $ reverse c))
+    in  reverse ur'
+
+
+tridagPar :: [Double] -> [Double] -> [Double] -> [Double] 
+          -> [Double]
+tridagPar a b c y =
+    ----------------------------------------------------
+    -- Recurrence 1: b[i] = b[i] - a[i]*c[i-1]/b[i-1] --
+    --   solved by scan with 2x2 matrix mult operator --
+    ----------------------------------------------------
+    let bfst = head b
+        mats = map  (\ (bi,ai,cim1) -> (bi, 0.0-ai*cim1, 1.0, 0.0) )  
+                    (zip3 (tail b) (tail a) c)
+
+        scmt = -- parallel scan with 2x2 mat mult op
+               scanl(\ (a0,a1,a2,a3) (b0,b1,b2,b3) -> 
+		                let val = 1.0/(a0*b0) in
+			            ( (b0*a0 + b1*a2)*val,
+			              (b0*a1 + b1*a3)*val,
+			              (b2*a0 + b3*a2)*val,
+			              (b2*a1 + b3*a3)*val ) ) 
+		            (1.0,0.0,0.0,1.0) mats
+
+        b'   = map  (\ (t0,t1,t2,t3) -> (t0*bfst + t1) / (t2*bfst + t3) )
+		            scmt
+
+    ------------------------------------------------------
+    -- Recurrence 2: y[i] = y[i] - (a[i]/b[i-1])*y[i-1] --
+    --   solved by scan with linear func comp operator  --
+    ------------------------------------------------------
+        y0   = head y
+        lffns= map (\ (yi,ai,bim1) -> (yi, 0.0-ai/bim1) )
+                   (zip3 (tail y) (tail a) b')
+
+        cffns= -- parallel scan with lin fun composition op
+               scanl (\ (a0,a1) (b0,b1) -> (b0 + b1*a0, a1*b1) )
+		             (0.0, 1.0)  lffns
+
+        yf   = map  (\ (t1,t2) -> t1 + t2*y0 ) cffns
+
+    ------------------------------------------------------
+    -- Recurrence 3: backward recurrence solved via     --
+    --             scan with linear func comp operator  --
+    ------------------------------------------------------
+        yn   = (last yf) / (last b')
+        lbfn0= map (\ (yi,bi,ci) -> (yi/bi, 0.0-ci/bi) )
+		           (tail $ zip3 (reverse yf) (reverse b') (reverse c))
+        lbfns= (0.0, 1.0) : lbfn0
+        cbfns= tail $ -- parallel scan with lin fun composition op
+               scanl (\ (a0,a1) (b0,b1) -> (b0 + b1*a0, a1*b1) )
+		             (0.0, 1.0)  lbfns
+
+        yb   = map  (\ (t1,t2) -> t1 + t2*yn ) cbfns
+
+    in  (reverse yb)
+
 ---------------------------------------------
----  Helpers for the rollback function    --- 
----    ToDo: make them nice!!!            ---
+---  Implicit Method (parameterization)   --- 
 ---------------------------------------------
 
--- explicitX = explicitXY  dt_inv 0.5  (transpose my_result)  (transpose myMuX)  (transpose myVarX)  myDx  myDxx
--- explicitY = explicitXY  0.0    1.0  my_result  myMuY  myVarY  myDy  myDyy
+implicitMethod :: Double
+               -> [(Double,Double,Double)] 
+               -> [(Double,Double,Double)] 
+               -> [[Double]] -> [[Double]]
+               -> [[Double]] -> [[Double]]
+implicitMethod dtInv myD myDD myMu myVar u =
+    zipWith3(\ mu_row var_row u_row ->
+                let (a, b, c) = unzip3 $
+                        zipWith4 (\ mu var (d0,d1,d2) (dd0,dd1,dd2) ->
+                                    ( 0.0   - 0.5*(mu*d0 + 0.5*var*dd0)
+			                        , dtInv - 0.5*(mu*d1 + 0.5*var*dd1)
+			                        , 0.0   - 0.5*(mu*d2 + 0.5*var*dd2)
+			                        )
+                                 )  mu_row var_row myD myDD 
+                in  if (1::Integer) == (1::Integer)
+                    then tridagSeq a b c u_row
+                    else tridagPar a b c u_row
+            ) myMu myVar u
+
+---------------------------------------------
+---  Explicit Method (parameterization)   --- 
+---------------------------------------------
+
 explicitXY ::   Double   ->   Double
            -> [[Double]] -> [[Double]] -> [[Double]]
            -> [ (Double,Double,Double) ] 
@@ -197,6 +299,7 @@ explicitXY  dt_inv  fact  my_result  myMuY  myVarY  myDy  myDyy =
             ) (zip3 my_result myMuY myVarY)
 
 ------------------------------------------
+--- UNUSED                             ---
 --- loop-like definition for explicitX ---
 ---  inneficient due to list traversal ---
 ---  to find every index.              ---
@@ -231,125 +334,34 @@ explicitX0    num_x  num_y  dt_inv  my_result
 
         ) [0..num_y-1]
 
-tridag :: [Double] -> [Double] -> [Double] -> [Double] 
-       -> ( [Double], [Double] )
-tridag a b c r = 
-    let u0  = head r
-        uu0 = head b
- 
-        -- scanl's binary operator is NOT associative
-        uu  = scanl (\ uuim1 (ai, bi, cim1) -> 
-                        let beta = ai / uuim1
-                        in  bi - beta*cim1
-                    ) uu0 (zip3 (tail a) (tail b) c)
- 
-        -- scanl's binary operator is NOT associative
-        u   = scanl (\ uim1 (ai, ri, uuim1) ->
-                        let beta = ai / uuim1
-                        in  ri - beta*uim1
-                    ) u0  (zip3 (tail a) (tail r) uu)
-
-        ur  = reverse u
-        uur = reverse uu
-        ur0'= (head ur) / (head uur)
-        ur' = scanl (\ uip1 (uri, uuri, cri) -> 
-                            (uri - cri*uip1) / uuri
-                    ) ur0' (zip3 (tail ur) (tail uur) (tail $ reverse c))
-    in  (reverse ur', uu)
-
-
-tridagPar :: [Double] -> [Double] -> [Double] -> [Double] 
-          -> ( [Double], [Double] )
-tridagPar a b c r = 
-    let -- u0  = head r
-        -- uu0 = head b
-        u0  = head b
-        uu0 = head r 
-
-        -- creating the 2x2 matrices 
-        mats    = map (\(ai,bi,cim1)-> (bi, -ai*cim1, 1.0, 0.0)) (zip3 (tail a) (tail b) c)
-        -- scan with 2x2 matrix multiplication
-        scanmat = scanl (\(x1,y1,z1,w1) (x2,y2,z2,w2) -> 
-                            let dv = 1.0/(x1*x2)
-                            in  ( (x1*x2+y1*z2)*dv, 
-                                  (x1*y2+y1*w2)*dv,
-                                  (z1*x2+w1*z2)*dv,
-                                  (z1*y2+w1*w2)*dv )
-                        ) (1.0, 0.0, 0.0, 1.0) mats
-
-        -- compute the first recurrence result
-        uu = map (\(x,y,z,w) -> (x*u0 + y) / (z*u0 + w) ) scanmat
-
-        -- compute the second recurrence
-        pairs = map (\(ai,ri,uuim1)->(ri, -ai/uuim1)) (zip3 (tail a) (tail r) uu) 
-
-        scanpairs = scanl (\ (x1,y1) (x2,y2) -> (x2+y2*x1, y1*y2) ) (0.0,1.0) pairs 
-
-        u = map (\(x,y) -> x + u0*y) scanpairs
-
-        -- backwards recurrence
-        ur  = reverse u
-        uur = reverse uu
-        ur0'= (head ur) / (head uur)
-
-        pairsr = map (\(uri, uuri, cri)->(uri/uuri, -cri/uuri)) (zip3 (tail ur) (tail uur) (tail $ reverse c)) 
-        scanpairsr = scanl (\ (x1,y1) (x2,y2) -> (x2+y2*x1, y1*y2) ) (0.0,1.0) pairsr
-        ur' = map (\(x,y) -> x + ur0'*y) scanpairsr
-
-    in  (reverse ur', uu)
 
 ---------------------------------------------
 --- rollback: the brain of the program    ---
 ---------------------------------------------
 
-rollback ::  Int -> [Double] -> [Double] -> [Double] -> [[Double]]
+rollback ::  Int -> [Double] -> [[Double]]
          -> [[Double]] -> [(Double,Double,Double)] -> [(Double,Double,Double)] -> [[Double]]
          -> [[Double]] -> [(Double,Double,Double)] -> [(Double,Double,Double)] -> [[Double]]
          -> [[Double]] 
 
-rollback g  myX  myY  myTimeline  myResult
+rollback g  myTimeline  myResult
          myMuX  myDx  myDxx  myVarX
          myMuY  myDy  myDyy  myVarY = 
 
-    let (numX, numY) = (length myX, length myY)
-        numZ  = max numX numY
-        dtInv = 1.0 / ( (myTimeline !! (g+1)) - (myTimeline !! g) )
+    let dtInv = 1.0 / ( (myTimeline !! (g+1)) - (myTimeline !! g) )
 
-        u0= explicitXY dtInv  0.5  (transpose myResult)  (transpose myMuX)  (transpose myVarX)  myDx  myDxx
+        u0= explicitXY dtInv  0.5  (transpose myResult)  myMuX  myVarX  myDx  myDxx
         v0= explicitXY 0.0    1.0  myResult  myMuY  myVarY  myDy  myDyy
  
         u1= map (\ (us, vs) -> zipWith (+) us vs )
                 (zip u0 (transpose v0))
 
-        u2= map (\ t -> let (uj, myDx, myDxx, myMuX, myVarX) = t
-                            (a,b,c) = unzip3 $
-                                        map (\ tt -> let (myDx, myDxx, myMuX, myVarX) = tt
-                                                         (dx0,  dx1,  dx2 ) = myDx  
-                                                         (dxx0, dxx1, dxx2) = myDxx
-                                                     in  (  -0.5*(myMuX*dx0 + 0.5*myVarX*dxx0),
-                                                            dtInv - 0.5*(myMuX*dx1 + 0.5*myVarX*dxx1),
-                                                            -0.5*(myMuX*dx2+0.5*myVarX*dxx2)          ) )
-                                            (zip4 myDx myDxx myMuX myVarX)
+        u2= implicitMethod dtInv myDx myDxx myMuX myVarX u1
+        y = zipWith (\ u_row v_row ->
+			            zipWith (\ u_el v_el -> dtInv*u_el - 0.5*v_el) u_row v_row
+			        ) (transpose u2) v0
 
-                            (uj', yy) = tridag a b c uj  -- tridagPar a b c uj 
-                        in  uj' )
-                (zip5 u1 (replicate numY myDx) (replicate numY myDxx) (transpose myMuX) (transpose myVarX))
-
-    in  map (\ t -> let (ui, vi, myDy, myDyy, myMuY, myVarY) = t
-                        (a,b,c) = unzip3 $
-                                    map (\ tt -> let (myDy, myDyy, myMuY, myVarY) = tt
-                                                     (dy0,  dy1,  dy2 ) = myDy
-                                                     (dyy0, dyy1, dyy2) = myDyy
-                                                 in  (  -0.5*(myMuY*dy0+0.5*myVarY*dyy0),
-                                                        dtInv - 0.5*(myMuY*dy1+0.5*myVarY*dyy1),
-                                                        -0.5*(myMuY*dy2+0.5*myVarY*dyy2)        ) )
-                                        (zip4 myDy myDyy myMuY myVarY)
-
-                        y = map (\ (u,v) -> dtInv * u - 0.5 * v) (zip ui vi)
-
-                        (ri, yy) = tridag a b c y -- tridagPar a b c y 
-                    in  ri )
-            (zip6 (transpose u2) v0 (replicate numX myDy) (replicate numX myDyy) myMuY myVarY)
+    in  implicitMethod dtInv myDy myDyy myMuY myVarY y
 
 ---------------------------------------------
 ---------------------------------------------
@@ -363,20 +375,19 @@ value ::    (Double, Double, Double, Double, Double)
         ->  (Int,    Int,    Int,    Int) -> Double
         ->  Double
 value  params it_spaces strike = 
-    let (outer, num_x, num_y, num_t) = it_spaces
-        (s0, t, alpha, nu, beta)     = params
+    let (_, num_x, num_y, num_t) = it_spaces
+        (s0, t, alpha, nu, beta) = params
 
-        (myXindex, myYindex, myX, myY, myTimeline, myMuX, myVarX, myMuY, myVarY) =
+        (myXindex, myYindex, myX, myY, myTimeline) =
             initGrid s0 alpha nu t num_x num_y num_t
         (myDx, myDxx) = initOperator myX
         (myDy, myDyy) = initOperator myY
 
         my_result_ini = map (\ xi -> replicate num_y (max (xi - strike) 0.0 )) myX
         
-        loop_variants = (my_result_ini, myMuX, myVarX, myMuY, myVarY)
         loop_ros      = (myX, myDx, myDxx, myY, myDy, myDyy, myTimeline, alpha, beta, nu)
 
-        (my_result,_,_,_,_) = doLoop 0 (num_t-1) loop_ros loop_variants 
+        my_result     = doLoop 0 (num_t-1) loop_ros my_result_ini 
 
     in  (my_result !! myXindex) !! myYindex  -- my_result[myXindex, myYindex]
 
@@ -387,8 +398,8 @@ compute :: (Int,    Int,    Int,    Int)
         -> (Double, Double, Double, Double, Double)
         -> [Double]
 compute    it_spaces params =
-    let (s0, t, alpha, nu, beta) = params
-        (outer, num_x, num_y, num_t) = it_spaces
+    let -- (s0, t, alpha, nu, beta) = params
+        (outer, _, _, _) = it_spaces -- was (outer, num_x, num_y, num_t)
         strikes = map (\i -> 0.001 * (fromIntegral i)) [0..outer-1]
         res     = map (value params it_spaces) strikes 
     in  res
@@ -428,8 +439,13 @@ main = do s <- getContents
                  num_x <- readInt
                  num_y <- readInt
                  num_t <- readInt
+                 s0    <- readDouble
+                 t     <- readDouble
+                 alpha <- readDouble
+                 nu    <- readDouble
+                 beta  <- readDouble
 
-                 let params = (0.03, 5.0, 0.2, 0.6, 0.5) --(s0, t, alpha, nu, beta)
+                 let params = (s0, t, alpha, nu, beta)
 
                  let v = compute (outer, num_x, num_y, num_t) params
                  r <- readDouble1d

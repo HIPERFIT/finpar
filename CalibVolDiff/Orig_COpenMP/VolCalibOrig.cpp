@@ -311,11 +311,11 @@ double* run_CPUkernel(
 int main()
 {
     unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T; 
-	const double s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
+	REAL s0, t, alpha, nu, beta;
 
     cout<<"\n// Running Original (Parallel) Volatility-Calibration Benchmark"<<endl;
 
-    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T ); 
+    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T, s0, t, alpha, nu, beta ); 
 
 	vector<double> strikes(OUTER_LOOP_COUNT),res(OUTER_LOOP_COUNT);
 

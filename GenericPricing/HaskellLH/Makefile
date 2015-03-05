@@ -6,7 +6,8 @@ endif
 # switch this on if llvm is enabled
 #BACKEND=-fllvm
 
-OPTIMIZATION=-O2 -msse2 -rtsopts
+OPTIMIZATION=-O2 -msse2 -rtsopts 
+#-Wall
 EXECUTABLE=GenPricing
 
 all: $(EXECUTABLE)

@@ -28,14 +28,24 @@ const float EPS = 0.00001;
 void readDataSet(   unsigned int& outer, 
                     unsigned int& num_X,
                     unsigned int& num_Y,
-                    unsigned int& num_T
+                    unsigned int& num_T,
+                    REAL        & s0,
+                    REAL        & t,
+                    REAL        & alpha,
+                    REAL        & nu,
+                    REAL        & beta
 ) {
-    if(     read_int( static_cast<unsigned int*>( &outer ) ) ||
-            read_int( static_cast<unsigned int*>( &num_X ) ) ||
-            read_int( static_cast<unsigned int*>( &num_Y ) ) ||
-            read_int( static_cast<unsigned int*>( &num_T ) )  ) {
+    if(     read_int ( static_cast<unsigned int*>( &outer ) ) ||
+            read_int ( static_cast<unsigned int*>( &num_X ) ) ||
+            read_int ( static_cast<unsigned int*>( &num_Y ) ) ||
+            read_int ( static_cast<unsigned int*>( &num_T ) ) ||
+            read_real( static_cast<REAL*>        ( &s0    ) ) ||
+            read_real( static_cast<REAL*>        ( &t     ) ) ||
+            read_real( static_cast<REAL*>        ( &alpha ) ) ||
+            read_real( static_cast<REAL*>        ( &nu    ) ) ||
+            read_real( static_cast<REAL*>        ( &beta  ) )  ) {
         
-        fprintf(stderr, "Syntax error when reading the dataset, i.e., four ints.\n");
+        fprintf(stderr, "Syntax error when reading the dataset, i.e., four ints and six reals.\n");
         exit(1);
     }
 
