@@ -1,347 +1,445 @@
-#include <vector>
 #include <cmath>
 
-typedef double REAL;
+#define WITH_FLOATS     0
 #define WORKGROUP_SIZE  512 
+
+typedef double REAL;
 
 #include "Util.h"
 #include "../includeC/ParseInput.h"
 
 using namespace std;
 
-struct PrivGlobs {
 
-    //	grid
-    vector<double>			myX;
-    vector<double>          myY; 
-    vector<double>          myTimeline;
-    unsigned				myXindex; 
-    unsigned                myYindex;
+// Macros for 2-dim array indexing
+#define Dx(i,j)       Dx[(i)*3 + j]
+#define Dy(i,j)       Dy[(i)*3 + j]
+#define Dxx(i,j)      Dxx[(i)*3 + j]
+#define Dyy(i,j)      Dyy[(i)*3 + j]
+#define MuX(i,j)      MuX[(i)*numX  + j]
+#define VarX(i,j)     VarX[(i)*numX + j]
+#define MuY(i,j)      MuY[(i)*numY  + j]
+#define VarY(i,j)     VarY[(i)*numY + j]
+#define ResultE(i,j)  ResultE[(i)*numY + j]
 
-    //	variable
-    vector<vector<double> > myResult;
-
-    //	coeffs
-    vector<vector<double> > myMuX;
-    vector<vector<double> > myVarX;
-    vector<vector<double> > myMuY;
-    vector<vector<double> > myVarY;
-
-    //	operators
-    vector<vector<double> >	myDx;
-    vector<vector<double> > myDxx;
-
-    vector<vector<double> > myDy; 
-    vector<vector<double> > myDyy;
-} __attribute__ ((aligned (128)));
-
-
-
-
+#define U(i,j)        U[(i)*numX + j]
+#define V(i,j)        V[(i)*numY + j]
 
 /***********************************/
 
-void updateParams(const unsigned g, const double alpha, const double beta, const double nu, PrivGlobs& globs)
-{
-    for(unsigned i=0;i<globs.myX.size();++i)
-        for(unsigned j=0;j<globs.myY.size();++j) {
-            globs.myMuX[i][j]  = 0.0;
-            globs.myVarX[i][j] = exp(2*(    beta*log(globs.myX[i])   
-                                          + globs.myY[j]             
-                                          - 0.5*nu*nu*globs.myTimeline[g] )
-                                    );
-            globs.myMuY[i][j]  = 0.0;
-            globs.myVarY[i][j] = nu*nu;
+/**
+ * Initializes MuX, MuY, VarX and VarY
+ */
+inline
+void updateParams(  const unsigned numX,   
+                    const unsigned numY,   
+                    const unsigned g,      
+                    const REAL     alpha,  
+                    const REAL     beta,   
+                    const REAL     nu,
+                    REAL* X, REAL* Y, REAL* Time,
+
+                    REAL* MuX, REAL* VarX, // output
+                    REAL* MuY, REAL* VarY  // output
+) {
+
+    for(unsigned j=0; j<numY; ++j) 
+        for(unsigned i=0; i<numX; ++i) {
+           	MuX(j,i)  = 0.0;
+            VarX(j,i) = exp(2*(beta*log(X[i]) + Y[j] - 0.5*nu*nu*Time[g]));
+        }
+
+    for(unsigned i=0; i<numX; ++i)
+        for(unsigned j=0; j<numY; ++j) {
+            MuY(i,j)  = 0.0;
+            VarY(i,j) = nu*nu;
         }
 }
 
+/**
+ * Initializes indX, indY and X, Y, Time
+ */
+void initGrid(  const unsigned numX, 
+                const unsigned numY, 
+                const unsigned numT,
+                const REAL     s0, 
+                const REAL     alpha, 
+                const REAL     nu,
+                const REAL     t,
+                unsigned&      indX, // output
+                unsigned&      indY, // output
+                REAL*          X,    // output
+                REAL*          Y,    // output
+                REAL*          Time  // output
+ ) {
 
-void initGrid(  const double s0, const double alpha, const double nu,const double t, 
-                const unsigned numX, const unsigned numY, const unsigned numT, PrivGlobs& globs   
+    for(unsigned i=0; i<numT; ++i)
+        Time[i] = t*i/(numT-1);
+
+    const REAL stdX = 20*alpha*s0*sqrt(t);
+    const REAL dx = stdX/numX;
+    indX = static_cast<unsigned>(s0/dx);
+
+    for(unsigned i=0; i<numX; ++i)
+        X[i] = i*dx - indX*dx + s0;
+
+    const REAL stdY = 10*nu*sqrt(t);
+    const REAL dy = stdY/numY;
+    const REAL logAlpha = log(alpha);
+    indY = static_cast<unsigned>(numY/2);
+
+    for(unsigned i=0; i<numY; ++i)
+        Y[i] = i*dy - indY*dy + logAlpha;
+}
+
+/**
+ * Initializes Globals: 
+ *      (i) Dx and Dxx when called with numX and X
+ *     (ii) Dy and Dyy when called with numY and Y
+ */
+void initOperator(  const int   n,
+                    const REAL* xx, 
+            
+                    REAL* D,  // Output
+                    REAL* DD  // Output
 ) {
-    globs.myX.resize(numX);
-    globs.myY.resize(numY);
-    globs.myTimeline.resize(numT);
+    REAL dxl, dxu;
 
-    for(unsigned i=0;i<numT;++i)
-        globs.myTimeline[i] = t*i/(numT-1);
+    //	lower boundary
+    dxl		 =  0.0;
+    dxu		 =  xx[1] - xx[0];
 
-    const double stdX = 20*alpha*s0*sqrt(t);
-    const double dx = stdX/numX;
-    globs.myXindex = static_cast<unsigned>(s0/dx);
+    D[0*3 + 0]  =  0.0;
+    D[0*3 + 1]  = -1.0/dxu;
+    D[0*3 + 2]  =  1.0/dxu;
+	
+    DD[0*3 + 0] =  0.0;
+    DD[0*3 + 1] =  0.0;
+    DD[0*3 + 2] =  0.0;
+	
+    //	standard case
+    for(int i=1; i<n-1; i++) {
+        dxl      = xx[i]   - xx[i-1];
+        dxu      = xx[i+1] - xx[i];
 
-    for(unsigned i=0;i<numX;++i)
-        globs.myX[i] = i*dx - globs.myXindex*dx + s0;
+        D[i*3 + 0]  = -dxu/dxl/(dxl+dxu);
+        D[i*3 + 1]  = (dxu/dxl - dxl/dxu)/(dxl+dxu);
+        D[i*3 + 2]  =  dxl/dxu/(dxl+dxu);
 
-    const double stdY = 10*nu*sqrt(t);
-    const double dy = stdY/numY;
-    const double logAlpha = log(alpha);
-    globs.myYindex = numY/2;
+        DD[i*3 + 0] =  2.0/dxl/(dxl+dxu);
+        DD[i*3 + 1] = -2.0*(1.0/dxl + 1.0/dxu)/(dxl+dxu);
+        DD[i*3 + 2] =  2.0/dxu/(dxl+dxu); 
+    }
 
-    for(unsigned i=0;i<numY;++i)
-        globs.myY[i] = i*dy - globs.myYindex*dy + logAlpha;
+    //	upper boundary
+    dxl =  xx[n-1] - xx[n-2];
+    dxu	=  0.0;
 
+    D[(n-1)*3 + 0]  = -1.0/dxl;
+    D[(n-1)*3 + 1]  =  1.0/dxl;
+    D[(n-1)*3 + 2]  =  0.0;
 
-    globs.myMuX.resize(numX);
-    globs.myVarX.resize(numX);
-    globs.myMuY.resize(numX);
-    globs.myVarY.resize(numX);
-    for(unsigned i=0;i<numX;++i) {
-        globs.myMuX[i].resize(numY);
-        globs.myVarX[i].resize(numY);
-        globs.myMuY[i].resize(numY);
-        globs.myVarY[i].resize(numY);
+    DD[(n-1)*3 + 0] = 0.0;
+    DD[(n-1)*3 + 1] = 0.0;
+    DD[(n-1)*3 + 2] = 0.0;
+}
+
+void setPayoff( const unsigned numX, 
+                const unsigned numY, 
+                const REAL     strike, 
+                REAL*          X,
+
+                REAL* ResultE  // Output
+
+) {
+    for( unsigned i=0; i<numX; ++i ) {
+        REAL payoff = max( X[i]-strike, 0.0 );
+
+        for( unsigned j=0; j<numY; ++j )
+            ResultE(i,j) = payoff;
     }
 }
 
-void initOperator(const vector<double>& x, vector<vector<double> >& Dx, vector<vector<double> >& Dxx)
-{
-	const unsigned n = x.size();
-
-	Dx.resize(n);
-	Dxx.resize(n);
-
-	for(unsigned i=0;i<n;++i)
-	{
-		Dx[i].resize(3);
-		Dxx[i].resize(3);
-	}
-
-	double dxl, dxu;
-
-	//	lower boundary
-	dxl		 =  0.0;
-	dxu		 =  x[1] - x[0];
-
-	Dx[0][0]  =  0.0;
-	Dx[0][1]  = -1.0/dxu;
-	Dx[0][2]  =  1.0/dxu;
-	
-	Dxx[0][0] =  0.0;
-	Dxx[0][1] =  0.0;
-	Dxx[0][2] =  0.0;
-	
-	//	standard case
-	for(unsigned i=1;i<n-1;i++)
-	{
-		dxl      = x[i]   - x[i-1];
-		dxu      = x[i+1] - x[i];
-
-		Dx[i][0]  = -dxu/dxl/(dxl+dxu);
-		Dx[i][1]  = (dxu/dxl - dxl/dxu)/(dxl+dxu);
-		Dx[i][2]  =  dxl/dxu/(dxl+dxu);
-
-		Dxx[i][0] =  2.0/dxl/(dxl+dxu);
-		Dxx[i][1] = -2.0*(1.0/dxl + 1.0/dxu)/(dxl+dxu);
-		Dxx[i][2] =  2.0/dxu/(dxl+dxu); 
-	}
-
-	//	upper boundary
-	dxl		   =  x[n-1] - x[n-2];
-	dxu		   =  0.0;
-
-	Dx[n-1][0]  = -1.0/dxl;
-	Dx[n-1][1]  =  1.0/dxl;
-	Dx[n-1][2]  =  0.0;
-
-	Dxx[n-1][0] = 0.0;
-	Dxx[n-1][1] = 0.0;
-	Dxx[n-1][2] = 0.0;
-}
-
-
-void setPayoff(const double strike, PrivGlobs& globs )
-{
-    globs.myResult.resize(globs.myX.size());
-	for(unsigned i=0;i<globs.myX.size();++i)
-	{
-		globs.myResult[i].resize(globs.myY.size());
-		double payoff = max(globs.myX[i]-strike,0.0);
-		for(unsigned j=0;j<globs.myY.size();++j)
-			globs.myResult[i][j] = payoff;
-	}
-}
-
-inline void tridag(
-    const vector<double>&   a,
-    const vector<double>&   b,
-    const vector<double>&   c,
-    const vector<double>&   r,
-    const int               n,
-          vector<double>&   u,
-          vector<double>&   uu)
-{
-    int    i, offset;
+/**
+ * Computes the solution of a tridiagonal system in 
+ *      output array y.
+ */
+inline
+void tridag(    const int     n,  // input RO
+                const REAL*   a,  // input RO
+                      REAL*   b,  // input RW
+                const REAL*   c,  // input RO
+                      REAL*   y   // input & OUTPUT RW
+) {
     REAL   beta;
+    int    i;
 
-    u[0]  = r[0];
-    uu[0] = b[0];
+    // forward swap
+    for (i=1; i<n-1; i++) {
+        beta = a[i] / b[i-1];
 
-    for(i=1; i<n; i++) {
-        beta  = a[i] / uu[i-1];
+        b[i] = b[i] - beta*c[i-1];
+        y[i] = y[i] - beta*y[i-1];
+    }    
 
-        uu[i] = b[i] - beta*c[i-1];
-        u[i]  = r[i] - beta*u[i-1];
-    }
-
-    u[n-1] = u[n-1] / uu[n-1];
-
+    // backward swap
+    y[n-1] = y[n-1]/b[n-1];
     for(i=n-2; i>=0; i--) {
-        u[i] = (u[i] - c[i]*u[i+1]) / uu[i];
+        y[i] = (y[i] - c[i]*y[i+1]) / b[i]; 
     }
 }
-
 
 void
-rollback( const unsigned g, PrivGlobs& globs ) {
-    unsigned numX = globs.myX.size(),
-             numY = globs.myY.size();
+rollback(   const unsigned numX, 
+            const unsigned numY, 
+            const unsigned g,
+            REAL* a, REAL* b,  REAL* c, REAL* Time, REAL* U, REAL* V,
+            REAL* Dx, REAL* Dxx, REAL* MuX,  REAL* VarX,
+            REAL* Dy, REAL* Dyy, REAL* MuY,  REAL* VarY,
 
-    unsigned numZ = max(numX,numY);
-
-    int k, l;
-    unsigned i, j;
-
-    int kl, ku, ll, lu;
-
-    double dtInv = 1.0/(globs.myTimeline[g+1]-globs.myTimeline[g]);
-
-    vector<vector<double> > u(numY,vector<double>(numX)), v(numX,vector<double>(numY));
-    vector<double> a(numZ), b(numZ), c(numZ), y(numZ), yy(numZ);
+            REAL* ResultE  // output
+) {
+    const REAL dtInv = 1.0 / (Time[g+1]-Time[g]);
+    int        i, j;
 
     //	explicit x
-    for(i=0;i<numX;i++) {
-        kl =	 1*(i==0);
-        ku = 2 - 1*(i==numX-1);
-        for(j=0;j<numY;j++) {
-            u[j][i] = dtInv*globs.myResult[i][j];
-            for(k=kl;k<=ku;k++)
-                u[j][i] += 0.5*( globs.myMuX[i][j]*globs.myDx[i][k] + 0.5*globs.myVarX[i][j]*globs.myDxx[i][k] )
-                              * globs.myResult[i+k-1][j];
+    for(j=0; j<numY; j++) {
+        for(i=0; i<numX; i++) {
+
+            U(j,i) = dtInv * ResultE(i,j);
+
+            if (0 < i) 
+            U(j,i) += 0.5 * ResultE(i-1,j) * ( MuX(j,i)*Dx(i,0) + 0.5*VarX(j,i)*Dxx(i,0) );
+
+            U(j,i) += 0.5 * ResultE(i,  j) * ( MuX(j,i)*Dx(i,1) + 0.5*VarX(j,i)*Dxx(i,1) );
+
+            if (i < numX-1) 
+            U(j,i) += 0.5 * ResultE(i+1,j) * ( MuX(j,i)*Dx(i,2) + 0.5*VarX(j,i)*Dxx(i,2) );
         }
     }
 
-    //	explicit y
-    for(j=0;j<numY;j++)
-    {
-        ll =	 1*(j==0);
-        lu = 2 - 1*(j==numY-1);
-        for(i=0;i<numX;i++) {
-            v[i][j] = 0.0;
-            for(l=ll;l<=lu;l++) {
-                v[i][j] +=   (globs.myMuY[i][j]*globs.myDy[j][l] + 0.5*globs.myVarY[i][j]*globs.myDyy[j][l])
-                            *  globs.myResult[i][j+l-1];
-            }
-            u[j][i] += v[i][j]; 
+	//	explicit y
+    for( i=0; i<numX; i++) {
+        for(j=0; j<numY; j++) {
+        
+            V(i,j) = 0.0;
+            if (0 < j)
+            V(i,j) += ResultE(i,j-1) * ( MuY(i,j)*Dy(j,0) + 0.5*VarY(i,j)*Dyy(j,0) );
+            V(i,j) += ResultE(i,j  ) * ( MuY(i,j)*Dy(j,1) + 0.5*VarY(i,j)*Dyy(j,1) );
+            if (j < numY-1)
+            V(i,j) += ResultE(i,j+1) * ( MuY(i,j)*Dy(j,2) + 0.5*VarY(i,j)*Dyy(j,2) );
+
+            U(j,i) += V(i,j); 
         }
     }
 
     //	implicit x
-    for(j=0;j<numY;j++) {
-        for(i=0;i<numX;i++) {
-            a[i] =		 - 0.5*(globs.myMuX[i][j]*globs.myDx[i][0] + 0.5*globs.myVarX[i][j]*globs.myDxx[i][0]);
-            b[i] = dtInv - 0.5*(globs.myMuX[i][j]*globs.myDx[i][1] + 0.5*globs.myVarX[i][j]*globs.myDxx[i][1]);
-            c[i] =		 - 0.5*(globs.myMuX[i][j]*globs.myDx[i][2] + 0.5*globs.myVarX[i][j]*globs.myDxx[i][2]);
+    for(j=0; j<numY; j++) {
+
+        for(i=0; i<numX; i++) {
+            a[i] =	     - 0.5*( MuX(j,i)*Dx(i,0) + 0.5*VarX(j,i)*Dxx(i,0) );
+            b[i] = dtInv - 0.5*( MuX(j,i)*Dx(i,1) + 0.5*VarX(j,i)*Dxx(i,1) );
+            c[i] =	     - 0.5*( MuX(j,i)*Dx(i,2) + 0.5*VarX(j,i)*Dxx(i,2) );
         }
 
-        tridag(a,b,c,u[j],numX,u[j],yy);
+        REAL* uu = U+j*numX;
+        tridag(numX, a, b, c, uu);
     }
 
     //	implicit y
     for(i=0;i<numX;i++) {
+        
         for(j=0;j<numY;j++) {
-            a[j] =		 - 0.5*(globs.myMuY[i][j]*globs.myDy[j][0] + 0.5*globs.myVarY[i][j]*globs.myDyy[j][0]);
-            b[j] = dtInv - 0.5*(globs.myMuY[i][j]*globs.myDy[j][1] + 0.5*globs.myVarY[i][j]*globs.myDyy[j][1]);
-            c[j] =		 - 0.5*(globs.myMuY[i][j]*globs.myDy[j][2] + 0.5*globs.myVarY[i][j]*globs.myDyy[j][2]);
+            a[j] =		 - 0.5*( MuY(i,j)*Dy(j,0) + 0.5*VarY(i,j)*Dyy(j,0) );
+            b[j] = dtInv - 0.5*( MuY(i,j)*Dy(j,1) + 0.5*VarY(i,j)*Dyy(j,1) );
+            c[j] =		 - 0.5*( MuY(i,j)*Dy(j,2) + 0.5*VarY(i,j)*Dyy(j,2) );
         }
 
-        for(j=0;j<numY;j++)
-            y[j] = dtInv*u[j][i] - 0.5*v[i][j];
+        REAL* yy = ResultE + i*numY;
+        for(j=0; j<numY; j++)
+            yy[j] = dtInv*U(j,i) - 0.5*V(i,j);
 
-        tridag(a,b,c,y,numY,globs.myResult[i],yy);
+        tridag(numY, a, b, c, yy);
     }
 }
 
-double value(   const double s0,
-                const double strike, 
-                const double t, 
-                const double alpha, 
-                const double nu, 
-                const double beta,
-                const unsigned int numX,
-                const unsigned int numY,
-                const unsigned int numT
+REAL value(   const REAL s0,
+              const REAL strike, 
+              const REAL t, 
+              const REAL alpha, 
+              const REAL nu, 
+              const REAL beta,
+              const unsigned int numX,
+              const unsigned int numY,
+              const unsigned int numT,
+              REAL* a, REAL* b,  REAL* c,   REAL* Time, REAL* U, REAL* V,
+              REAL* X, REAL* Dx, REAL* Dxx, REAL* MuX,  REAL* VarX,
+              REAL* Y, REAL* Dy, REAL* Dyy, REAL* MuY,  REAL* VarY,
+
+              REAL* ResultE  // output
+
 ) {	
-    PrivGlobs   globs;
-	initGrid(s0,alpha,nu,t, numX, numY, numT, globs);
-	initOperator(globs.myX,globs.myDx,globs.myDxx);
-	initOperator(globs.myY,globs.myDy,globs.myDyy);
 
-	setPayoff(strike, globs);
-	for(int i = globs.myTimeline.size()-2;i>=0;--i)
-	{
-		updateParams(i,alpha,beta,nu,globs);
-		rollback(i, globs);
-	}
+    unsigned indX, indY;
 
-	return globs.myResult[globs.myXindex][globs.myYindex];
-}
+    initGrid    ( numX, numY, numT, 
+                  s0, alpha, nu, t, 
+                  indX, indY, X, Y, Time );
 
-double* run_CPUkernel(  
-                const unsigned int&     outer,
-                const unsigned int&     numX,
-                const unsigned int&     numY,
-                const unsigned int&     numT,
-                const double&           s0,
-                const double&           t, 
-                const double&           alpha, 
-                const double&           nu, 
-                const double&           beta,
-                const vector<double>&   strikes,
-                      vector<double>&   res
-) {
-#pragma omp parallel for default(shared) schedule(static) if(outer>4)
-    for( unsigned i = 0; i < outer; ++ i ) {
-        res[i] = value( s0, strikes[i], t, alpha, nu, beta,
-                        numX, numY, numT );
+    initOperator( numX, X, Dx, Dxx );
+    initOperator( numY, Y, Dy, Dyy );
+
+    setPayoff(numX, numY, strike, X, ResultE);
+
+    for( int i = numT-2; i>=0; --i ) {
+        updateParams( numX, numY, i, alpha, beta, nu, 
+                      X, Y, Time, MuX, VarX, MuY, VarY );
+
+        rollback( numX, numY, i,  
+                  a, b, c, Time, U, V,
+                  Dx, Dxx, MuX, VarX,
+                  Dy, Dyy, MuY, VarY,
+                  ResultE
+                );
     }
+
+    REAL res = ResultE(indX,indY);
+
+    return res;
 }
 
+void run_CPUkernel(  
+                const unsigned&     outer,
+                const unsigned&     numX,
+                const unsigned&     numY,
+                const unsigned&     numT,
+                const REAL&         s0,
+                const REAL&         t, 
+                const REAL&         alpha, 
+                const REAL&         nu, 
+                const REAL&         beta,
+                const unsigned&     P,
+                REAL* a, REAL* b,  REAL* c,   REAL* Time, REAL* U, REAL* V,
+                REAL* X, REAL* Dx, REAL* Dxx, REAL* MuX,  REAL* VarX,
+                REAL* Y, REAL* Dy, REAL* Dyy, REAL* MuY,  REAL* VarY,
+                REAL* ResultE,
 
-int main()
-{
-    unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T; 
-	REAL s0, t, alpha, nu, beta;
+                REAL*               result  // output
+) {
+    const unsigned numZ = max( numX, numY );
+#pragma omp parallel default(shared) 
+    {
+        // compute the start of private arrays
+        int th_id = omp_get_thread_num();
+        unsigned long int offs;
+        offs = th_id*numZ;
+        REAL *ap = a + offs, *bp = b + offs, *cp = c + offs;
 
-    cout<<"\n// Running Original (Parallel) Volatility-Calibration Benchmark"<<endl;
+        offs = th_id*numX*3;
+        REAL *Xp = X + th_id*numX, *Dxp = Dx + offs, *Dxxp = Dxx + offs;
 
-    readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T, s0, t, alpha, nu, beta ); 
+        offs = th_id*numY*3;
+        REAL *Yp = Y + th_id*numY, *Dyp = Dy + offs, *Dyyp = Dyy + offs;
+        REAL *Timep = Time + th_id*numT;
 
-	vector<double> strikes(OUTER_LOOP_COUNT),res(OUTER_LOOP_COUNT);
+        offs = th_id*numX*numY;
+        REAL *Up    = U + offs,    *Vp    = V + offs,
+             *MuXp  = MuX + offs,  *MuYp  = MuY + offs, 
+             *VarXp = VarX + offs, *VarYp = VarY + offs,
+             *ResultEp = ResultE + offs; 
 
-	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i)
-		strikes[i] = 0.001*i;
+#pragma omp for schedule(static)
+        for( unsigned i = 0; i < outer; ++ i ) {
+            REAL strike = 0.001*i;
+            result[i] = value(  s0, strike, t, 
+                                alpha, nu, beta,
+                                numX, numY, numT,
+                                ap, bp,  cp, Timep,  Up, Vp, 
+                                Xp, Dxp, Dxxp, MuXp, VarXp,
+                                Yp, Dyp, Dyyp, MuYp, VarYp,
+                                ResultEp
+                             );
+        }
+    } // end parallel region
+}
 
+int main() {
+    unsigned OUTER_LOOP_COUNT, numX, numY, numT; 
+    REAL  s0, t, alpha, nu, beta, strike;
+    REAL *a, *b, *c, *U, *V, *Time, 
+         *X, *Dx, *Dxx, *MuX, *VarX,
+         *Y, *Dy, *Dyy, *MuY, *VarY,
+         *ResultE;
+
+    fprintf(stdout, "\n// Original (Sequential) Volatility Calibration Benchmark:\n");
+    readDataSet( OUTER_LOOP_COUNT, numX, numY, numT, s0, t, alpha, nu, beta ); 
+
+    REAL* result = new REAL[OUTER_LOOP_COUNT];
     const int Ps = get_CPU_num_threads();
 
     unsigned long int elapsed = 0;
     {   // Main Computational Kernel
         struct timeval t_start, t_end, t_diff;
-        gettimeofday(&t_start, NULL);
+        
+        {  // Global Array Allocation
+            const unsigned numZ = max( numX, numY );
+            a       = new REAL[Ps*numZ];      // [Ps, max(numX,numY)]
+            b       = new REAL[Ps*numZ];      // [Ps, max(numX,numY)]
+            c       = new REAL[Ps*numZ];      // [Ps, max(numX,numY)]
+            V       = new REAL[Ps*numX*numY]; // [Ps, numX, numY]
+            U       = new REAL[Ps*numY*numX]; // [Ps, numY, numX]
 
-        run_CPUkernel( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T, s0, t, alpha, nu, beta, strikes, res );
+            X       = new REAL[Ps*numX];      // [Ps, numX]
+            Dx      = new REAL[Ps*numX*3];    // [Ps, numX, 3]
+            Dxx     = new REAL[Ps*numX*3];    // [Ps, numX, 3]
+            Y       = new REAL[Ps*numY];      // [Ps, numY]
+            Dy      = new REAL[Ps*numY*3];    // [Ps, numY, 3]
+            Dyy     = new REAL[Ps*numY*3];    // [Ps, numY, 3]
+            Time    = new REAL[Ps*numT];      // [Ps, numT]
 
-        gettimeofday(&t_end, NULL);
-        timeval_subtract(&t_diff, &t_end, &t_start);
-        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+            MuX     = new REAL[Ps*numY*numX]; // [Ps, numY, numX]
+            MuY     = new REAL[Ps*numX*numY]; // [Ps, numX, numY]
+            VarX    = new REAL[Ps*numY*numX]; // [Ps, numY, numX]
+            VarY    = new REAL[Ps*numX*numY]; // [Ps, numX, numY]
+            ResultE = new REAL[Ps*numX*numY]; // [Ps, numX, numY]
+        }
+
+        { // Computation Kernel
+            gettimeofday(&t_start, NULL);
+
+
+            run_CPUkernel(  OUTER_LOOP_COUNT, numX, numY, numT, 
+                            s0, t, alpha, nu, beta, Ps, 
+                            a, b,  c, Time,  U, V, 
+                            X, Dx, Dxx, MuX, VarX,
+                            Y, Dy, Dyy, MuY, VarY,
+                            ResultE, result
+                         );
+
+            gettimeofday(&t_end, NULL);
+            timeval_subtract(&t_diff, &t_end, &t_start);
+            elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+        }
+
+        { // Global Array Deallocation
+            delete[] a;    delete[] b;    delete[] c;    
+            delete[] V;    delete[] U;
+            delete[] X;    delete[] Dx;   delete[] Dxx;
+            delete[] Y;    delete[] Dy;    delete[] Dyy;
+            delete[] MuX;  delete[] MuY; 
+            delete[] VarX; delete[] VarY;
+            delete[] Time; delete[] ResultE;
+        }
     }
 
     {   // validation and writeback of the result
-        bool is_valid = validate   ( res.data(), OUTER_LOOP_COUNT );
-        writeStatsAndResult( is_valid, res.data(), OUTER_LOOP_COUNT, 
-                             NUM_X, NUM_Y, NUM_T, false, Ps, elapsed );        
+        bool is_valid = validate( result, OUTER_LOOP_COUNT );
+        writeStatsAndResult( is_valid, result, OUTER_LOOP_COUNT, 
+                             numX, numY, numT, false, Ps, elapsed );        
+//        writeResult( res.data(), OUTER_LOOP_COUNT );
     }
 
+    delete[] result;
     return 0;
 }
 
