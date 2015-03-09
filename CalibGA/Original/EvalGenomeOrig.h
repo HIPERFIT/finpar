@@ -51,7 +51,7 @@ void eval_genome_on_swaption (
 
     { // PRICER OF SWAPTION COMPUTATION
         REAL v0_mat, dummy1, dummy2;
-        bigv( a, b, rho, nu, sigma, tmat0, v0_mat, dummy1, dummy2);
+        bigv( gene.a, gene.b, gene.rho, gene.nu, gene.sigma, tmat0, v0_mat, dummy1, dummy2);
 //
         const REAL mux     = - bigmx( a, b, rho, nu, sigma, TODAY, maturity, TODAY, maturity );
         const REAL muy     = - bigmy( a, b, rho, nu, sigma, TODAY, maturity, TODAY, maturity );

@@ -138,7 +138,7 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
         tmp = r01 * ( g_maxs[4] - g_mins[4]) + g_mins[4];
         genomes[i].sigma = genomes[i+POP_SIZE].sigma = tmp;
         
-        genomes[i].fbRat = genomes[i+POP_SIZE].fbRat = 1.0;
+//        genomes[i].fbRat = genomes[i+POP_SIZE].fbRat = 1.0;
     }
 
     // Initial evaluation of the genomes!           
@@ -179,12 +179,12 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
                 // compute the k^th and the l^th genes
                 UINT cand_UB = POP_SIZE - 1;
                 UINT k = getRandIntNorm(cand_UB); // random in [0,pop_size-1)
-                if ( k == j ) {
+                if ( k == i ) {
                     k = cand_UB;
                     cand_UB -= 1;
                 }
                 UINT l = getRandIntNorm(cand_UB); 
-                if ( l == j || l == k ) {
+                if ( l == i || l == k ) {
                     l = cand_UB;
                 }
  
