@@ -6,7 +6,7 @@
 #include "Genome.h"
 
 #include "IrregShape.h"
-#include "EvalGenomeInl.h"
+#include "EvalGenomeOrig.h"
 #include "UtilCPU.h"
 
 /**
@@ -138,7 +138,7 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
         tmp = r01 * ( g_maxs[4] - g_mins[4]) + g_mins[4];
         genomes[i].sigma = genomes[i+POP_SIZE].sigma = tmp;
         
-        genomes[i+POP_SIZE].fbRat = 1.0;
+        genomes[i].fbRat = genomes[i+POP_SIZE].fbRat = 1.0;
     }
 
     // Initial evaluation of the genomes!           
