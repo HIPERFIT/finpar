@@ -6,7 +6,6 @@ using namespace std;
 #include "Constants.h"
 #include "GenAlgUtil.h"
 #include "Genome.h"
-#include "IrregShape.h"
 #include "UtilCPU.h"
 #include "EvalGenomeOrig.h"
 
@@ -17,13 +16,12 @@ using namespace std;
  *   for each swaption the calibrated price, the black price 
  *   and the percentagewise difference between the two.
  */
-REAL* makeSummary(  const int     winner, 
+void makeSummary(   const int     winner, 
                     const Genome& wgene, 
                     const REAL*   new_quote, 
-                    const REAL*   new_price
+                    const REAL*   new_price,
+                          REAL*   result // output
 ) {
-    REAL* res = (REAL*) malloc( 3*NUM_SWAP_QUOTES*sizeof(REAL) );
-
     REAL rms = 0.0;
 
     fprintf(stderr, "\n\nCALIBRATION RESULT: best genome is at index %d: ", winner);
@@ -36,21 +34,19 @@ REAL* makeSummary(  const int     winner,
         REAL calib_price = new_price[i];
         REAL err_ratio   =  (calib_price - black_price) / black_price;
 
-        res[3*i + 0] = 10000.0*calib_price;
-        res[3*i + 1] = 10000.0*black_price;
-        res[3*i + 2] = 100.0*fabs(err_ratio);
+        result[3*i + 0] = 10000.0*calib_price;
+        result[3*i + 1] = 10000.0*black_price;
+        result[3*i + 2] = 100.0*fabs(err_ratio);
 
         rms += err_ratio * err_ratio;
 
         fprintf(stderr,"Swaption %d: {{%f, %f, %f},%f}, CalibratedPrice: %f, BlackPrice: %f, DiffPerc: %f\n",
                 i, SwaptionQuotes[4*i+0], SwaptionQuotes[4*i+1], SwaptionQuotes[4*i+2], SwaptionQuotes[4*i+3], 
-                res[3*i + 0], res[3*i + 1], res[3*i + 2] );
+                result[3*i + 0], result[3*i + 1], result[3*i + 2] );
     }
 
     rms = 100.0 * sqrt ( rms / NUM_SWAP_QUOTES );
     fprintf(stderr, "\n\n Best Genome RMS: %f\n\n", rms);
-
-    return res;
 }
 
 
@@ -111,11 +107,11 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
 
     UINT n_schedi_max = 0;
     for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
-        const UINT n_schedi = static_cast<UINT>(12.0 * SwaptionQuotes[2] / SwaptionQuotes[1]);
+        const UINT n_schedi = static_cast<UINT>(12.0 * SwaptionQuotes[4*ttt+2] / SwaptionQuotes[4*ttt+1]);
         n_schedi_max = max(n_schedi_max, n_schedi);
     }
 
-    CpuArrays cpu_arrs(n_schedi_max);
+    SeqArrays cpu_arrs(n_schedi_max);
     Genome* genomes = cpu_arrs.genomes;
 
     srand   ( SEED );
@@ -248,27 +244,31 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
         }
     }
 
-    REAL* result;
+    REAL* result = new REAL[3*NUM_SWAP_QUOTES];
     { // print best candidate for the current iteration:
         int best_ind; REAL best_lik;
         find_best(genomes, best_ind, best_lik);
-        winner = genomes[best_ind];
+        //winner = genomes[best_ind];
+        winner.a   = genomes[best_ind].a;   winner.b  = genomes[best_ind].b; 
+        winner.rho = genomes[best_ind].rho; winner.nu = genomes[best_ind].nu;
+        winner.sigma = genomes[best_ind].sigma;  winner.logLik = genomes[best_ind].logLik; 
 
         // recompute the calibrated price and the black price!
-        REAL rms = 0.0;
+        REAL* quotes = cpu_arrs.get_quote();
+        REAL* prices = cpu_arrs.get_price();
         for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
             eval_genome_new ( 
                         winner.a, winner.b, winner.rho, winner.nu, winner.sigma,
                         SwaptionQuotes+4*ttt, cpu_arrs.tmp_arrs, quote, price
                     );
-            rms += logLikelihood( quote, price );
-            cpu_arrs.get_quote()[ttt] = quote; 
-            cpu_arrs.get_price()[ttt] = price;
+            quotes[ttt] = quote; 
+            prices[ttt] = price;
         }
-        winner.logLik = rms;
+
+        
 
         // write summary
-        result = makeSummary( best_ind, winner, cpu_arrs.get_quote(), cpu_arrs.get_price() );
+        makeSummary( best_ind, winner, quotes, prices, result );
     }
 
     // Releasing the CPU resources:

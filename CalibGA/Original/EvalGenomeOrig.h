@@ -17,19 +17,13 @@ void eval_genome_new (
                     const REAL&   nu, 
                     const REAL&   sigma,
                     const REAL*   swaption,
-                    IntermArrays* tmp_arrs,
+                    IntermElem*   tmp_arrs,
                           REAL&   new_quote, // output
                           REAL&   new_price  // output
 ) {
     bool sanity = true;
 
-    ////const REAL mat_year  = swaption[0]; //inline
-    //const REAL swap_freq = swaption[1];
-    ////const REAL term_year = swaption[2]; //inline
-    ////const REAL quote     = swaption[3]; //inline
-
-    const REAL swap_freq = swaption[1];
-
+    const REAL swap_freq  = swaption[1];
     const REAL maturity   = add_years( TODAY, swaption[0] );
     const UINT n_schedi   = static_cast<UINT>(12.0 * swaption[2] / swap_freq);
     const REAL tmat0      = date_act_365( maturity, TODAY );

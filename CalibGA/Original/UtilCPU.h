@@ -1,7 +1,7 @@
 #ifndef CPU_UTILITIES
 #define CPU_UTILITIES
 
-struct IntermArrays {
+struct IntermElem {
     REAL ci;
     REAL t1_cs;
     REAL bai;
@@ -11,16 +11,16 @@ struct IntermArrays {
     REAL scale;
     REAL hat_scale;  
 
-    IntermArrays() { }
+    IntermElem() { }
 };
 
-struct CpuArrays {
+struct SeqArrays {
 
     // max size of temp arrays
     const uint    MaxSzTmpArrs; 
 
     // [ MaxSzTmpArrs ]
-    IntermArrays* tmp_arrs;
+    IntermElem* tmp_arrs;
 
     // [ 2 * POP_SIZE ]     
     Genome*       genomes;   
@@ -28,16 +28,11 @@ struct CpuArrays {
     // [ 2 * NUM_SWAP_QUOTES ]
     REAL*         new_quote_price;
 
-    REAL          gene_ranges[10];
-
-    CpuArrays (const uint m) : MaxSzTmpArrs(m) {
+    SeqArrays (const uint m) : MaxSzTmpArrs(m) {
         genomes         = new Genome[ 2 * POP_SIZE ];
-        tmp_arrs        = new IntermArrays[MaxSzTmpArrs];
+        tmp_arrs        = new IntermElem[MaxSzTmpArrs];
 
         new_quote_price = new REAL [ 2 * NUM_SWAP_QUOTES ];
-
-        for(int i=0; i<5; i++) { gene_ranges[i]   = g_mins[i]; }
-        for(int i=0; i<5; i++) { gene_ranges[i+5] = g_maxs[i]; }
     }
 
     void releaseResources() {

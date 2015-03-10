@@ -8,7 +8,9 @@
 
 #include "GenAlgUtil.h"
 
-REAL to_solve_orig( const UINT& N, const IntermArrays* tmp_arrs, const REAL& yhat) {     
+REAL to_solve_orig( const UINT&       N, 
+                    const IntermElem* tmp_arrs, 
+                    const REAL&       yhat  ) {     
     REAL accum = 0.0;
     for( UINT i = 0; i < N; i++ ) {
         accum += tmp_arrs[i].hat_scale * exp( - tmp_arrs[i].bbi * yhat );
@@ -22,9 +24,7 @@ REAL to_solve_orig( const UINT& N, const IntermArrays* tmp_arrs, const REAL& yha
 
 void rootFinding_Brent_orig ( 
                             const UINT&   N, 
-                            IntermArrays* tmp_arrs, 
-//                            const REAL*   hat_scale, 
-//                            const REAL*   bbi, 
+                            IntermElem*   tmp_arrs, 
                             const REAL&   lb, 
                             const REAL&   ub, 
                             const REAL&   toll, 
@@ -119,7 +119,7 @@ REAL exactYhatOrig(
                 const REAL& rhoxycs,
                 const REAL& mux,
                 const REAL& muy,      // scals ends
-                IntermArrays* tmp_arrs, 
+                IntermElem* tmp_arrs, 
 
                 const REAL& x   // output
 ) {
