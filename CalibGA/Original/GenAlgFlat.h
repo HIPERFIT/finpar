@@ -1,13 +1,15 @@
 #ifndef GEN_ALG_FLAT
 #define GEN_ALG_FLAT
 
+using namespace std;
+
 #include "Constants.h"
 #include "GenAlgUtil.h"
 #include "Genome.h"
-
 #include "IrregShape.h"
-#include "EvalGenomeOrig.h"
 #include "UtilCPU.h"
+#include "EvalGenomeOrig.h"
+
 
 /**
  * Printing Swaption / Calibrated Price / Black Price / RMS
@@ -103,11 +105,14 @@ Move_Type selectMoveType(REAL move_selected) {
  *      difference between the two.
  */
 REAL* mainKernelSeqCPU( Genome& winner ) {
-    uint   FLAT_SZ;
-    short* shape      = getIregShapeAdjusted( LWG_EG, FLAT_SZ );
-    int  * start_inds = getStartInd( FLAT_SZ, shape, NUM_SWAP_QUOTES );
 
-    CpuArrays cpu_arrs(FLAT_SZ, shape);
+    UINT n_schedi_max = 0;
+    for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
+        const UINT n_schedi = static_cast<UINT>(12.0 * SwaptionQuotes[2] / SwaptionQuotes[1]);
+        n_schedi_max = max(n_schedi_max, n_schedi);
+    }
+
+    CpuArrays cpu_arrs(n_schedi_max);
     Genome* genomes = cpu_arrs.genomes;
 
     srand   ( SEED );
@@ -144,10 +149,11 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
     // Initial evaluation of the genomes!           
     for( int i = 0; i < POP_SIZE; i++ ) {
         Genome& gene = genomes[i];
-        gene.logLik = eval_genome ( 
-                        gene.a, gene.b, gene.rho, gene.nu, gene.sigma, 
-                        cpu_arrs.get_quote(i),  cpu_arrs.get_price(i), 
-                        FLAT_SZ, shape, start_inds 
+
+        gene.logLik = eval_genome_new ( 
+                        gene.a, gene.b, gene.rho, gene.nu, gene.sigma,
+                        cpu_arrs.tmp_arrs, 
+                        cpu_arrs.get_quote(i),  cpu_arrs.get_price(i)
                       );
     }
 
@@ -196,10 +202,12 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
         // evaluate the proposals
         for( int i = 0; i < POP_SIZE; i++ ) {
             Genome& gene = genomes[i+POP_SIZE];
-            gene.logLik = 
-                eval_genome( gene.a, gene.b, gene.rho, gene.nu, gene.sigma, 
-                             cpu_arrs.get_quote(i), cpu_arrs.get_price(i), 
-                             FLAT_SZ, shape, start_inds );
+
+            gene.logLik = eval_genome_new ( 
+                                gene.a, gene.b, gene.rho, gene.nu, gene.sigma,
+                                cpu_arrs.tmp_arrs, 
+                                cpu_arrs.get_quote(i),  cpu_arrs.get_price(i)
+                            );
         }
 
         // mcmc_acceptance_rejection();
@@ -236,20 +244,20 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
 
         winner = genomes[best_ind];
         // recompute the calibrated price and the black price!
-        winner.logLik = 
-           eval_genome( winner.a, winner.b, winner.rho, winner.nu, winner.sigma, 
-                        cpu_arrs.get_quote(best_ind), cpu_arrs.get_price(best_ind), 
-                        FLAT_SZ, shape, start_inds );
+        winner.logLik = eval_genome_new ( 
+                                winner.a, winner.b, winner.rho, winner.nu, winner.sigma, 
+                                cpu_arrs.tmp_arrs, 
+                                cpu_arrs.get_quote(best_ind),  cpu_arrs.get_price(best_ind)
+                            );
 
         result = makeSummary( best_ind, cpu_arrs );
     }
 
-    delete[] start_inds;    
     // Releasing the CPU resources:
     cpu_arrs.releaseResources();
 
     return result;
 }
 
-#endif // end ifndef
+#endif // end ifndef GEN_ALG_FLAT
 

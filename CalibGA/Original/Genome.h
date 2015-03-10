@@ -98,18 +98,18 @@ struct Genome {
     REAL sigma;
     REAL logLik;
     REAL fbRat;
-    REAL tmp;
+    REAL padding;
 
     Genome() {
         this->a  = 0.0; this->b     = 0.0; this->rho    = 0.0; 
         this->nu = 0.0; this->sigma = 0.0; this->logLik = 0.0;
-        this->fbRat = 0.0; this->tmp = 0.0;
+        this->fbRat = 0.0; 
     }
     Genome( const REAL a, const REAL b, const REAL rho, const REAL nu, 
             const REAL sigma, const REAL logLik, const REAL fbRat) {
         this->a  = a;  this->b     = b;     this->rho    = rho; 
         this->nu = nu; this->sigma = sigma; this->logLik = logLik;
-        this->fbRat = fbRat; this->tmp = 0.0;
+        this->fbRat = fbRat; 
     } 
     Genome(const Genome& gene) {
         this->a  = gene.a;  this->b     = gene.b;     this->rho    = gene.rho; 
