@@ -17,20 +17,23 @@ using namespace std;
  *   for each swaption the calibrated price, the black price 
  *   and the percentagewise difference between the two.
  */
-REAL* makeSummary(uint winner, CpuArrays& arrs) {
+REAL* makeSummary(  const int     winner, 
+                    const Genome& wgene, 
+                    const REAL*   new_quote, 
+                    const REAL*   new_price
+) {
     REAL* res = (REAL*) malloc( 3*NUM_SWAP_QUOTES*sizeof(REAL) );
 
     REAL rms = 0.0;
 
-    const Genome& wgene = arrs.genomes[winner];
     fprintf(stderr, "\n\nCALIBRATION RESULT: best genome is at index %d: ", winner);
     fprintf(stderr, "{ a = %f, b = %f, sigma = %f, nu = %f, rho = %f  }, Likelihood: %f!\n",
                     wgene.a, wgene.b, wgene.sigma, wgene.nu, wgene.rho, wgene.logLik );
     fprintf(stderr, "\nPer-Swaption Approximation w.r.t. Black Price:\n\n");
 
     for( int i = 0; i < NUM_SWAP_QUOTES; i ++ ) {
-        REAL black_price = arrs.get_quote(winner)[i];
-        REAL calib_price = arrs.get_price(winner)[i];
+        REAL black_price = new_quote[i];
+        REAL calib_price = new_price[i];
         REAL err_ratio   =  (calib_price - black_price) / black_price;
 
         res[3*i + 0] = 10000.0*calib_price;
@@ -146,15 +149,19 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
 //        genomes[i].fbRat = genomes[i+POP_SIZE].fbRat = 1.0;
     }
 
-    // Initial evaluation of the genomes!           
+    // Initial evaluation of the genomes!
+    REAL quote, price;         
     for( int i = 0; i < POP_SIZE; i++ ) {
         Genome& gene = genomes[i];
-
-        gene.logLik = eval_genome_new ( 
+        REAL rms = 0.0;
+        for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
+            eval_genome_new ( 
                         gene.a, gene.b, gene.rho, gene.nu, gene.sigma,
-                        cpu_arrs.tmp_arrs, 
-                        cpu_arrs.get_quote(i),  cpu_arrs.get_price(i)
-                      );
+                        SwaptionQuotes+4*ttt, cpu_arrs.tmp_arrs, quote, price
+                    );
+            rms += logLikelihood( quote, price );
+        }
+        gene.logLik = rms;
     }
 
     // convergence loop that runs the genetic algorithms
@@ -203,11 +210,15 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
         for( int i = 0; i < POP_SIZE; i++ ) {
             Genome& gene = genomes[i+POP_SIZE];
 
-            gene.logLik = eval_genome_new ( 
-                                gene.a, gene.b, gene.rho, gene.nu, gene.sigma,
-                                cpu_arrs.tmp_arrs, 
-                                cpu_arrs.get_quote(i),  cpu_arrs.get_price(i)
-                            );
+            REAL rms = 0.0;
+            for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
+                eval_genome_new ( 
+                            gene.a, gene.b, gene.rho, gene.nu, gene.sigma,
+                            SwaptionQuotes+4*ttt, cpu_arrs.tmp_arrs, quote, price
+                        );
+                rms += logLikelihood( quote, price );
+            }
+            gene.logLik = rms;
         }
 
         // mcmc_acceptance_rejection();
@@ -241,16 +252,23 @@ REAL* mainKernelSeqCPU( Genome& winner ) {
     { // print best candidate for the current iteration:
         int best_ind; REAL best_lik;
         find_best(genomes, best_ind, best_lik);
-
         winner = genomes[best_ind];
-        // recompute the calibrated price and the black price!
-        winner.logLik = eval_genome_new ( 
-                                winner.a, winner.b, winner.rho, winner.nu, winner.sigma, 
-                                cpu_arrs.tmp_arrs, 
-                                cpu_arrs.get_quote(best_ind),  cpu_arrs.get_price(best_ind)
-                            );
 
-        result = makeSummary( best_ind, cpu_arrs );
+        // recompute the calibrated price and the black price!
+        REAL rms = 0.0;
+        for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
+            eval_genome_new ( 
+                        winner.a, winner.b, winner.rho, winner.nu, winner.sigma,
+                        SwaptionQuotes+4*ttt, cpu_arrs.tmp_arrs, quote, price
+                    );
+            rms += logLikelihood( quote, price );
+            cpu_arrs.get_quote()[ttt] = quote; 
+            cpu_arrs.get_price()[ttt] = price;
+        }
+        winner.logLik = rms;
+
+        // write summary
+        result = makeSummary( best_ind, winner, cpu_arrs.get_quote(), cpu_arrs.get_price() );
     }
 
     // Releasing the CPU resources:

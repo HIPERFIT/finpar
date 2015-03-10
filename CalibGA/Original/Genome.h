@@ -203,18 +203,6 @@ struct Genome {
                     const REAL  gamma_avg = 2.38 / sqrt(2.0*GENOME_DIM),
                     const REAL  ampl_ratio = 0.1 * MOVES_UNIF_AMPL_RATIO
     ) {
-/*
-        UINT cand_UB = POP_SIZE - 1;
-        UINT k = getRandIntNorm(cand_UB); // random in [0,pop_size-1)
-        if ( k == j ) {
-            k = cand_UB;
-            cand_UB -= 1;
-        }
-        UINT l = getRandIntNorm(cand_UB); 
-        if ( l == j || l == k ) {
-            l = cand_UB;
-        }            
-*/
         // proposal
         //   gamma: integrated out from the adviced 
         //          Multivariate Gaussian with Gaussian target (Braak, 2006)

@@ -10,29 +10,28 @@
 /**
  * MOST IMPORTANTLY: GENOME EVALUATION By Pricer of Swaption & BLACK PRICE
  */
-REAL eval_genome_new (   
+void eval_genome_new (   
                     const REAL&   a, 
                     const REAL&   b, 
                     const REAL&   rho, 
                     const REAL&   nu, 
-                    const REAL&   sigma, 
+                    const REAL&   sigma,
+                    const REAL*   swaption,
                     IntermArrays* tmp_arrs,
-                          REAL*   new_quote, // [NUM_SWAP_QUOTES] output
-                          REAL*   new_price // [NUM_SWAP_QUOTES] output
+                          REAL&   new_quote, // output
+                          REAL&   new_price  // output
 ) {
     bool sanity = true;
-    REAL rms    = 0.0;
 
-for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
     ////const REAL mat_year  = swaption[0]; //inline
     //const REAL swap_freq = swaption[1];
     ////const REAL term_year = swaption[2]; //inline
     ////const REAL quote     = swaption[3]; //inline
 
-    const REAL swap_freq = SwaptionQuotes[4*ttt+1];
+    const REAL swap_freq = swaption[1];
 
-    const REAL maturity   = add_years( TODAY, SwaptionQuotes[4*ttt+0] );
-    const UINT n_schedi   = static_cast<UINT>(12.0 * SwaptionQuotes[4*ttt+2] / swap_freq);
+    const REAL maturity   = add_years( TODAY, swaption[0] );
+    const UINT n_schedi   = static_cast<UINT>(12.0 * swaption[2] / swap_freq);
     const REAL tmat0      = date_act_365( maturity, TODAY );
 
     REAL strike;   
@@ -51,8 +50,8 @@ for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
         }
 
         strike = ( zc(t0) - zc(tn) ) / lvl;
-        const REAL d1 = 0.5 * SwaptionQuotes[4*ttt+3] * tmat0;
-        new_quote[ttt] = lvl * strike * ( uGaussian_P(d1) - uGaussian_P(-d1) );
+        const REAL d1 = 0.5 * swaption[3] * tmat0;
+        new_quote = lvl * strike * ( uGaussian_P(d1) - uGaussian_P(-d1) );
     } // END BLACK PRICE
 
     { // PRICER OF SWAPTION COMPUTATION
@@ -152,18 +151,8 @@ for( UINT ttt = 0; ttt < NUM_SWAP_QUOTES; ttt++ ) {
         sanity = ! ( isnan(accum) || isinf(accum) );
         assert(sanity && "Nan accum1 in pricer of swaption. Exiting!\n"); 
 
-        new_price[ttt] = zc_mat * ( accum / sqrt( PI ) );
-
-////        const REAL tmp       = (anew_price[ttt] - anew_quote[ttt]) / anew_quote[ttt]; 
-////        rms += tmp * tmp;
-////        return 0.0-rms;
-//
-        const REAL lik = logLikelihood( new_quote[ttt], new_price[ttt] );
-        rms += lik;
-
+        new_price = zc_mat * ( accum / sqrt( PI ) );
     }
-}
-return rms;
 }
 
 

@@ -47,13 +47,3 @@ int main()
 	return 1;
 }
 
-
-#if 0
-void test_all() {
-    test_dates             ();
-    test_math              ();
-    test_g2ppUtil          ();
-    test_pricer_of_swaption();
-}
-#endif
-
