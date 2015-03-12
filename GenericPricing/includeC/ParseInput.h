@@ -79,7 +79,7 @@ void computeSobolFixIndex( SobolArrays& sob_arrs, const UINT& chunk ) {
     
     // Given `chunk', the most-significant zero of iterations 
     // {1 .. chunk-1} mod chunk is the same.
-    for( int k = 1; k < chunk-1; k ++ ) {
+    for( UINT k = 1; k < chunk-1; k ++ ) {
         UINT gs  = k;
         UINT ell = 0;
         while(gs & 1) {
@@ -128,14 +128,14 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         int sob_dim    = scals.num_under * scals.num_dates;
         int alloc_size = do_padding ( (sob_dim * scals.sobol_bits) + (1 << logMAX_CHUNK) );
         sob_arrs.sobol_dirvcts = static_cast<int*> ( malloc( do_padding( alloc_size ) * sizeof(int) ) );
-        for( int j = 0; j < scals.sobol_bits; j++ ) {
+        for( UINT j = 0; j < scals.sobol_bits; j++ ) {
             for( int i = 0; i< sob_dim; i++ ) {
                 sob_arrs.sobol_dirvcts[j*sob_dim + i] = sob_mat[i*scals.sobol_bits + j];
             }
         }
 
         sob_arrs.sobol_fix_ind = (UCHAR*) (sob_arrs.sobol_dirvcts + sob_dim * scals.sobol_bits);
-        for ( int j; j < (1<<logMAX_CHUNK); j ++ ) sob_arrs.sobol_fix_ind[j] = 0;
+        for ( int j = 0; j < (1<<logMAX_CHUNK); j ++ ) sob_arrs.sobol_fix_ind[j] = 0;
     }
 
     { // reading the market (models) data

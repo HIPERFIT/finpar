@@ -13,63 +13,63 @@
 /********************************************/
 
 void mlfi_genmatrix_uniformGPUind (
-		UINT                  			seq_count,
-		__constant  LoopROScalars* 		ro_scal,
-		__constant  int* 				sobol_v_dir,
-		            int* 				sobol_last_num_vec,
-		            REAL* 				md_zd
+                UINT                                    seq_count,
+                __constant  LoopROScalars*              ro_scal,
+                __constant  int*                        sobol_v_dir,
+                            int*                        sobol_last_num_vec,
+                            REAL*                       md_zd
 ) {
-	UINT  j, k, gs, gv_k = 0;
+        UINT  j, k, gs, gv_k = 0;
 
-	seq_count += 1;
-	gs = seq_count >> 1;
-	gs = seq_count ^  gs;
+        seq_count += 1;
+        gs = seq_count >> 1;
+        gs = seq_count ^  gs;
 
     UINT sob_dim = ro_scal->num_under * ro_scal->num_dates;
 
-	for( j = 0; j < sob_dim; j++ )
-		sobol_last_num_vec[j] = 0;
-	for( k = 0; k < ro_scal->sobol_bits; ++k ) {
-		if(gs & 1) {
+        for( j = 0; j < sob_dim; j++ )
+                sobol_last_num_vec[j] = 0;
+        for( k = 0; k < ro_scal->sobol_bits; ++k ) {
+                if(gs & 1) {
             __constant int* dir_vect
-				= sobol_v_dir + k*sob_dim;
-			for( j=0; j < sob_dim; j++ ) {
-				// xor term g_k * v_k to direction i
-				sobol_last_num_vec[j] ^= dir_vect[j];
-			}
-		}
+                                = sobol_v_dir + k*sob_dim;
+                        for( j=0; j < sob_dim; j++ ) {
+                                // xor term g_k * v_k to direction i
+                                sobol_last_num_vec[j] ^= dir_vect[j];
+                        }
+                }
         gs = gs >> 1;
-	}
-	for( j = 0; j < sob_dim; j++ ) {
-		md_zd[j] = sobol_last_num_vec[j] * ro_scal->sob_norm_fact;
-	}
+        }
+        for( j = 0; j < sob_dim; j++ ) {
+                md_zd[j] = sobol_last_num_vec[j] * ro_scal->sob_norm_fact;
+        }
 }
 
 inline void mlfi_genmatrix_uniformGPUrecOpt(
-		UINT                  			f_ind,
-		__constant  LoopROScalars* 		ro_scal,
-		__constant  int* 				sobol_v_dir,
-		            int* 				sobol_last_num_vec,
-		            REAL* 				md_zd
+                UINT                                    f_ind,
+                __constant  LoopROScalars*              ro_scal,
+                __constant  int*                        sobol_v_dir,
+                            int*                        sobol_last_num_vec,
+                            REAL*                       md_zd
 ) {
-	UINT j;
+    UINT j;
     UINT sob_dim = ro_scal->num_under * ro_scal->num_dates;
     f_ind *= sob_dim;
-	for(j=0; j < sob_dim; j++) {
-	    sobol_last_num_vec[j] ^= sobol_v_dir[ f_ind + j ]; //f_ind * sob_dim
-		md_zd[j]               = sobol_last_num_vec[j] * ro_scal->sob_norm_fact;
-	}
+        for(j=0; j < sob_dim; j++) {
+            sobol_last_num_vec[j] ^= sobol_v_dir[ f_ind + j ]; //f_ind * sob_dim
+                md_zd[j]               = sobol_last_num_vec[j] * ro_scal->sob_norm_fact;
+        }
 }
 
 
 inline void mlfi_genmatrix_uniformGPUrec(
-		UINT                  			seq_count,
-		__constant  LoopROScalars* 		ro_scal,
-		__constant  int* 				sobol_v_dir,
-		            int* 				sobol_last_num_vec,
-		            REAL* 				md_zd
+                UINT                                    seq_count,
+                __constant  LoopROScalars*              ro_scal,
+                __constant  int*                        sobol_v_dir,
+                            int*                        sobol_last_num_vec,
+                            REAL*                       md_zd
 ) {
-	UINT ell, j;
+    UINT ell, j;
 
     UINT c = seq_count;
     ell = 0;
@@ -78,11 +78,11 @@ inline void mlfi_genmatrix_uniformGPUrec(
         c >>= 1;
     }
     UINT sob_dim = ro_scal->num_under * ro_scal->num_dates;
-	for(j=0; j < sob_dim; j++) {
-	
-		sobol_last_num_vec[j] ^= sobol_v_dir[ell*sob_dim + j];
-		md_zd[j] = sobol_last_num_vec[j] * ro_scal->sob_norm_fact; //sobol_last_den_inv;
-	}
+        for(j=0; j < sob_dim; j++) {
+        
+                sobol_last_num_vec[j] ^= sobol_v_dir[ell*sob_dim + j];
+                md_zd[j] = sobol_last_num_vec[j] * ro_scal->sob_norm_fact; //sobol_last_den_inv;
+        }
 }
 
 
@@ -161,19 +161,19 @@ inline REAL tail(REAL r) {
 }
 
 inline void mlfi_ugaussian_Pinv_vector(REAL* p, UINT N, UINT logBLOCK) {
-	UINT i, UB = N; 
+        UINT i, UB = N; 
   
-	for ( i=0; i < UB; i++ ) {
-		REAL dp = p[i] - 0.5;
-		if (fabs(dp) <= 0.425) { 
-			p[i] = small_case(dp); 
-		} else {
-			REAL pp = (dp < 0.0) ? dp + 0.5 : (0.5 - dp);
-			REAL r  = sqrt (- log(pp));
-			REAL x  = (r <= 5.0) ? intermediate(r) : tail(r);
-			p[i]    = (dp < 0.0) ? (0.0 - x) : x; 
-		}
-	}
+        for ( i=0; i < UB; i++ ) {
+                REAL dp = p[i] - 0.5;
+                if (fabs(dp) <= 0.425) { 
+                        p[i] = small_case(dp); 
+                } else {
+                        REAL pp = (dp < 0.0) ? dp + 0.5 : (0.5 - dp);
+                        REAL r  = sqrt (- log(pp));
+                        REAL x  = (r <= 5.0) ? intermediate(r) : tail(r);
+                        p[i]    = (dp < 0.0) ? (0.0 - x) : x; 
+                }
+        }
 }
 
 
@@ -181,15 +181,15 @@ inline void mlfi_ugaussian_Pinv_vector(REAL* p, UINT N, UINT logBLOCK) {
 /************* BROWNIAN BRIDGE **************/
 /********************************************/
 inline void mlfi_brownianbridge_wiener_pathNoTransGPU(
-		__constant  LoopROScalars*	ro_scal,
+        __constant  LoopROScalars*   ro_scal,
         __constant  int*             bb_inds,
         __constant  REAL*            bb_data,
-		            REAL*			 md_zd,
+        REAL*                        md_zd,
         __local     REAL*            md_z,
-		UINT                         block_size
+        UINT                         block_size
 ) {
 
-	UINT n, m, md_dim = ro_scal->num_under * block_size, nb_path_dates = ro_scal->num_dates;
+    UINT n, m, md_dim = ro_scal->num_under * block_size, nb_path_dates = ro_scal->num_dates;
     __constant int  *bb_li, *bb_bi, *bb_ri;
     __constant REAL *bb_rw, *bb_lw, *bb_sd;
 
@@ -201,24 +201,24 @@ inline void mlfi_brownianbridge_wiener_pathNoTransGPU(
     bb_lw = bb_data +  nb_path_dates;
     bb_rw = bb_data + (nb_path_dates<<1);
 
-	for (n=0, m=0; m < md_dim; n++, m+=block_size) {
-		UINT i;
+        for (n=0, m=0; m < md_dim; n++, m+=block_size) {
+                UINT i;
 
         md_z [ (bb_bi[0]-1) * md_dim + m ] = bb_sd[0] * md_zd[n]; 
 
-		for(i=1; i < nb_path_dates; i++) {
-			int j = bb_li[i] - 1;
-			int k = bb_ri[i] - 1;
-			int l = bb_bi[i] - 1; 
+                for(i=1; i < nb_path_dates; i++) {
+                        int j = bb_li[i] - 1;
+                        int k = bb_ri[i] - 1;
+                        int l = bb_bi[i] - 1; 
 
-			REAL wk = md_z [k*md_dim+m];
-			REAL zi = md_zd[i*ro_scal->num_under+n];
-			
-			md_z[l*md_dim+m] = (j == -1) ?
-					bb_rw[i] * wk + bb_sd[i] * zi :
-					bb_rw[i] * wk + bb_sd[i] * zi + bb_lw[i] * md_z[j*md_dim+m];
-		}
-	}
+                        REAL wk = md_z [k*md_dim+m];
+                        REAL zi = md_zd[i*ro_scal->num_under+n];
+                        
+                        md_z[l*md_dim+m] = (j == -1) ?
+                                        bb_rw[i] * wk + bb_sd[i] * zi :
+                                        bb_rw[i] * wk + bb_sd[i] * zi + bb_lw[i] * md_z[j*md_dim+m];
+                }
+        }
 }
 
 
@@ -262,9 +262,9 @@ __kernel void payoffGPU(
     UINT lb = (get_global_id (0) << ro_scal->log_chunk);  
     UINT ub = min(lb + ro_scal->chunk, ro_scal->num_gpuits);
 
-	
+        
     for( k = lb; k < ub; k++ ) { 
-	
+        
         // 1. random number generation phase 
 #ifndef _OPTIMIZATION_SOBOL_STRENGTH_RED_RECURR
         mlfi_genmatrix_uniformGPUind (
@@ -306,9 +306,9 @@ __kernel void payoffGPU(
             }
         }
 
-		{ // 5. compute trajectory
-			UINT m, i, j, q, l;
-			UINT num_under  = ro_scal->num_under;
+                { // 5. compute trajectory
+                        UINT m, i, j, q, l;
+                        UINT num_under  = ro_scal->num_under;
             UINT num_dates  = ro_scal->num_dates;
             REAL* trajWF    = md_zd;
             
@@ -325,7 +325,7 @@ __kernel void payoffGPU(
                 md_detvals= model_coefs + offset; 
             }
 
-			for (m = 0; m < ro_scal->num_models; m++) {
+                        for (m = 0; m < ro_scal->num_models; m++) {
 
                 for (j = 0; j < num_under; j++) {
                     REAL accum = md_starts[j];
@@ -358,12 +358,12 @@ __kernel void payoffGPU(
                     md_drifts += dim_paths;               md_starts += num_under;
                     md_discts += ro_scal->num_cash_flows; md_detvals += ro_scal->num_det_pricers;
                 }
-			}
-		} // end 5. compute trajectory   
+                        }
+                } // end 5. compute trajectory   
 
-	} // END  for( k ) 
+        } // END  for( k ) 
 
-	barrier(CLK_LOCAL_MEM_FENCE);    
+        barrier(CLK_LOCAL_MEM_FENCE);    
 
     segm_scan_reg_block ( vhat_local - get_local_id(0), block_size * ro_scal->num_models, block_size );
     if( get_local_id(0) == 0) { 
@@ -374,4 +374,3 @@ __kernel void payoffGPU(
         }
     }
 }
-

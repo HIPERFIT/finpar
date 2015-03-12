@@ -38,7 +38,7 @@ void payoffFunction( // SIMPLE
         __local    REAL*    vhat        // [model_num] Accumulated per-model price        
 ) {
     REAL amount = ((underlyings(0,0)) - 4000.0) * md_detvals[model_num*num_pricers];
-    amount = fmax(0.0, amount);
+    amount = fmax((REAL)0.0, amount);
 	trajectory_inner( num_cash_flows, model_num, 0, amount, md_discts, vhat );
 }
 
