@@ -2,11 +2,10 @@ OS=$(shell uname -s)
 
 ifeq ($(OS),Darwin)
   # OpenMP is not supported by clang and gcc-4.9 does not work
-  # well with OpenCL on Mac.
+  # well with OpenCL on Mac, thus, we don't define ENABLE_OPENMP
   CXX        = clang++
-  CXXFLAGS   = -Wall -W -O2 -framework OpenCL
-#  LIB        = -Wl,-x -m64
-  LIB        =
+  CXXFLAGS   = -Wall -W -O3
+  LIB        = -framework OpenCL
   INCLUDES   = -I. -I../../include
 else
   ENABLE_OPENMP     = 1

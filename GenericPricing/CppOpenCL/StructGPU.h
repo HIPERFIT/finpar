@@ -158,10 +158,10 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
             const size_t ub       = static_cast<size_t>( USER_MEM * 101.0 / 100.0 );
             const size_t lb       = static_cast<size_t>( USER_MEM *  99.0 / 100.0 );
             if ( !(glob_mem_size >= lb && glob_mem_size <= ub) ) {
-                fprintf(stderr, "WARNING! Querried GPU global memory %llu DIFFERS from what user declared: [%ld,%ld]!\n", 
-                                 glob_mem_size, lb, ub);
+                fprintf(stderr, "WARNING! Querried GPU global memory %lu DIFFERS from what user declared: [%ld,%ld]!\n", 
+			(unsigned long)glob_mem_size, lb, ub);
                 glob_mem_size = static_cast<cl_ulong>(USER_MEM);
-                fprintf(stderr, "Using user-declared size for global memory: %llu\n", glob_mem_size);
+                fprintf(stderr, "Using user-declared size for global memory: %lu\n", (unsigned long)glob_mem_size);
             }
         } 
 

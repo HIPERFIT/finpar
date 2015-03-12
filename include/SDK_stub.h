@@ -365,7 +365,7 @@ const char* oclErrorString(unsigned int err)
 
     //using namespace std;
 
-    void oclPrintDevInfo(int iLogMode, cl_device_id device)
+    void oclPrintDevInfo(cl_device_id device)
     {
         char device_string[1024];
         bool nv_device_attibute_query = false;
@@ -694,7 +694,7 @@ void build_for_GPU(
 
 #ifdef DEBUG_PRINT_GPU_INFO
         for (cl_uint i = 0; i < nDevice; i++) {
-            oclPrintDevInfo(0, cdDevices[i]);
+            oclPrintDevInfo(cdDevices[i]);
         }
 #endif
         // 6. build program
