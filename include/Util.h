@@ -10,7 +10,10 @@
 #include <sys/time.h>
 //#include <sys/timeb.h>
 #include <assert.h>
+
+#ifdef ENABLE_OPENMP
 #include <omp.h>
+#endif
 
 
 #define TIME_RESOLUTION_MICROSECOND
@@ -42,6 +45,7 @@ typedef struct timeb mlfi_timeb;
 int get_CPU_num_threads() {
     int procs;
 
+#ifdef ENABLE_OPENMP
 #pragma omp parallel shared(procs)
     {
         int th_id = omp_get_thread_num();
@@ -50,6 +54,9 @@ int get_CPU_num_threads() {
 
     bool valid_procs = (procs > 0) && (procs <= 1024);
     assert(valid_procs && "Number of threads NOT in {1, ..., 1024}");
+#else
+    procs = 1;
+#endif
     return procs;
 }
 

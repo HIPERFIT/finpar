@@ -140,7 +140,6 @@ getWorkSize(const UINT& num_iter, const UINT& chunk, const UINT& block) {
 int
 discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_KERNEL kernel) {
     bool is_priv = (kernel == PRIV);
-    UINT THRESHOLD;
     cl_uint tot_cuda_cores = 0;
 
     UINT size_vct = ro_scal.num_under * ro_scal.num_dates;
@@ -160,9 +159,9 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
             const size_t lb       = static_cast<size_t>( USER_MEM *  99.0 / 100.0 );
             if ( !(glob_mem_size >= lb && glob_mem_size <= ub) ) {
                 fprintf(stderr, "WARNING! Querried GPU global memory %lu DIFFERS from what user declared: [%ld,%ld]!\n", 
-                                 glob_mem_size, lb, ub);
+			(unsigned long)glob_mem_size, lb, ub);
                 glob_mem_size = static_cast<cl_ulong>(USER_MEM);
-                fprintf(stderr, "Using user-declared size for global memory: %lu\n", glob_mem_size);
+                fprintf(stderr, "Using user-declared size for global memory: %lu\n", (unsigned long)glob_mem_size);
             }
         } 
 
@@ -187,6 +186,9 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
     }
 
     {
+#ifdef __APPLE__
+      tot_cuda_cores = GPU_CORES;   // MEMO: No correctness check... mael 2015-03-12
+#else
         cl_uint compute_units;
         clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS,
                             sizeof(compute_units), &compute_units, NULL);
@@ -204,7 +206,7 @@ discriminate_cost_model( LoopROScalars& ro_scal, cl_device_id device, const GPU_
             tot_cuda_cores = GPU_CORES;
             fprintf(stderr, "Using user-declared GPU number of cores: %u\n", tot_cuda_cores);
         }
-
+#endif
         UINT div = (1 << logNextPow2(tot_cuda_cores)) * 64;
         ro_scal.log_chunk = logNextPow2(ro_scal.num_gpuits / div );  // was div*2
         ro_scal.log_chunk = MIN(ro_scal.log_chunk, logMAX_CHUNK);
@@ -315,7 +317,7 @@ runGPU_PRIV(
         size_t*                 localWorkSize
 ) {
     cl_kernel ckGenPricing = NULL; // OpenCL kernel
-    cl_int    ciErr1, ciErr2;
+    cl_int    ciErr1;
 
     size_t  counter = 0, priv_sz = 0; // ro_scals
     const int PRIV_MULT   = sizeof(REAL)*ro_scals.BLOCK;
@@ -351,7 +353,7 @@ runGPU_PRIV(
     oclCheckError(ciErr1, CL_SUCCESS);
 
     // 8. ENQUEUE KERNEL!!!  //
-    ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckGenPricing, 1, NULL,
+    ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, ckGenPricing, 1, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL);
     oclCheckError(ciErr1, CL_SUCCESS);
 
@@ -370,7 +372,7 @@ void reduceVHAT_CPU(const LoopROScalars& ro_scals, REAL* vhat, double* cpu_vhat 
     // final reduction on CPU!!!
     UINT SZ = getWorkSize(ro_scals.num_gpuits, ro_scals.chunk, ro_scals.BLOCK) / ro_scals.BLOCK;
 
-    for(int ii = 0; ii<ro_scals.num_models; ii++) {
+    for( UINT ii = 0; ii<ro_scals.num_models; ii++) {
         int    offset    = ii * SZ;
         double final_res = 0.0;
 
@@ -493,7 +495,7 @@ void runGPU_VECT(
 ) {
     cl_kernel ckGenPricing_sobol = NULL, ckGenPricing_invg   = NULL, ckGenPricing_brown = NULL;
     cl_kernel ckGenPricing_traj  = NULL, ckGenPricing_finred = NULL;
-    cl_int    ciErr1, ciErr2;
+    cl_int    ciErr1;
 
     int  counter = 0;
 

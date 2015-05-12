@@ -23,18 +23,16 @@ run_GPUkernel (
     cl_uint nDevice;                                // OpenCL device count
     cl_device_id* cdDevices;                        // OpenCL device list
     cl_program cpProgram;                           // OpenCL program
-    cl_kernel  ckGenPricing = NULL;                 // OpenCL kernel
-    cl_int ciErr1, ciErr2;                          // Error code var
+    cl_int ciErr1;                                  // Error code var
 
     size_t globalWorkSize[1]; 	                    // 1D var for Total # of work items
     size_t localWorkSize [1]; 	                    // 1D var for # of work items in the work group, e.g., { 128 }
-    size_t global_arr_sz; 
 
     REAL* glb_vhat = NULL;
 
 
     double* vhat_fin = (double*)malloc(ro_scal.num_models*sizeof(double));
-    for( int i = 0; i < ro_scal.num_models; i++ ) vhat_fin[i] = 0.0;
+    for( UINT i = 0; i < ro_scal.num_models; i++ ) vhat_fin[i] = 0.0;
 
     GPU_KERNEL  kernel_type = priv_or_vect_kernel( ro_scal );
 #ifdef _OPTIMIZATION_MEM_COALES_ON
@@ -86,7 +84,7 @@ run_GPUkernel (
                     ciErr1, ro_scal, sob_arrs, bb_arrs, md_arrs
                 );
 
-        UINT cur_iter = 0, sob_ini_count = ro_scal.sobol_count_ini;
+        UINT sob_ini_count = ro_scal.sobol_count_ini;
 
         for(UINT cur_iter = 0; cur_iter < ro_scal.num_mcits; cur_iter+=ro_scal.num_gpuits) {
             if(cur_iter + ro_scal.num_gpuits > ro_scal.num_mcits) {
@@ -117,7 +115,7 @@ run_GPUkernel (
         ro_scal.sobol_count_ini = sob_ini_count;
     }
 
-    for(int ii = 0; ii<ro_scal.num_models; ii++) {
+    for(UINT ii = 0; ii<ro_scal.num_models; ii++) {
         vhat_fin[ii] = vhat_fin[ii] / ro_scal.num_mcits;
     }
 
@@ -128,7 +126,6 @@ run_GPUkernel (
     { // free allocated space
         shrLog(stderr, "Release CPU buffers and OpenCL objects...\n");
         // clFinish(cqCommandQueue[0]);
-        // clReleaseKernel(ckGenPricing);
         clReleaseProgram(cpProgram);
         if(kernel_type == PRIV) ocl_arrs.cleanupPRIV();
         else                    ocl_arrs.cleanupVECT();

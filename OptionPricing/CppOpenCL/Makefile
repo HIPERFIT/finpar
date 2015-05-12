@@ -1,7 +1,11 @@
 include ../../setup.mk
 
 ifndef ($(HAVE_GPU))
-include ../../platform.mk
+  ifeq ($(OS),Darwin)
+    include ../../platform.macbookpro.mk
+  else
+    include ../../platform.mk
+  endif
 endif
 
 INCLUDES  += -I../includeC
