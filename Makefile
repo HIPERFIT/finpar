@@ -22,9 +22,13 @@
 
 # As per today, we have the following working directories: 
 
-# ./GenericPricing/Orig_COpenMp
-# ./GenericPricing/HaskellLH
-# ./GenericPricing/CppOpenCL
+# Option Pricing
+# ./GenericPricing/OrigCpp   -- sequential C(++) code
+# ./GenericPricing/CppOpenMP -- OpenMP version
+# ./GenericPricing/HaskellLH -- a Haskell version expressing all parallelism.
+# ./GenericPricing/CppOpenCL -- GPU version using OpenCL
+#
+# ./CalibVolDiff
 #
 # planned future work:
 # ./CalibVolDiff/Orig_COpenMP
@@ -37,8 +41,8 @@
 
 BENCHMARKS =GenericPricing #CalibVolDiff #CalibGA
 
-VERSIONS_GenericPricing =GenericPricing/Orig_COpenMp GenericPricing/HaskellLH \
-			 GenericPricing/CppOpenCL
+VERSIONS_GenericPricing =GenericPricing/OrigCpp GenericPricing/CppOpenMP \
+			GenericPricing/HaskellLH GenericPricing/CppOpenCL
 
 VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/All_COpenCLMP \
                          CalibVolDiff/Original CalibVolDiff/Outer_COpenCLMP \

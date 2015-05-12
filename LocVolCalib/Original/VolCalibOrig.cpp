@@ -308,60 +308,6 @@ REAL value(   const REAL s0,
     return res;
 }
 
-void run_CPUkernel(  
-                const unsigned&     outer,
-                const unsigned&     numX,
-                const unsigned&     numY,
-                const unsigned&     numT,
-                const REAL&         s0,
-                const REAL&         t, 
-                const REAL&         alpha, 
-                const REAL&         nu, 
-                const REAL&         beta,
-                const unsigned&     P,
-                REAL* a, REAL* b,  REAL* c,   REAL* Time, REAL* U, REAL* V,
-                REAL* X, REAL* Dx, REAL* Dxx, REAL* MuX,  REAL* VarX,
-                REAL* Y, REAL* Dy, REAL* Dyy, REAL* MuY,  REAL* VarY,
-                REAL* ResultE,
-
-                REAL*               result  // output
-) {
-    const unsigned numZ = max( numX, numY );
-#pragma omp parallel default(shared) 
-    {
-        // compute the start of private arrays
-        int th_id = omp_get_thread_num();
-        unsigned long int offs;
-        offs = th_id*numZ;
-        REAL *ap = a + offs, *bp = b + offs, *cp = c + offs;
-
-        offs = th_id*numX*3;
-        REAL *Xp = X + th_id*numX, *Dxp = Dx + offs, *Dxxp = Dxx + offs;
-
-        offs = th_id*numY*3;
-        REAL *Yp = Y + th_id*numY, *Dyp = Dy + offs, *Dyyp = Dyy + offs;
-        REAL *Timep = Time + th_id*numT;
-
-        offs = th_id*numX*numY;
-        REAL *Up    = U + offs,    *Vp    = V + offs,
-             *MuXp  = MuX + offs,  *MuYp  = MuY + offs, 
-             *VarXp = VarX + offs, *VarYp = VarY + offs,
-             *ResultEp = ResultE + offs; 
-
-#pragma omp for schedule(static)
-        for( unsigned i = 0; i < outer; ++ i ) {
-            REAL strike = 0.001*i;
-            result[i] = value(  s0, strike, t, 
-                                alpha, nu, beta,
-                                numX, numY, numT,
-                                ap, bp,  cp, Timep,  Up, Vp, 
-                                Xp, Dxp, Dxxp, MuXp, VarXp,
-                                Yp, Dyp, Dyyp, MuYp, VarYp,
-                                ResultEp
-                             );
-        }
-    } // end parallel region
-}
 
 int main() {
     unsigned OUTER_LOOP_COUNT, numX, numY, numT; 
