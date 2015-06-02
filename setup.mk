@@ -14,7 +14,7 @@ else
   OPENCL_INCDIR	    ?= $(OPENCL_ROOTDIR)/include
   CXX        = g++
   LIB        = -L$(OPENCL_LIBDIR) -lOpenCL
-  CXXFLAGS   = -fopenmp -O3
+  CXXFLAGS   = -DENABLE_OPENMP -fopenmp -O3
   INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../../include
 endif
 

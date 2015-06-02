@@ -24,18 +24,20 @@ working directories:
   ./InterestCalib/CppOpenCL    -- OpenCL version, which needs to exploit parallelism on all levels.
   ./InterestCalib/HaskellLH    -- Haskell version documenting all parallelism.
 
-#####################################################################
-### Hardware description and Where has the benchmark been tested: ###
-#####################################################################
+#########################################################################
+### Hardware/software description and Where was the benchmark tested: ###
+#########################################################################
 
-1. The GPU and CPU hardware should be described in file "platform.mk", e.g.,
+1. Please fill in various env variables in file "setup.mk".
+
+2. Please describe the GPU and CPU hardware in file "platform.mk", e.g.,
     (i)  the size of GPU's global memory (GPU_DEVICE_MEM) or 
    (ii)  the number of cores that execute in lock step (SIMD), e.g,
          two to power GPU_LG_WARP (for NVIDIA, GPU_LG_WARP is 5 since 
          warp size is 32) or 
    (iii) the OpenCL identifier of the GPU device, e.g, GPU_DEVICE_ID = 0.
 
-2. So far, the benchmark was tested mostly on NVIDIA GPUs.
+3. So far, the benchmark was tested mostly on NVIDIA GPUs.
    Please note that the current OpenCL implementation does not adhere to, 
    the OpenCL standard i.e., we have used (segmented) reduction and scan
    implementation that assumes the existance of SIMD instructions
@@ -47,8 +49,10 @@ working directories:
     (i) 2x2 matrix multiplication, and
    (ii) linear-function composition.
 
-3. For the OpenMP version, it is advised to set the number of OpenMP threads
-    in the testing terminal, e.g., for a 4-core machine with two-way multithreading:
+4. It is assumed that gcc is installed (with support for OpenMP, i.e., -fopenmp)
+    and an OpenCL implementation is available -- see file "setup.mk".
+
+5. For the OpenMP version, one may set the desired number of OpenMP threads with:
         $ export OMP_NUM_THREADS = 8
 
 #############################################
