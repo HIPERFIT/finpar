@@ -112,16 +112,19 @@ working directories:
     to the OpenCL one, i.e., the code has been transformed in the same
     way, e.g., array expansion, loop distribution and interchange.
 
-    Each benchmark exhibits an "original", sequential version and
-    and an OpenMP version that are to be run on CPU. 
+    a) Each benchmark exhibits an "original", sequential version and
+       an OpenMP version that are to be run on CPU. 
 
-    Parallelism is fully specified in the Haskell versions: the runtime of 
-    these versions is irrelevant, since the aimed has been to write a very
-    basic (list-based) Haskell code that documents parallelism and
-    performance of the Haskell was not pursued. (In particular one can
-    write Haskell versions that are efficient.)
+    b) The Haskell versions are aimed to fully specified application's
+       parallelism. They use a very basic Haskell (map, reduce, filter, 
+       scan on lists), so that they are "easy" to read. From this purpose
+       they are also extremely slow: Why they (eventually) validate, they
+       take a very long time to run. This is not necessarily because
+       Haskell is slow; in particular efficient Haskell code can be
+       written for every one of the benchmarks, but this has not been
+       the goal of the current implementation.
 
-    One or several OpenCL versions are of course provided.
+    c) One or several OpenCL versions are of course provided for each bench.
 
 
 5. Before compiling and running the benchmarks, check the sections 
