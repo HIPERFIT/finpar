@@ -1,4 +1,7 @@
-# Centralised makefile for benchmarks
+# Supposed to be the Centralised makefile for benchmarks
+# BUT IT IS NOT IMPLEMENTED RIGHT NOW. RATHER GO AND MAKE
+# EACH BENCHMARK (VERSION) INDIVIDUALLY IN ITS OWN FOLDER,
+# PLEASE READ the README.md file!!!!!
 #
 # This makefile is common infrastructure to compile and run all benchmarks.
 #
