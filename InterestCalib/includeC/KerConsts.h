@@ -25,7 +25,7 @@
  *    a dummy change in file `SrcCL/CalibKers.cl',
  *    so that the cached version will be invalidated!
  */
-#define WITH_FLOAT 0
+#define WITH_FLOAT 1
 
 /*********************************************/
 /*********************************************/
