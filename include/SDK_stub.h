@@ -53,9 +53,64 @@
         ciErr |= ciErr2;
 
 #endif
+
 /**********************************/
 /******* FROM oclUtils.h   ********/
 /**********************************/
+
+const char* oclErrorString(unsigned int err) 
+{
+    switch (err) {
+        case CL_SUCCESS:                            return "Success!";
+        case CL_DEVICE_NOT_FOUND:                   return "Device not found.";
+        case CL_DEVICE_NOT_AVAILABLE:               return "Device not available";
+        case CL_COMPILER_NOT_AVAILABLE:             return "Compiler not available";
+        case CL_MEM_OBJECT_ALLOCATION_FAILURE:      return "Memory object allocation failure";
+        case CL_OUT_OF_RESOURCES:                   return "Out of resources";
+        case CL_OUT_OF_HOST_MEMORY:                 return "Out of host memory";
+        case CL_PROFILING_INFO_NOT_AVAILABLE:       return "Profiling information not available";
+        case CL_MEM_COPY_OVERLAP:                   return "Memory copy overlap";
+        case CL_IMAGE_FORMAT_MISMATCH:              return "Image format mismatch";
+        case CL_IMAGE_FORMAT_NOT_SUPPORTED:         return "Image format not supported";
+        case CL_BUILD_PROGRAM_FAILURE:              return "Program build failure";
+        case CL_MAP_FAILURE:                        return "Map failure";
+        case CL_INVALID_VALUE:                      return "Invalid value";
+        case CL_INVALID_DEVICE_TYPE:                return "Invalid device type";
+        case CL_INVALID_PLATFORM:                   return "Invalid platform";
+        case CL_INVALID_DEVICE:                     return "Invalid device";
+        case CL_INVALID_CONTEXT:                    return "Invalid context";
+        case CL_INVALID_QUEUE_PROPERTIES:           return "Invalid queue properties";
+        case CL_INVALID_COMMAND_QUEUE:              return "Invalid command queue";
+        case CL_INVALID_HOST_PTR:                   return "Invalid host pointer";
+        case CL_INVALID_MEM_OBJECT:                 return "Invalid memory object";
+        case CL_INVALID_IMAGE_FORMAT_DESCRIPTOR:    return "Invalid image format descriptor";
+        case CL_INVALID_IMAGE_SIZE:                 return "Invalid image size";
+        case CL_INVALID_SAMPLER:                    return "Invalid sampler";
+        case CL_INVALID_BINARY:                     return "Invalid binary";
+        case CL_INVALID_BUILD_OPTIONS:              return "Invalid build options";
+        case CL_INVALID_PROGRAM:                    return "Invalid program";
+        case CL_INVALID_PROGRAM_EXECUTABLE:         return "Invalid program executable";
+        case CL_INVALID_KERNEL_NAME:                return "Invalid kernel name";
+        case CL_INVALID_KERNEL_DEFINITION:          return "Invalid kernel definition";
+        case CL_INVALID_KERNEL:                     return "Invalid kernel";
+        case CL_INVALID_ARG_INDEX:                  return "Invalid argument index";
+        case CL_INVALID_ARG_VALUE:                  return "Invalid argument value";
+        case CL_INVALID_ARG_SIZE:                   return "Invalid argument size";
+        case CL_INVALID_KERNEL_ARGS:                return "Invalid kernel arguments";
+        case CL_INVALID_WORK_DIMENSION:             return "Invalid work dimension";
+        case CL_INVALID_WORK_GROUP_SIZE:            return "Invalid work group size";
+        case CL_INVALID_WORK_ITEM_SIZE:             return "Invalid work item size";
+        case CL_INVALID_GLOBAL_OFFSET:              return "Invalid global offset";
+        case CL_INVALID_EVENT_WAIT_LIST:            return "Invalid event wait list";
+        case CL_INVALID_EVENT:                      return "Invalid event";
+        case CL_INVALID_OPERATION:                  return "Invalid operation";
+        case CL_INVALID_GL_OBJECT:                  return "Invalid OpenGL object";
+        case CL_INVALID_BUFFER_SIZE:                return "Invalid buffer size";
+        case CL_INVALID_MIP_LEVEL:                  return "Invalid mip-map level";
+        default:                                    return "Unknown";
+    }
+}
+
     #define shrLog      fprintf
     #define shrLogEx    fprintf
     #define stdlog      stderr
@@ -74,7 +129,7 @@
     #define oclCheckErrorEX(a, b, c) __oclCheckErrorEX(a, b, c, __FILE__ , __LINE__)
     #define oclCheckError(a, b) oclCheckErrorEX(a, b, 0)
 
-    inline void __oclCheckErrorEX(cl_int iSample, cl_int iReference, void (*pCleanup)(int), const char* cFile, const int iLine)
+    void __oclCheckErrorEX(cl_int iSample, cl_int iReference, void (*pCleanup)(int), const char* cFile, const int iLine)
     {
         // An error condition is defined by the sample/test value not equal to the reference
         if (iReference != iSample)
@@ -83,7 +138,7 @@
             iSample = (iSample == 0) ? -9999 : iSample;
 
             // Log the error info
-            //shrLog(stdlog, "\n !!! Error # %i (%s) at line %i , in file %s !!!\n\n", iSample, oclErrorString(iSample), iLine, cFile);
+            shrLog(stdlog, "\n !!! Error # %i (%s) at line %i , in file %s !!!\n\n", iSample, oclErrorString(iSample), iLine, cFile);
 
             // Cleanup and exit, or just exit if no cleanup function pointer provided.  Use iSample (error code in this case) as process exit code.
             if (pCleanup != NULL)
@@ -310,7 +365,7 @@
 
     //using namespace std;
 
-    void oclPrintDevInfo(int iLogMode, cl_device_id device)
+    void oclPrintDevInfo(cl_device_id device)
     {
         char device_string[1024];
         bool nv_device_attibute_query = false;
@@ -550,10 +605,10 @@
         char cBuildLog[10240];
         clGetProgramBuildInfo(cpProgram, cdDevice, CL_PROGRAM_BUILD_LOG,
                               sizeof(cBuildLog), cBuildLog, NULL );
-        shrLog(stdlog, "\n%s\nBuild Log:\n%s\n%s\n", HDASHLINE, cBuildLog, HDASHLINE);
+        shrLog(stdlog, "\n%sBuild Log:\n%s\n%s\n", HDASHLINE, cBuildLog, HDASHLINE);
     }
 
-    cl_device_id oclGetFirstDev(cl_context cxGPUContext)
+    cl_device_id oclGetDevFromContext(cl_context cxGPUContext, cl_int dev_id)
     {
         size_t szParmDataBytes;
         cl_device_id* cdDevices;
@@ -564,10 +619,10 @@
 
         clGetContextInfo(cxGPUContext, CL_CONTEXT_DEVICES, szParmDataBytes, cdDevices, NULL);
 
-        cl_device_id first = cdDevices[0];
+        cl_device_id dev = cdDevices[dev_id];
         free(cdDevices);
 
-        return first;
+        return dev;
     }
 
 
@@ -590,7 +645,7 @@ void build_for_GPU(
         string              name
     ) {
         cl_platform_id  cpPlatform;  // OpenCL platform
-        cl_int          ciErr1, ciErr2;
+        cl_int          ciErr1;
         string           cl_name = name;
         string          ptx_name = name;
 
@@ -610,27 +665,38 @@ void build_for_GPU(
         cdDevices = (cl_device_id *)malloc(nDevice * sizeof(cl_device_id) );
         ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_GPU, nDevice, cdDevices, NULL);
         oclCheckError(ciErr1, CL_SUCCESS);
+	shrLog(stdlog, "Got %d devices:\n", nDevice);
+	#define MAX_STRING_LENGTH 1024
+	char buf[MAX_STRING_LENGTH];
+	for(cl_uint i = 0; i < nDevice;i++) {
+	  clGetDeviceInfo(cdDevices[i], CL_DEVICE_NAME, MAX_STRING_LENGTH, buf, NULL);
+          shrLog(stdlog, "  Device %d: %s, which supports ", i, buf);
+          clGetDeviceInfo(cdDevices[i], CL_DEVICE_VERSION, MAX_STRING_LENGTH, buf, NULL);
+          shrLog(stdlog, "%s\n", buf); 
+        }
+        if (nDevice < 1) {
+          shrLog(stdlog, "Exiting: No GPU devices available\n");
+          exit(1);
+        }
+        shrLog(stdlog, "Using device %d (change by modifying your platform.mk file)\n", dev_id); 
 
         // 4. create context
-        shrLog(stdlog, "Create context...\n");
-        cxGPUContext = clCreateContext(0, nDevice, cdDevices, NULL, NULL, &ciErr1);
+        shrLog(stdlog, "Create context with all devices...\n");
+        cxGPUContext = clCreateContext(NULL, nDevice, cdDevices, NULL, NULL, &ciErr1);
         oclCheckError(ciErr1, CL_SUCCESS);
 
         // 5. create command queues for all available devices
-        shrLog(stdlog, "clCreateCommandQueue\n");
-
         for (cl_uint i = 0; i < nDevice; i++) {
+	    shrLog(stdlog, "Creating command queue for device %d\n", i);
             cqCommandQueue[i] = clCreateCommandQueue(cxGPUContext, cdDevices[i], 0, &ciErr1);
             oclCheckErrorEX(ciErr1, CL_SUCCESS, NULL);
         }
 
 #ifdef DEBUG_PRINT_GPU_INFO
         for (cl_uint i = 0; i < nDevice; i++) {
-            oclPrintDevInfo(0, cdDevices[i]);
+            oclPrintDevInfo(cdDevices[i]);
         }
 #endif
-        shrLog(stdlog, "\nUsing %d GPU(s)...\n\n", nDevice);
-
         // 6. build program
         shrLog(stdlog, "Create and build program from %s...\n", cl_name.c_str());
 
@@ -639,6 +705,8 @@ void build_for_GPU(
         char * kernel_code = oclLoadProgSource(cl_name.c_str(), preamble, &szKernelLength);
 
         oclCheckError(kernel_code != NULL, shrTRUE);
+        shrLog(stdlog, "Program source code loaded...\n");
+
         cpProgram = clCreateProgramWithSource(cxGPUContext, 1, (const char **)&kernel_code, &szKernelLength, &ciErr1);
 	if (ciErr1 != CL_SUCCESS)
 	  {
@@ -646,17 +714,21 @@ void build_for_GPU(
 	    exit(0);
 	  }
 
+        shrLog(stdlog, "Program created...\n");
+
         //shrLog(stdlog, "Before building error: %d, code: %d, success: %d, num_dev: %d\n\n",
         //      ciErr1, CL_BUILD_PROGRAM_FAILURE, CL_SUCCESS, nDevice);
-        ciErr1 |= clBuildProgram(cpProgram, 0, NULL, compileOptions, NULL, NULL);
+        ciErr1 = clBuildProgram(cpProgram, 1, cdDevices+dev_id, compileOptions, NULL, NULL);
+
+        shrLog(stdlog, "Program built 1...\n");
 
         // 7. check errors!
         if (ciErr1 != CL_SUCCESS) {
             // write out standard error, Build Log and PTX, then cleanup and exit
-            shrLog(stdlog, "BUILDING ERROR: %d\n", ciErr1);
-            oclLogBuildInfo(cpProgram, oclGetFirstDev(cxGPUContext));
+  	    shrLog(stdlog, "BUILDING ERROR: %d: %s\n", ciErr1, oclErrorString(ciErr1));
+            //oclLogBuildInfo(cpProgram, cdDevices[dev_id]);
 
-            oclLogPtx(cpProgram, oclGetFirstDev(cxGPUContext), ptx_name.c_str());
+            //oclLogPtx(cpProgram, cdDevices[dev_id], ptx_name.c_str());
 
             if (ciErr1 == CL_BUILD_PROGRAM_FAILURE) {
                 // Determine the size of the log
@@ -679,7 +751,9 @@ void build_for_GPU(
             shrLogEx(stdlog, "  COSMIN!!!! CL_DEVICE_MAX_WORK_GROUP_SIZE:\t%lu\n", workgroup_size);
         }
     #endif
-    }
 
+        shrLog(stdlog, "Program built...\n");
+
+    }
 
 #endif // end SDK_INTERNALS
