@@ -36,9 +36,9 @@ fun [int] sobolIndI ( int bits_num, [[int]] dir_vs, int n ) =
 ////////////////////////////////////////////////////////////////
 
 fun [real] sobolIndR( int bits_num, [[int]] dir_vs, int n ) =
-    let divisor = 2.0 pow toReal (bits_num)        in
+    let divisor = 2.0 pow toFloat (bits_num)        in
     let arri    = sobolIndI( bits_num, dir_vs, n ) in
-        map( fn real (int x) => toReal(x) / divisor, arri )
+        map( fn real (int x) => toFloat(x) / divisor, arri )
 
 ////////////////////////////////////////
 /// Inverse Gaussian
@@ -272,7 +272,7 @@ fun [real] main(int contract_number,
         let payoffs   = map ( payoff3(md_disc), bs_mat ) in
         reduce ( +, 0.0, payoffs )
       else 0.0 in
-    [ payoff / toReal(num_mc_it) ]
+    [ payoff / toFloat(num_mc_it) ]
 
 ////////////////////////////////////////
 // PAYOFF FUNCTION
