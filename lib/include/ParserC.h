@@ -240,7 +240,7 @@ template<class T>
 void write_2Darr( FILE* out, const T* ptr, const int& Nouter, const int& Ninner ) {
     fprintf(out, "\n[ ");
     for( int i = 0; i < Nouter-1; i ++ ) {
-        write_1Darr( stdout, ptr + i*Ninner, Ninner );
+        write_1Darr( out, ptr + i*Ninner, Ninner );
         fprintf(out, ",");
     }
     write_1Darr( out, ptr + (Nouter-1)*Ninner, Ninner );
