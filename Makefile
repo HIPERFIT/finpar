@@ -1,4 +1,7 @@
-# Centralised makefile for benchmarks
+# Supposed to be the Centralised makefile for benchmarks
+# BUT IT IS NOT IMPLEMENTED RIGHT NOW. RATHER GO AND MAKE
+# EACH BENCHMARK (VERSION) INDIVIDUALLY IN ITS OWN FOLDER,
+# PLEASE READ the README.md file!!!!!
 #
 # This makefile is common infrastructure to compile and run all benchmarks.
 #
@@ -14,7 +17,7 @@
 # Some centralised targets are defined here:
 # run_all: runs all benchmarks with all data
 # clean: calls make clean in all configured subdirectories
-# GenericPricing: compile all programs in GenericPricing subdir
+# OptionPricing: compile all programs in OptionPricing subdir
 # 
 
 
@@ -22,28 +25,36 @@
 
 # As per today, we have the following working directories: 
 
-# ./GenericPricing/Orig_COpenMp
-# ./GenericPricing/HaskellLH
-# ./GenericPricing/CppOpenCL
+# Option Pricing
+# ./OptionPricing/OrigCpp      -- sequential, original C(++) code
+# ./OptionPricing/CppOpenMP    -- OpenMP version
+# ./OptionPricing/CppOpenCL    -- GPU version using OpenCL
+# ./OptionPricing/HaskellLH    -- Haskell version documenting all parallelism.
 #
-# planned future work:
-# ./CalibVolDiff/Orig_COpenMP
-# ./CalibVolDiff/VectAll
-# ./CalibVolDiff/Original
-# ./CalibVolDiff/VectOuters
-# ./CalibGA/CppAndGPU
-# ./CalibGA/python
-# ./CalibGA/OCaml
+# Local Volatility Calibration
+# ./LocVolCalib/OrigCpp        -- sequential, original C(++) code
+# ./LocVolCalib/COpenMP        -- OpenMP C version of the code
+# ./LocVolCalib/AllParOpenCLMP -- parallelizing the outer two loops in OpenCL and OpenMP
+# ./LocVolCalib/OutParOpenCLMP -- parallelizing the whole loop nest in OpenCL and OpenMP
+# ./LocVolCalib/HaskellLH      -- Haskell version documenting all parallelism.
+#
+# Interest Rate Calibration:
+# ./InterestCalib/OrigCpp      -- sequential C++ code (translated from the original Caml code)
+# ./InterestCalib/CppOpenMP    -- OpenMP version, in which only the outermost loop is parallel
+# ./InterestCalib/CppOpenCL    -- OpenCL version, which needs to exploit parallelism on all levels.
+# ./InterestCalib/HaskellLH    -- Haskell version documenting all parallelism.
+#
 
-BENCHMARKS =GenericPricing #CalibVolDiff #CalibGA
+BENCHMARKS =OptionPricing #LocVolCalib #InterestCalib
 
-VERSIONS_GenericPricing =GenericPricing/Orig_COpenMp GenericPricing/HaskellLH \
-			 GenericPricing/CppOpenCL
+VERSIONS_OptionPricing = OptionPricing/OrigCpp OptionPricing/CppOpenMP \
+			OptionPricing/HaskellLH OptionPricing/CppOpenCL
 
-VERSIONS_CalibVolDiff   =CalibVolDiff/Orig_COpenMP CalibVolDiff/All_COpenCLMP \
-                         CalibVolDiff/Original CalibVolDiff/Outer_COpenCLMP \
-			 CalibVolDiff/HaskellLH
-VERSIONS_CalibGA        =CalibGA/Outer_CppOpenMP CalibGA/All_CppOpenCL
+VERSIONS_LocVolCalib   = LocVolCalib/OrigCpp LocVolCalib/COpenMP LocVolCalib/AllParOpenCLMP \
+			LocVolCalib/HaskellLH LocVolCalib/OutParOpenCLMP
+
+VERSIONS_InterestCalib = InterestCalib/OrigCpp  InterestCalib/CppOpenMP \
+			InterestCalib/CppOpenCL InterestCalib/HaskellLH
 
 include platform.mk
 
@@ -60,11 +71,11 @@ all	: $(BENCHMARKS) run_all
 run_all ::
 	@echo "Running all benchmarks"
 
-GenericPricing: $(VERSIONS_GenericPricing)
+OptionPricing: $(VERSIONS_OptionPricing)
 
-CalibVolDiff: $(VERSIONS_CalibVolDiff)
+LocVolCalib: $(VERSIONS_LocVolCalib)
 
-#CalibGA: $(VERSIONS_CalibGA)
+InterestCalib: $(VERSIONS_InterestCalib)
 
 
 ################## target construction functions ################
@@ -109,9 +120,9 @@ endef
 
 ################## constructing the targets ################
 
-$(foreach B,$(VERSIONS_GenericPricing),$(eval $(call mkStdRule,$(B))))
-$(foreach B,$(VERSIONS_CalibVolDiff),$(eval $(call mkStdRule,$(B))))
+$(foreach B,$(VERSIONS_OptionPricing),$(eval $(call mkStdRule,$(B))))
+$(foreach B,$(VERSIONS_LocVolCalib),$(eval $(call mkStdRule,$(B))))
 
-# $(foreach B,$(VERSIONS_CalibGA),$(eval $(call mkStdRule,$(B))))
+$(foreach B,$(VERSIONS_InterestCalib),$(eval $(call mkStdRule,$(B))))
 
 # custom rules would go here as well

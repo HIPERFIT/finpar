@@ -1,0 +1,39 @@
+#!/bin/sh
+
+set -e
+
+cp $FINPAR_LIB_DIR/setup.mk .
+cp $FINPAR_LIB_DIR/include/ParserC.h .
+cp $FINPAR_LIB_DIR/include/Util.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/Constants.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/ParseInput.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/KerConsts.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/Date.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/GenAlgUtil.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/Candidate.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/IrregShape.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/EvalGenomeInl.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/G2PP.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/G2ppUtil.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/MathModule.h .
+cp $FINPAR_BENCHMARK_LIB_DIR/include/WriteResult.h .
+cp $FINPAR_IMPLEMENTATION/GenAlgFlat.h .
+cp $FINPAR_IMPLEMENTATION/UtilCPU.h .
+cp $FINPAR_IMPLEMENTATION/Genome.h .
+cp $FINPAR_IMPLEMENTATION/EvalGenomeOrig.h .
+cp $FINPAR_IMPLEMENTATION/G2PPorig.h .
+cp $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/Makefile .
+
+$FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs > input.data
+$FINPAR_LIB_DIR/generate_platform_mk.py $FINPAR_PLATFORM > platform.mk
+NCORES=$($FINPAR_LIB_DIR/json_get.py $FINPAR_PLATFORM num_cores)
+
+cat > run <<EOF
+#!/bin/sh
+export OMP_NUM_THREADS=$NCORES
+cat input.data | ./SwapCalib
+EOF
+
+chmod +x run
+
+make
