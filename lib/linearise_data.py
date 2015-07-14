@@ -14,7 +14,6 @@ if __name__ == '__main__':
         data = read_json_file(sys.argv[1])
         for field in sys.argv[2:]:
             try:
-                print ("// " + field)
                 print(data[field])
             except KeyError:
                 exit("Key %s not found in JSON file." % field)
