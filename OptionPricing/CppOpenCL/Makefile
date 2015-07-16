@@ -2,8 +2,6 @@
 # This is handled by a macro which is defined as an argument in the GPU_OPTS. 
 # The C/C++ code can then use the variable called "MAKEFILE_PATH" without declaring/defining it.
 MAKE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
-#MAKE_DIR := $(abspath $(lastword $(MAKEFILE_LIST)))
-CURR_DIR := $(notdir $(patsubst %/,%,$(dir $(mkfile_path))))
 
 include ../../setup.mk
 
@@ -20,7 +18,7 @@ GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) -D GPU_DEV_ID=$(GPU_DEVICE_ID) \
              -D GPU_LOC_MEM=$(GPU_LOCAL_MEM) -D GPU_CONST_MEM=$(GPU_CONST_MEM) \
              -D GPU_REG_MEM=$(GPU_REG_MEM) -D GPU_GLB_MEM=$(GPU_DEVICE_MEM) \
              -D GPU_TILE=$(GPU_LOCAL_MEM_PER_TH) -D GPU_CORES=$(GPU_NUM_CORES) \
-			 -D CURR_DIR_PATH='"$(MAKE_DIR)"' -D CURR_DIR_PATH2='"$(CURR_DIR)"'
+			 -D CURR_DIR_PATH='"$(MAKE_DIR)"'
 
 SOURCES_CPP =GenPricing.cpp
 HELPERS     =StructGPU.h ../includeC/Constants.h ../includeC/Optimizations.h ../includeC/ParseInput.h
