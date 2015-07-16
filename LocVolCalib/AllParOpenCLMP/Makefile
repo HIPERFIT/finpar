@@ -1,3 +1,8 @@
+# The MAKE_DIR allows the preprocessor to include the path of the make file in the source code sent to the compiler.
+# This is handled by a macro which is defined as an argument in the GPU_OPTS. 
+# The C/C++ code can then use the variable called "MAKEFILE_PATH" without declaring/defining it.
+MAKE_DIR := $(dir $(abspath $(lastword $(MAKEFILE_LIST))))
+
 include ../../setup.mk
 
 ifndef ($(HAVE_GPU))
@@ -8,7 +13,8 @@ INCLUDES  += -I../includeC
 GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP) -D GPU_DEV_ID=$(GPU_DEVICE_ID) \
              -D GPU_LOC_MEM=$(GPU_LOCAL_MEM) -D GPU_CONST_MEM=$(GPU_CONST_MEM) \
              -D GPU_REG_MEM=$(GPU_REG_MEM) -D GPU_GLB_MEM=$(GPU_DEVICE_MEM) \
-             -D GPU_TILE=$(GPU_LOCAL_MEM_PER_TH) -D GPU_CORES=$(GPU_NUM_CORES)
+             -D GPU_TILE=$(GPU_LOCAL_MEM_PER_TH) -D GPU_CORES=$(GPU_NUM_CORES) \
+			 -D CURR_DIR_PATH='"$(MAKE_DIR)"'
 
 SOURCES_CPP =VolCalibAll.cpp
 HELPERS     =PrepareKernels.h Vect_CPU.h Vect_GPU.h VolCalibInit.h ../includeC/Constants.h \
