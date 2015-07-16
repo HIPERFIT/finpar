@@ -718,7 +718,17 @@ void build_for_GPU(
 
         //shrLog(stdlog, "Before building error: %d, code: %d, success: %d, num_dev: %d\n\n",
         //      ciErr1, CL_BUILD_PROGRAM_FAILURE, CL_SUCCESS, nDevice);
+
+#ifdef CURR_DIR_PATH
+        // create new string that concatenates the current compileOptions and "-I VAR"
+        char newCompileOptions [2048];
+        sprintf(newCompileOptions, "%s%s%s", compileOptions, " -I ", CURR_DIR_PATH);
+        ciErr1 = clBuildProgram(cpProgram, 1, cdDevices+dev_id, newCompileOptions, NULL, NULL);
+        shrLog(stdlog, "If condition entered. With argument: %s\n", newCompileOptions);
+        shrLog(stdlog, "CURR_DIR_PATH2 is = %s\n", CURR_DIR_PATH2);
+#else
         ciErr1 = clBuildProgram(cpProgram, 1, cdDevices+dev_id, compileOptions, NULL, NULL);
+#endif //CURR_DIR_PATH
 
         shrLog(stdlog, "Program built 1...\n");
 
