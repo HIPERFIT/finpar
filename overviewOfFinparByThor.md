@@ -21,3 +21,10 @@ ciErr1 = clBuildProgram(cpProgram, 1, cdDevices+dev_id, newCompileOptions, NULL,
 
 where "newCompileOptions" includes the above mentioned argument. This makes it possible to run on non-nVidia platforms since the compilation may occur somewhere else than the location of the Makefile, making the compiler unable to locate any resources that needs to be utilized, had this fix not been applied.
 
+################################################
+### ToDo ###
+################################################
+
+1. Learn to use the benchmarking program Rodinia. What are the standards that this program enforces? How are input/output defined? Etc.
+
+2. Troels Henriksen has translated some of the example programs written for Rodinya from C to Futhark. But where has he tested these programs? 
