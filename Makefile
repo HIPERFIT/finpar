@@ -1,10 +1,15 @@
 FINPAR_BASE_DIR := $(shell pwd)
-INTERESTCALIB_BIN_DIR := $(FINPAR_BASE_DIR)/bin/linux/InterestCalib
-INTERESTCALIB_DIRS := CppOpenMP/ OrigCpp/
+PROBLEM_NAMES := InterestCalib
+INTERESTCALIB_DIRS := CppOpenMP OrigCpp
+INTERESTCALIB_BIN_DIR := $(FINPAR_BASE_DIR)/bin/linux/$(PROBLEM_NAMES)
+EXECUTABLE_NAMES := $(addprefix $(PROBLEM_NAMES), _)
+EXECUTABLE_NAMES := $(addprefix $(EXECUTABLE_NAMES), ${INTERESTCALIB_DIRS})
+DIFF_SUM := $(shell echo $(i)++ | bc)
 
 interestcalib: 
+	$(eval i := 1)
 	cd InterestCalib;\
-	for dir in $(INTERESTCALIB_DIRS) ; do cd $$dir; make; cd .. ; done
+	for dir in $(INTERESTCALIB_DIRS) ; do cd $$dir; make; cp $(word $i, $(EXECUTABLE_NAMES)) $(FINPAR_BASE_DIR)/bin/linux/ ; cd .. ; done
 
 interestcalib_clean:
 	cd InterestCalib;\
@@ -15,12 +20,10 @@ init:
 	$(info This makefile lies in: ${FINPAR_BASE_DIR})
 	mkdir $(FINPAR_BASE_DIR)/bin
 	mkdir $(FINPAR_BASE_DIR)/bin/linux
-	mkdir $(INTERESTCALIB_BIN_DIR)
 
 
 clean:
 	rm -rf $(FINPAR_BASE_DIR)/bin/
-	cd Interest
 
 print-%: ; @echo $* = $($*)
 

@@ -12,7 +12,7 @@ GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP)
 SOURCES_CPP =SwapCalib.cpp
 HELPERS     =../includeC/ParseInput.h
 OBJECTS     =SwapCalib.o  
-EXECUTABLE  =SwapCalib
+EXECUTABLE  =InterestCalib_CppOpenMP
 
 
 default: cpu
