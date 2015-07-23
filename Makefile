@@ -4,12 +4,12 @@ INTERESTCALIB_DIRS := CppOpenMP OrigCpp
 INTERESTCALIB_BIN_DIR := $(FINPAR_BASE_DIR)/bin/linux/$(PROBLEM_NAMES)
 EXECUTABLE_NAMES := $(addprefix $(PROBLEM_NAMES), _)
 EXECUTABLE_NAMES := $(addprefix $(EXECUTABLE_NAMES), ${INTERESTCALIB_DIRS})
-DIFF_SUM := $(shell echo $(i)++ | bc)
+BUILD_NUMBER_FILE := build-number.txt
 
-interestcalib: 
+interestcalib:
 	$(eval i := 1)
 	cd InterestCalib;\
-	for dir in $(INTERESTCALIB_DIRS) ; do cd $$dir; make; cp $(word $i, $(EXECUTABLE_NAMES)) $(FINPAR_BASE_DIR)/bin/linux/ ; cd .. ; done
+	for dir in $(INTERESTCALIB_DIRS) ; do cd $$dir; make; cd .. ; done
 
 interestcalib_clean:
 	cd InterestCalib;\
@@ -30,3 +30,5 @@ print-%: ; @echo $* = $($*)
 
 	# Insert something like "cp name_of_exec $(FINPAR_BASE_DIR)/bin" into above line.
 	# Figure out naming convention.
+	@echo $$(cat build-number.txt)
+	@echo $$(($$(cat build-number.txt) + 1)) > build-number.txt
