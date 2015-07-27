@@ -2,17 +2,17 @@
 
 set -e
 
-cp $FINPAR_LIB_DIR/setup.mk .
-cp $FINPAR_LIB_DIR/include/ParserC.h .
-cp $FINPAR_LIB_DIR/include/Util.h .
-cp $FINPAR_BENCHMARK_LIB_DIR/Constants.h .
-cp $FINPAR_BENCHMARK_LIB_DIR/Optimizations.h .
-cp $FINPAR_BENCHMARK_LIB_DIR/ParseInput.h .
-cp $FINPAR_IMPLEMENTATION/*cpp $FINPAR_IMPLEMENTATION/*h $FINPAR_IMPLEMENTATION/Makefile .
+cp $HIPERMARK_LIB_DIR/setup.mk .
+cp $HIPERMARK_LIB_DIR/include/ParserC.h .
+cp $HIPERMARK_LIB_DIR/include/Util.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/Constants.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/Optimizations.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/ParseInput.h .
+cp $HIPERMARK_IMPLEMENTATION/*cpp $HIPERMARK_IMPLEMENTATION/*h $HIPERMARK_IMPLEMENTATION/Makefile .
 
-$FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > input.data
-$FINPAR_LIB_DIR/generate_platform_mk.py $FINPAR_PLATFORM > platform.mk
-NCORES=$($FINPAR_LIB_DIR/json_get.py $FINPAR_PLATFORM num_cores)
+$HIPERMARK_LIB_DIR/linearise_data.py $HIPERMARK_INPUT contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > input.data
+$HIPERMARK_LIB_DIR/generate_platform_mk.py $HIPERMARK_PLATFORM > platform.mk
+NCORES=$($HIPERMARK_LIB_DIR/json_get.py $HIPERMARK_PLATFORM num_cores)
 
 cat > run <<EOF
 #!/bin/sh

@@ -1,9 +1,0 @@
-#!/bin/sh
-
-set -e
-
-$FINPAR_LIB_DIR/linearise_data.py $FINPAR_INPUT outer num_x num_y num_t > input.data
-
-cp $FINPAR_IMPLEMENTATION/run .
-
-futhark-c $FINPAR_IMPLEMENTATION/CalibVolDiff.fut -o CalibVolDiff
