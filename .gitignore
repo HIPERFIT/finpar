@@ -20,6 +20,9 @@ GenericPricing/HaskellLH/GenPricing
 GenericPricing/Orig_COpenMp/GenPricing
 CalibVolDiff/Original/CalibVol
 
+# all instantiations
+instantiations/*
+
 # emacs backups
 *~
 

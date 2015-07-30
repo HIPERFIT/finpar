@@ -1,0 +1,3 @@
+#!/bin/sh
+
+cat datasets/$HIPERMARK_INPUT_NAME/input.data | ./VolCalib

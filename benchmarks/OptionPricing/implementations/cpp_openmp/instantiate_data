@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+# This instantiate file only compiles the data and not the program.
+# It also creates a run file that can execute the binary with the specified input.
+
+# The dataset file should be compiled to a specific dataset folder. This folder can be 
+# made in the hipermark script and a process with that new folder as path can be started.
+# This process compiles the data. This means that the run script should not be compiled 
+# in this script. The run file must be implementation dependent and not dataset dependent.
+# So the dataset name is set in the script and not here.
+#DATASET_NAME="input.data"
+HIPERMARK_LIB_DIR=/home/thor/Documents/Uni/hiperfit/finpar/lib
+HIPERMARK_INPUT=/home/thor/Documents/Uni/hiperfit/finpar/benchmarks/OptionPricing/datasets/small/input.json
+HIPERMARK_PLATFORM=/home/thor/Documents/Uni/hiperfit/finpar/config/platform_example.json
+
+$HIPERMARK_LIB_DIR/linearise_data.py $HIPERMARK_INPUT contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > $DATASET_NAME
