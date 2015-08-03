@@ -127,7 +127,7 @@ __kernel void prepare_tridag_x (
         myDy_elem  = (REAL3)( myDy[get_global_id(1)<<2], myDy[ (get_global_id(1)<<2)+1], myDy[(get_global_id(1)<<2)+2] );
         myDyy_elem = (REAL3)( myDyy[get_global_id(1)<<2], myDyy[(get_global_id(1)<<2)+1], myDyy[(get_global_id(1)<<2)+2] );
 
-        myDy_elem = cur_myMu*myDy_elem + 0.5*cur_myVar*myDyy_elem;
+        myDy_elem = cur_myMu*myDy_elem + 0.5f*cur_myVar*myDyy_elem;
         myDy_elem *= myres_elem;
         tmp += myDy_elem.x + myDy_elem.y + myDy_elem.z;
 
@@ -139,7 +139,7 @@ __kernel void prepare_tridag_x (
     // first loop 
     cur_myMu  = 0.0; // X
     cur_myVar = exp( 2 * ( ro_scals->beta*log(myX[get_global_id(0)]) + 
-                                 myY[get_global_id(1)] - 0.5*cur_myVar*ro_scals->timeline_i  // cur_myVar == nu*nu
+                                 myY[get_global_id(1)] - 0.5f*cur_myVar*ro_scals->timeline_i  // cur_myVar == nu*nu
                           )
                     ); 
     { 
@@ -158,7 +158,7 @@ __kernel void prepare_tridag_x (
                             );
 
         tmp += ro_scals->dtInv*myres_elem.y;
-        myDy_elem = 0.5*( cur_myMu*myDy_elem + 0.5*cur_myVar*myDyy_elem );
+        myDy_elem = 0.5f*( cur_myMu*myDy_elem + 0.5f*cur_myVar*myDyy_elem );
 
         c[ind] = - myDy_elem.z;   
 
@@ -219,9 +219,9 @@ __kernel void prepare_tridag_y (
     REAL dt_inv = ro_scals->dtInv;
 
     REAL cur_myMuY = 0.0;
-    REAL cur_myVarY = ro_scals->nu; cur_myVarY *= cur_myVarY*0.5; //nu*nu;
+    REAL cur_myVarY = ro_scals->nu; cur_myVarY *= cur_myVarY*0.5f; //nu*nu;
 
-    myDy_elem  = 0.5*( cur_myMuY*myDy [get_global_id(0)] + cur_myVarY*myDyy[get_global_id(0)] );
+    myDy_elem  = 0.5f*( cur_myMuY*myDy [get_global_id(0)] + cur_myVarY*myDyy[get_global_id(0)] );
 
 #ifdef USE_LOCAL_Y
     cache_tmp[glob_ind] = - myDy_elem.z;
@@ -233,7 +233,7 @@ __kernel void prepare_tridag_y (
     v[ind] =    dt_inv * 
                 u[  get_global_id(2)* get_global_size(1) * get_global_size(0) + 
                     get_global_id(0)*get_global_size(1) + get_global_id(1)     ] 
-                - 0.5*v[ind];  // y[j] = dtInv*u[j][i] - 0.5*v[i][j];
+                - 0.5f*v[ind];  // y[j] = dtInv*u[j][i] - 0.5*v[i][j];
 
 #ifdef USE_LOCAL_Y
     barrier(CLK_LOCAL_MEM_FENCE);
@@ -244,7 +244,7 @@ __kernel void prepare_tridag_y (
 #ifdef USE_LOCAL_Y
         scan_tmp[ind] = (REAL4) ( dt_inv - myDy_elem.y, myDy_elem.x * cache_tmp[glob_ind-1], 1.0, 0.0 );
 #else
-        const REAL elem = - 0.5*(cur_myMuY*myDy[get_global_id(0)-1].z + cur_myVarY*myDyy[get_global_id(0)-1].z);
+        const REAL elem = - 0.5f*(cur_myMuY*myDy[get_global_id(0)-1].z + cur_myVarY*myDyy[get_global_id(0)-1].z);
         scan_tmp[ind] = (REAL4) ( dt_inv - myDy_elem.y, myDy_elem.x * elem, 1.0, 0.0 );   
 #endif
         //scan_tmp[ind] = (REAL4) ( dt_inv - myDy_elem.y, myDy_elem.x*c[ind-1], 1.0, 0.0 );
@@ -856,7 +856,7 @@ void nordea_kernel_x (
         myres_elem = (REAL3)( myDyy[ind_y<<2], myDyy[(ind_y<<2)+1], myDyy[(ind_y<<2)+2] );
         myD_elem   = (REAL3)( myDy [ind_y<<2], myDy [(ind_y<<2)+1], myDy [(ind_y<<2)+2] );
 
-        myD_elem   = cur_myMu*myD_elem + 0.5*cur_myVar*myres_elem; 
+        myD_elem   = cur_myMu*myD_elem + 0.5f*cur_myVar*myres_elem; 
 
         myres_elem = (REAL3)(   (ind_y != 0) ? res_arr[get_global_id(0) - ro_scals->NUM_X] : 0.0, 
                                  res_arr[get_global_id(0)], 
@@ -875,7 +875,7 @@ void nordea_kernel_x (
         // II. first loop 
         cur_myMu  = 0.0; // X
         cur_myVar = exp( 2 * ( ro_scals->beta*log(myX[ind_x]) + 
-                                 myY[ind_y] - 0.5*cur_myVar*ro_scals->timeline_i  // cur_myVar == nu*nu
+                                 myY[ind_y] - 0.5f*cur_myVar*ro_scals->timeline_i  // cur_myVar == nu*nu
                              )
                        ); 
         // CACHING ASSUMES ALL ELEMENTS IN X DIMENSION fit in the LOCALGROUP!
@@ -892,7 +892,7 @@ void nordea_kernel_x (
                             );
 
         tmp += ro_scals->dtInv*myres_elem.y;
-        myD_elem = 0.5*( cur_myMu*myD_elem + 0.5*cur_myVar*myDxx[ ind_x ] );
+        myD_elem = 0.5f*( cur_myMu*myD_elem + 0.5f*cur_myVar*myDxx[ ind_x ] );
 
         // write in cache the values of c!
         cache_tmp[get_local_size(0) + get_local_id(0)] = - myD_elem.z;      // c[get_global_id(0)] = - myD_elem.z;    
@@ -987,9 +987,9 @@ void nordea_kernel_y (
 #endif
 
         REAL tmp = 0.0;
-        REAL cur_myVarY = ro_scals->nu; cur_myVarY *= cur_myVarY*0.5; //nu*nu;
+        REAL cur_myVarY = ro_scals->nu; cur_myVarY *= cur_myVarY*0.5f; //nu*nu;
         
-        myDy_elem  = 0.0 - 0.5*( tmp*myDy[ind_y] + cur_myVarY*myDyy[ind_y] );
+        myDy_elem  = 0.0 - 0.5f*( tmp*myDy[ind_y] + cur_myVarY*myDyy[ind_y] );
  
         // a[ind] = myDy_elem.x; c[ind] = myDy_elem.z;   
         cache_tmp[get_local_size(0) + get_local_id(0)] = myDy_elem.z;  // c[ind]
@@ -997,7 +997,7 @@ void nordea_kernel_y (
 
         
         //v[get_global_id(0)] = dt_inv * my_u - 0.5 * v[get_global_id(0)];
-        myDy_elem.z = dt_inv * my_u - 0.5 * v[get_global_id(0)]; // i.e., v[ind]
+        myDy_elem.z = dt_inv * my_u - 0.5f * v[get_global_id(0)]; // i.e., v[ind]
 
         if(ind_y == 0) {
             cache_tmp[get_local_id(0)    ] = myDy_elem.y; // b0
