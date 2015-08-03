@@ -16,7 +16,7 @@
 /**************************************************************************/
 
 #define WITH_INTERLEAVED_BANKS4 1 
-#define WITH_INTERLEAVED_BANKS2 0
+#define WITH_INTERLEAVED_BANKS2 1
 
 #if WITH_INTERLEAVED_BANKS2
 inline void store2(REAL2 val, unsigned int ind,  __local REAL* cache) {
