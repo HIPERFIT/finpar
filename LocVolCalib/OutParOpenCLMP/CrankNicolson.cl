@@ -100,7 +100,7 @@ __kernel void nordea_kernel_x (
 
     { // computing myDy_el = (cur_myMuY*myDy[j] + 0.5*cur_myVarY*myDyy[j])
         i = get_global_id(0) & (ro_scals->NUM_Y - 1);
-        myDy_el = cur_myMu*myDy[i] + (0.5*cur_myVar)*myDyy[i];
+        myDy_el = cur_myMu*myDy[i] + (0.5f*cur_myVar)*myDyy[i];
         //i = REAL3_CT*(get_global_id(0) & (ro_scals->NUM_Y - 1));
         //myDy_el = (REAL4)(myDyy[i], myDyy[i+1], myDyy[i+2], 1.0);
         //myDy_el = myDy_el * (0.5*cur_myVar);
