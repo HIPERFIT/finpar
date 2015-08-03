@@ -352,10 +352,22 @@ runGPU_PRIV(
 
     oclCheckError(ciErr1, CL_SUCCESS);
 
+    clFinish(cqCommandQueue);
+    struct timeval t_start, t_end, t_diff; unsigned long long elapsed;
+    gettimeofday(&t_start, NULL);
+
     // 8. ENQUEUE KERNEL!!!  //
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, ckGenPricing, 1, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL);
     oclCheckError(ciErr1, CL_SUCCESS);
+
+    clFinish(cqCommandQueue);
+    gettimeofday(&t_end, NULL);
+    timeval_subtract(&t_diff, &t_end, &t_start);
+    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+    printf("KERNEL TIME IS: %llu\n\n", elapsed);
+
+    gettimeofday(&t_start, NULL);
 
     // 9. FINALLY, WRITE BACK!!! //
     priv_sz = (globalWorkSize[0]/ro_scals.BLOCK)*ro_scals.num_models*sizeof(REAL);
@@ -365,6 +377,12 @@ runGPU_PRIV(
     oclCheckError(ciErr1, CL_SUCCESS);
 
     clReleaseKernel(ckGenPricing);
+
+    clFinish(cqCommandQueue);
+    gettimeofday(&t_end, NULL);
+    timeval_subtract(&t_diff, &t_end, &t_start);
+    elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+    printf("COPY-OUT and KERNEL RELEASE TIME IS: %llu\n\n", elapsed);
 }
 
 
