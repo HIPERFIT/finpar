@@ -989,7 +989,7 @@ void nordea_kernel_y (
         REAL tmp = 0.0;
         REAL cur_myVarY = ro_scals->nu; cur_myVarY *= cur_myVarY*0.5f; //nu*nu;
         
-        myDy_elem  = 0.0 - 0.5f*( tmp*myDy[ind_y] + cur_myVarY*myDyy[ind_y] );
+        myDy_elem  = 0.0f - 0.5f*( tmp*myDy[ind_y] + cur_myVarY*myDyy[ind_y] );
  
         // a[ind] = myDy_elem.x; c[ind] = myDy_elem.z;   
         cache_tmp[get_local_size(0) + get_local_id(0)] = myDy_elem.z;  // c[ind]
