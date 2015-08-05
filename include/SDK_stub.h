@@ -229,7 +229,7 @@ const char* oclErrorString(unsigned int err)
                     if(ciErrNum == CL_SUCCESS)
                     {
   		                shrLog(stdlog, "Platform name is %s\n", chBuffer);
-                        if( strstr(chBuffer, "NVIDIA") != NULL || 
+			 if( strstr(chBuffer, "NVIDIA") != NULL || 
                             strstr(chBuffer, "Apple")  != NULL ||
                             strstr(chBuffer, "Advanced Micro") != NULL )
                         {

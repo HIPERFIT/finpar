@@ -82,7 +82,7 @@ bool check_date(int year, int month, int day) {
     tmp2 = ( day <= 28 );
 
     if        ( month == 2 ) {
-        tmp3 = ( day == 29 && MOD(year, 4) == 0 && ( year == 2000 || (not (MOD(year, 100) == 0)) ) );
+        tmp3 = ( day == 29 && MOD(year, 4) == 0 && ( year == 2000 || (! (MOD(year, 100) == 0)) ) );
     } else if ( month == 4 || month == 6 || month == 9 || month == 11 ) {
         tmp3 = ( day <= 30 );
     } else {
