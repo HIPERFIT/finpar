@@ -247,8 +247,8 @@ inline void transposeMatrix(
     yIndex = get_group_id(0) * BLOCK_DIM + get_local_id(1);
     if((xIndex < height) && (yIndex < width))
     {
-	unsigned int index_out = yIndex * height + xIndex;
-	odata[index_out] = block[get_local_id(0)*(BLOCK_DIM+1)+get_local_id(1)];
+        unsigned int index_out = yIndex * height + xIndex;
+        odata[index_out] = block[get_local_id(0)*(BLOCK_DIM+1)+get_local_id(1)];
     } 
 }
    

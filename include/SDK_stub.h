@@ -228,8 +228,8 @@ const char* oclErrorString(unsigned int err)
                     ciErrNum = clGetPlatformInfo (clPlatformIDs[i], CL_PLATFORM_VENDOR, 1024, &chBuffer, NULL);
                     if(ciErrNum == CL_SUCCESS)
                     {
-  		        shrLog(stdlog, "Platform name is %s\n", chBuffer);
-			if( strstr(chBuffer, "NVIDIA") != NULL || 
+  		                shrLog(stdlog, "Platform name is %s\n", chBuffer);
+                        if( strstr(chBuffer, "NVIDIA") != NULL || 
                             strstr(chBuffer, "Apple")  != NULL || 
                             strstr(chBuffer, "Advanced") != NULL )
                         {
