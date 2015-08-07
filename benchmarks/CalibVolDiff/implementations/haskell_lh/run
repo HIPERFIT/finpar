@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e
+
+./VolCalib +RTS -K128m -RTS < ./datasets/$HIPERMARK_INPUT_NAME/input.data
+#cat datasets/$HIPERMARK_INPUT_NAME/input.data | ./VolCalib +RTS -K128m -RTS

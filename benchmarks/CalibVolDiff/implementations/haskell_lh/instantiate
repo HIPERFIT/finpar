@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e # Die on error.
+
+cp $HIPERMARK_IMPLEMENTATION/*hs .
+cp $HIPERMARK_IMPLEMENTATION/run .
+
+ghc -Wall -O2 -msse2 -rtsopts VolCalib.hs -o VolCalib

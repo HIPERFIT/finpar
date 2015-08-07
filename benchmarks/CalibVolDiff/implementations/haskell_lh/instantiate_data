@@ -1,0 +1,7 @@
+#!/bin/sh
+
+set -e #Die on error
+
+mkdir -p datasets/$HIPERMARK_INPUT_NAME
+
+$HIPERMARK_LIB_DIR/linearise_data.py $HIPERMARK_INPUT outer num_x num_y num_t > datasets/$HIPERMARK_INPUT_NAME/input.data

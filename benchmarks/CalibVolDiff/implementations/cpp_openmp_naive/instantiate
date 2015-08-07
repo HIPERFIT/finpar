@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+cp $HIPERMARK_LIB_DIR/setup.mk .
+cp $HIPERMARK_LIB_DIR/include/ParserC.h .
+cp $HIPERMARK_LIB_DIR/include/Util.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/Constants.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/ParseInput.h .
+cp $HIPERMARK_IMPLEMENTATION/*cpp $HIPERMARK_IMPLEMENTATION/Makefile .
+cp $HIPERMARK_IMPLEMENTATION/run .
+
+$HIPERMARK_LIB_DIR/generate_platform_mk.py $HIPERMARK_PLATFORM > platform.mk
+NCORES=$($HIPERMARK_LIB_DIR/json_get.py $HIPERMARK_PLATFORM num_cores)
+
+make
