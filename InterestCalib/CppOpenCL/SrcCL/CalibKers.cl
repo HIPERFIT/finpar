@@ -152,7 +152,7 @@ void eval_genome_main (
 
         sh_mem4[ TH_ID ] = tmp4;
         barrier(CLK_LOCAL_MEM_FENCE);
-        segm_reduce_plusminmax( sh_mem4, flags ); // ToDo 2
+//333        segm_reduce_plusminmax( sh_mem4, flags ); // ToDo 2
 
         int last_ind  = TH_ID - getIotaInd( shape_meta );
         if(!iddle) last_ind += n_schedi - 1;
