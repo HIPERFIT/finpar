@@ -736,7 +736,7 @@ void build_for_GPU(
         // 7. check errors!
         if (ciErr1 != CL_SUCCESS) {
             // write out standard error, Build Log and PTX, then cleanup and exit
-  	    shrLog(stdlog, "BUILDING ERROR: %d: %s\n", ciErr1, oclErrorString(ciErr1));
+            shrLog(stdlog, "BUILDING ERROR: %d: %s\n", ciErr1, oclErrorString(ciErr1));
             //oclLogBuildInfo(cpProgram, cdDevices[dev_id]);
 
             //oclLogPtx(cpProgram, cdDevices[dev_id], ptx_name.c_str());
