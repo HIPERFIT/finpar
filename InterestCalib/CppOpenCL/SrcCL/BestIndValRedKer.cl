@@ -8,7 +8,6 @@ inline REAL2 OP_BEST(REAL2 iv1, REAL2 iv2) {
 
 inline REAL2 reduce_best_warp( __local volatile REAL2* sh_data ) {
     const uint th_id = get_local_id(0) & (WARP-1);
-    return sh_data[th_id]; //333!
 
     if( th_id >= 1  ) sh_data[th_id] = OP_BEST( sh_data[th_id], sh_data[th_id-1 ] );
     if( th_id >= 2  ) sh_data[th_id] = OP_BEST( sh_data[th_id], sh_data[th_id-2 ] );
