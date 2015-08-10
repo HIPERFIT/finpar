@@ -1,5 +1,0 @@
-#!/bin/sh
-
-set -e
-
-./GenericPricing -t runtime.txt < input.data > result.json

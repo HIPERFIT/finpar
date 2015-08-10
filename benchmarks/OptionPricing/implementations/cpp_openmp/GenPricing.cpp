@@ -169,8 +169,8 @@ int main() {
         timeval_subtract(&t_diff, &t_end, &t_start);
         elapsed_usec = t_diff.tv_sec*1e6+t_diff.tv_usec;
         {
-          FILE* runtime = fopen("runtime.txt", "w");
-          FILE* result = fopen("result.json", "w");
+          FILE* runtime = fopen(getenv("HIPERMARK_RUNTIME"), "w");
+      FILE* result = fopen(getenv("HIPERMARK_RESULT"), "w");
           fprintf(runtime, "%d\n", elapsed_usec / 1000);
           fclose(runtime);
           write_1Darr(result, prices, scals.num_models);
