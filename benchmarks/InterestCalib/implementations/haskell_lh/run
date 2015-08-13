@@ -1,5 +1,0 @@
-#!/bin/sh
-
-set -e
-
-./SwapCalib +RTS -K128m -RTS < input.data
