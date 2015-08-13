@@ -1,0 +1,8 @@
+#!/bin/sh
+
+set -e
+
+mkdir -p datasets/$HIPERMARK_INPUT_NAME
+
+# the linearisation might not be needed!!
+cp $HIPERMARK_INPUT datasets/$HIPERMARK_INPUT_NAME/input.data

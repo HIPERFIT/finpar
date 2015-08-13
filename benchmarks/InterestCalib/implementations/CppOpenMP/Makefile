@@ -10,7 +10,7 @@ GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP)
 #-fmath-errno -ftrapping-math -fno-rounding-math -fsignaling-nans
 
 SOURCES_CPP =SwapCalib.cpp
-HELPERS     =../includeC/ParseInput.h
+HELPERS     =ParseInput.h  #Can this be correct??
 OBJECTS     =SwapCalib.o  
 EXECUTABLE  =SwapCalib
 
