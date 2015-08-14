@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import json
+import math
+
+LG_LIKELIHOOD_TOLERANCE1 = 1.0
+LG_LIKELIHOOD_TOLERANCE2 = 0.5
+LG_LIKELIHOOD_TOLERANCE3 = 0.7
+LLHOOD_CAUCHY_OFFS = 5.0
+
+def read_json_file(filename):
+    """ returns an array containing the content of the JSON file.
+
+    keyword arguments:
+    filename -- name of json file to interpret
+    """
+    with open(filename, "r") as file:
+        return json.loads(file.read())
+
+def get_arguments():
+    if len(sys.argv) != 3:
+        raise Exception("Usage: %s <path_to_calculated_result> <path_to_expected_result>"% (sys.argv[0]) )
+    return (sys.argv[1], sys.argv[2])
+
+def cauchy_pdf(z, mu, gamma):
+    x = (z-mu) / gamma
+    return 1/(math.pi * gamma * (1+x*x))
+
+def log_likelihood(y_ref, y): # CAUCHY
+    gamma = (abs(y_ref) / 50.0) * LLHOOD_CAUCHY_OFFS + 0.01
+    pdfs = cauchy_pdf(y, y_ref, gamma)
+    pdfs += 1e-20 # avoid NaNs
+    return math.log(pdfs)
+
+def validate_swaption(calc_swap, expt_swap):
+    N = len(calc_swap)
+    if N != len(expt_swap):
+        raise Exception("The length of the swaption result array is different for the calculated and expected result: len(calculated swaption result array: %d. Expected result array: %d)" % (N, len(expt_swap)))
+    for i in range(N):
+        lg_lh_calc = log_likelihood(calc_swap[i][1], calc_swap[i][0])
+        lg_lh_expt = log_likelihood(expt_swap[i][1], expt_swap[i][0])
+        diff_curr_lg_lh = 0.0 if (lg_lh_calc > lg_lh_expt) else (lg_lh_expt - lg_lh_calc)
+        if diff_curr_lg_lh > LG_LIKELIHOOD_TOLERANCE3:
+            raise Exception("Error in swaption result validation. Error of result number %d: %f. Acceptable: %f" %
+                            (i, diff_curr_lg_lh, LG_LIKELIHOOD_TOLERANCE3))
+
+def validate(calculated_result_file, expected_result_file):
+    """ Checks if the calculated result and the expected result are close enough to be considered valid.
+    All errors in validation must throw an exception, otherwise validate will wrongly return succesful.
+    """
+    calc = read_json_file(os.path.join(os.getcwd(), calculated_result_file))
+    expt = read_json_file(os.path.join(os.getcwd(), expected_result_file))
+    calc_lg_lh = calc['lg_likelyhood']
+    expt_lg_lh = expt['lg_likelyhood']
+    dev = abs(calc_lg_lh - expt_lg_lh)
+    if (dev > LG_LIKELIHOOD_TOLERANCE1):
+        raise Exception("Difference in log likelihood > %f. Result log likelihood: %f, reference log likelihood: %f" %
+                        (LG_LIKELIHOOD_TOLERANCE1, calc_lg_lh, expt_lg_lh))
+    if (expt_lg_lh  - calc_lg_lh) > LG_LIKELIHOOD_TOLERANCE2:
+        raise Exception("Result likelihood is worse than reference with more than %f. Result log likelihood: %f, reference log likelihood %f" % (LG_LIKELIHOOD_TOLERANCE2, calc_lg_lh, expt_lg_lh))
+    expt_res = expt['swaption_calibration_result']
+    calc_res = calc['swaption_calibration_result']
+    validate_swaption(calc_res, expt_res)
+
+if __name__ == "__main__":
+    (calculated_result, expected_result) = get_arguments()
+    try:
+        validate(calculated_result, expected_result)
+        print("Validation succesfull")
+        exit(0)
+    except Exception as e:
+        print(e.args)
+        exit(1)
