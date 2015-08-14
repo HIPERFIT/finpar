@@ -37,13 +37,15 @@ def log_likelihood(y_ref, y): # CAUCHY
 def validate_swaption(calc_swap, expt_swap):
     N = len(calc_swap)
     if N != len(expt_swap):
-        raise Exception("The length of the swaption result array is different for the calculated and expected result: len(calculated swaption result array: %d. Expected result array: %d)" % (N, len(expt_swap)))
+        raise Exception("The length of the swaption resulta rray is different for the calculated and expected result: len(calculated swaption result array: %d. Expected result array: %d)" % (N, len(expt_swap)))
+    print(N)
     for i in range(N):
+        print(1)
         lg_lh_calc = log_likelihood(calc_swap[i][1], calc_swap[i][0])
         lg_lh_expt = log_likelihood(expt_swap[i][1], expt_swap[i][0])
         diff_curr_lg_lh = 0.0 if (lg_lh_calc > lg_lh_expt) else (lg_lh_expt - lg_lh_calc)
         if diff_curr_lg_lh > LG_LIKELIHOOD_TOLERANCE3:
-            raise Exception("Error in swaption result validation. Error of result number %d: %f. Acceptable: %f" %
+            raise Exception("Error in swaption result validation.git Error of result number %d: %f. Acceptable: %f" %
                             (i, diff_curr_lg_lh, LG_LIKELIHOOD_TOLERANCE3))
 
 def validate(calculated_result_file, expected_result_file):
