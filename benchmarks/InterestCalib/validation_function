@@ -35,12 +35,12 @@ def log_likelihood(y_ref, y): # CAUCHY
     return math.log(pdfs)
 
 def validate_swaption(calc_swap, expt_swap):
+    """ Checks whether the result (excluding the lg_likelyhood part of the JSON object) validates.
+    """
     N = len(calc_swap)
     if N != len(expt_swap):
-        raise Exception("The length of the swaption resulta rray is different for the calculated and expected result: len(calculated swaption result array: %d. Expected result array: %d)" % (N, len(expt_swap)))
-    print(N)
+        raise Exception("The length of the swaption result array is different for the calculated and expected result: len(calculated swaption result array: %d. Expected result array: %d)" % (N, len(expt_swap)))
     for i in range(N):
-        print(1)
         lg_lh_calc = log_likelihood(calc_swap[i][1], calc_swap[i][0])
         lg_lh_expt = log_likelihood(expt_swap[i][1], expt_swap[i][0])
         diff_curr_lg_lh = 0.0 if (lg_lh_calc > lg_lh_expt) else (lg_lh_expt - lg_lh_calc)
