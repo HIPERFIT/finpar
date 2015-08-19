@@ -14,7 +14,7 @@ EXECUTABLE  =VolCalib
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 default: cpu
 
-.cpp.o: $(SOURCES_CPP) $(HELPERS)
+.cpp.o: $(SOURCES_CPP) $(HELPERS) -DREAL_TYPE=${REAL_TYPE}
 	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
 
 cpu: $(EXECUTABLE)

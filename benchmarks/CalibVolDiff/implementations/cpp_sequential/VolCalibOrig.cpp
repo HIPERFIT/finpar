@@ -1,10 +1,13 @@
 #include <vector>
 #include <cmath>
 
-#define WITH_FLOATS     0
-#define WORKGROUP_SIZE  512 
+#define WORKGROUP_SIZE  512
 
+#ifdef REAL_TYPE
+typedef REAL_TYPE REAL;
+#else
 typedef double REAL;
+#endif
 
 #include "Util.h"
 #include "ParseInput.h"
