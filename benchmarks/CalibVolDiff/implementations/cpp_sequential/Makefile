@@ -11,10 +11,12 @@ HELPERS     =../includeC/ParseInput.h
 OBJECTS     =VolCalibOrig.o  
 EXECUTABLE  =VolCalib
 
+CXXFLAGS    += -DREAL_TYPE=$(HIPERMARK_CONFIG_REAL_TYPE)
+
 #g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 default: cpu
 
-.cpp.o: $(SOURCES_CPP) $(HELPERS) -DREAL_TYPE=${REAL_TYPE}
+.cpp.o: $(SOURCES_CPP) $(HELPERS)
 	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
 
 cpu: $(EXECUTABLE)

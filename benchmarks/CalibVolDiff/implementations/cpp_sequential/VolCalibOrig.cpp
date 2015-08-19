@@ -4,9 +4,9 @@
 #define WORKGROUP_SIZE  512
 
 #ifdef REAL_TYPE
-typedef REAL_TYPE REAL;
+typedef REAL_TYPE real_t;
 #else
-typedef double REAL;
+typedef double real_t;
 #endif
 
 #include "Util.h"
@@ -15,24 +15,24 @@ typedef double REAL;
 using namespace std;
 
 //	grid
-vector<double>			myX, myY, myTimeline;
+vector<real_t>			myX, myY, myTimeline;
 unsigned				myXindex, myYindex;
 
 //	variable
-vector<vector<double> > myResult;
+vector<vector<real_t> > myResult;
 
 //	coeffs
-vector<vector<double> > myMuX, myVarX, myMuY, myVarY;
+vector<vector<real_t> > myMuX, myVarX, myMuY, myVarY;
 
 //	operators
-vector<vector<double> >	myDx, myDxx, myDy, myDyy;
+vector<vector<real_t> >	myDx, myDxx, myDy, myDyy;
 
 
 
 
 /***********************************/
 
-void updateParams(const unsigned g, const double alpha, const double beta, const double nu)
+void updateParams(const unsigned g, const real_t alpha, const real_t beta, const real_t nu)
 {
 	for(unsigned i=0;i<myX.size();++i)
 		for(unsigned j=0;j<myY.size();++j)
@@ -45,7 +45,7 @@ void updateParams(const unsigned g, const double alpha, const double beta, const
 }
 
 
-void initGrid(const double s0, const double alpha, const double nu,const double t, const unsigned numX, const unsigned numY, const unsigned numT)
+void initGrid(const real_t s0, const real_t alpha, const real_t nu,const real_t t, const unsigned numX, const unsigned numY, const unsigned numT)
 {
 	myX.resize(numX);
 	myY.resize(numY);
@@ -54,16 +54,16 @@ void initGrid(const double s0, const double alpha, const double nu,const double 
 	for(unsigned i=0;i<numT;++i)
 		myTimeline[i] = t*i/(numT-1);
 
-	const double stdX = 20*alpha*s0*sqrt(t);
-	const double dx = stdX/numX;
+	const real_t stdX = 20*alpha*s0*sqrt(t);
+	const real_t dx = stdX/numX;
 	myXindex = static_cast<unsigned>(s0/dx);
 
 	for(unsigned i=0;i<numX;++i)
 		myX[i] = i*dx - myXindex*dx + s0;
 
-	const double stdY = 10*nu*sqrt(t);
-	const double dy = stdY/numY;
-	const double logAlpha = log(alpha);
+	const real_t stdY = 10*nu*sqrt(t);
+	const real_t dy = stdY/numY;
+	const real_t logAlpha = log(alpha);
 	myYindex = numY/2;
 
 	for(unsigned i=0;i<numY;++i)
@@ -83,7 +83,7 @@ void initGrid(const double s0, const double alpha, const double nu,const double 
 	}
 }
 
-void initOperator(const vector<double>& x, vector<vector<double> >& Dx, vector<vector<double> >& Dxx)
+void initOperator(const vector<real_t>& x, vector<vector<real_t> >& Dx, vector<vector<real_t> >& Dxx)
 {
 	const unsigned n = x.size();
 
@@ -96,7 +96,7 @@ void initOperator(const vector<double>& x, vector<vector<double> >& Dx, vector<v
 		Dxx[i].resize(3);
 	}
 
-	double dxl, dxu;
+	real_t dxl, dxu;
 
 	//	lower boundary
 	dxl		 =  0.0;
@@ -139,13 +139,13 @@ void initOperator(const vector<double>& x, vector<vector<double> >& Dx, vector<v
 }
 
 
-void setPayoff(const double strike)
+void setPayoff(const real_t strike)
 {
 	myResult.resize(myX.size());
 	for(unsigned i=0;i<myX.size();++i)
 	{
 		myResult[i].resize(myY.size());
-		double payoff = max(myX[i]-strike,0.0);
+		real_t payoff = max(myX[i]-strike,(real_t)0.0);
 		for(unsigned j=0;j<myY.size();++j)
 			myResult[i][j] = payoff;
 	}
@@ -153,16 +153,16 @@ void setPayoff(const double strike)
 
 
 inline void tridag(
-    const vector<double>&   a,
-    const vector<double>&   b,
-    const vector<double>&   c,
-    const vector<double>&   r,
+    const vector<real_t>&   a,
+    const vector<real_t>&   b,
+    const vector<real_t>&   c,
+    const vector<real_t>&   r,
     const int               n,
-          vector<double>&   u,
-          vector<double>&   uu)
+          vector<real_t>&   u,
+          vector<real_t>&   uu)
 {
     int    i, offset;
-    REAL   beta;
+    real_t   beta;
 
     u[0]  = r[0];
     uu[0] = b[0];
@@ -194,11 +194,11 @@ rollback(const unsigned g)
 
 	int kl, ku, ll, lu;
 
-	double dtInv = 1.0/(myTimeline[g+1]-myTimeline[g]);
+	real_t dtInv = 1.0/(myTimeline[g+1]-myTimeline[g]);
 
-	vector<vector<double> > u(numY,vector<double>(numX)), v(numX,vector<double>(numY));
+	vector<vector<real_t> > u(numY,vector<real_t>(numX)), v(numX,vector<real_t>(numY));
 
-	vector<double> a(numZ), b(numZ), c(numZ), y(numZ), yy(numZ);
+	vector<real_t> a(numZ), b(numZ), c(numZ), y(numZ), yy(numZ);
 
 	//	explicit x
 	for(i=0;i<numX;i++)
@@ -258,12 +258,12 @@ rollback(const unsigned g)
 	}
 }
 
-double value(   const double s0,
-                const double strike, 
-                const double t, 
-                const double alpha, 
-                const double nu, 
-                const double beta,
+real_t value(   const real_t s0,
+                const real_t strike, 
+                const real_t t, 
+                const real_t alpha, 
+                const real_t nu, 
+                const real_t beta,
                 const unsigned int numX,
                 const unsigned int numY,
                 const unsigned int numT
@@ -285,12 +285,12 @@ double value(   const double s0,
 int main()
 {
     unsigned int OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T; 
-	const double s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
+	const real_t s0 = 0.03, strike = 0.03, t = 5.0, alpha = 0.2, nu = 0.6, beta = 0.5;
 
     fprintf(stdout, "\n// Original (Sequential) Volatility Calibration Benchmark:\n");
     readDataSet( OUTER_LOOP_COUNT, NUM_X, NUM_Y, NUM_T ); 
 
-	vector<double> strikes(OUTER_LOOP_COUNT),res(OUTER_LOOP_COUNT);
+	vector<real_t> strikes(OUTER_LOOP_COUNT),res(OUTER_LOOP_COUNT);
 
 	for(unsigned i=0;i<OUTER_LOOP_COUNT;++i)
 		strikes[i] = 0.001*i;
