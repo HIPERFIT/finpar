@@ -1,27 +1,37 @@
-include setup.mk
+# Permit standalone compilation.
+HIPERMARK_LIB_DIR ?= ../../../../lib/
 
-ifndef ($(HAVE_GPU))
-include platform.mk
-endif
+# Default to double if nothing else defined.
+HIPERMARK_CONFIG_REAL_TYPE ?= double
 
-INCLUDES    += -I../includeC
-GPU_OPTS   = -D lgWARP=$(GPU_LG_WARP)
+include $(HIPERMARK_LIB_DIR)/setup.mk
+
+INCLUDES    += -I$(HIPERMARK_BENCHMARK_LIB_DIR)/include
+INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
+INCLUDES    += -I$(HIPERMARK_IMPLEMENTATION)
+
 #-fno-unsafe-math-optimizations -fno-finite-math-only 
 #-fmath-errno -ftrapping-math -fno-rounding-math -fsignaling-nans
 
-SOURCES_CPP =SwapCalib.cpp
-HELPERS     =ParseInput.h  #Can this be correct??
-OBJECTS     =SwapCalib.o  
+HELPERS     =$(HIPERMARK_BENCHMARK_LIB_DIR)/include/ParseInput.h
+OBJECTS     =SwapCalib.o
 EXECUTABLE  =SwapCalib
 
-default: cpu
+default: $(EXECUTABLE)
 
-.cpp.o: $(SOURCES_CPP) $(HELPERS)
-	$(CXX) $(CXXFLAGS) $(GPU_OPTS) $(INCLUDES) -c -o $@ $<
+%.o: $(HIPERMARK_IMPLEMENTATION)/%.cpp $(HELPERS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
-# The GPU version is in: ../CppAndGPU. This folder is CPU only!
-cpu: $(OBJECTS)
+$(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
+
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
 
+data: $(HIPERMARK_INPUT)
+	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs > datasets/$(HIPERMARK_INPUT_NAME)/input.data
+
+run:
+	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | \
+	 OMP_NUM_THREADS=$(HIPERMARK_CONFIG_NUM_THREADS) ./$(EXECUTABLE)
