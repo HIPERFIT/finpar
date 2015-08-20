@@ -73,5 +73,6 @@ if __name__ == "__main__":
         print("Validation succesfull")
         exit(0)
     except Exception as e:
-        print(e.args)
+        print("Validation failed:")
+        print("%s: %s" % (type(e), e.args))
         exit(1)
