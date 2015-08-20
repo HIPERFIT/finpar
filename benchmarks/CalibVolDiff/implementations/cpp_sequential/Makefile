@@ -1,19 +1,21 @@
-include setup.mk
+# Permit standalone compilation.
+HIPERMARK_LIB_DIR ?= ../../../../lib/
 
-ifndef ($(HAVE_GPU))
-include platform.mk
-endif
+# Default to double if nothing else defined.
+HIPERMARK_CONFIG_REAL_TYPE ?= double
 
-INCLUDES    += -I../includeC
+include $(HIPERMARK_LIB_DIR)/setup.mk
+
+INCLUDES    += -I$(HIPERMARK_BENCHMARK_LIB_DIR)/include
+INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
 
 SOURCES_CPP =VolCalibOrig.cpp
-HELPERS     =../includeC/ParseInput.h
-OBJECTS     =VolCalibOrig.o  
-EXECUTABLE  =VolCalib
+HELPERS     =$(HIPERMARK_BENCHMARK_LIB_DIR)/include/ParseInput.h
+OBJECTS     =VolCalibOrig.o
+EXECUTABLE  =VolCalibOrig
 
 CXXFLAGS    += -DREAL_TYPE=$(HIPERMARK_CONFIG_REAL_TYPE)
 
-#g++ -I. -I/usr/local/cuda/include  -O3 NordeaVect.cpp -lOpenCL
 default: cpu
 
 .cpp.o: $(SOURCES_CPP) $(HELPERS)
@@ -36,3 +38,7 @@ run_large: $(EXECUTABLE)
 
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
+
+data: $(HIPERMARK_INPUT)
+	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) outer num_x num_y num_t > datasets/$(HIPERMARK_INPUT_NAME)/input.data

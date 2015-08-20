@@ -1,3 +1,8 @@
+# If we are run from outside Hipermark itself, a number of environment
+# variables will be missing.  Set these to hopefully-working values to
+# support standalone compilation.
+HIPERMARK_BENCHMARK_LIB_DIR ?= ../../lib/
+
 OS=$(shell uname -s)
 
 ifeq ($(OS),Darwin)
@@ -17,4 +22,3 @@ else
   CXXFLAGS   = -DENABLE_OPENMP -fopenmp -O3
   INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../../include
 endif
-
