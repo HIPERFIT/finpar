@@ -7,8 +7,10 @@ SOURCES    = VolCalib.hs
 EXECUTABLE = VolCalib
 GHC_FLAGS  = -Wall -O2 -msse2 -rtsopts
 
-$(EXECUTABLE): $(SOURCES)
-	ghc $(SOURCES) $(GHC_FLAGS) -o $(EXECUTABLE)
+default: $(EXECUTABLE)
+
+$(EXECUTABLE): $(HIPERMARK_IMPLEMENTATION)/$(SOURCES)
+	ghc $(HIPERMARK_IMPLEMENTATION)/$(SOURCES) $(GHC_FLAGS) -o $(EXECUTABLE)
 
 clean:
 	rm $(EXECUTABLE) *o *hi
@@ -16,3 +18,6 @@ clean:
 data: $(HIPERMARK_INPUT)
 	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
 	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) outer num_x num_y num_t > datasets/$(HIPERMARK_INPUT_NAME)/input.data
+
+run:
+	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | ./$(EXECUTABLE)
