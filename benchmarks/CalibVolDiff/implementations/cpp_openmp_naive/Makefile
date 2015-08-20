@@ -31,4 +31,5 @@ data: $(HIPERMARK_INPUT)
 	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) outer num_x num_y num_t > datasets/$(HIPERMARK_INPUT_NAME)/input.data
 
 run:
-	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | ./$(EXECUTABLE)
+	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | \
+	 OMP_NUM_THREADS=$(HIPERMARK_NUM_THREADS) ./$(EXECUTABLE)
