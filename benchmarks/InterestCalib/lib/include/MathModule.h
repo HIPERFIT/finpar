@@ -12,15 +12,15 @@
 //   formula 7.1.26 (page 300), Handbook of Mathematical Functions, Abramowitz and Stegun
 //   http://people.math.sfu.ca/~cbm/aands/frameindex.htm
 
-REAL erff1( const REAL& x ) {
-    const REAL p = 0.3275911;
-    const REAL a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
+real_t erff1( const real_t& x ) {
+    const real_t p = 0.3275911;
+    const real_t a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
 
-    const REAL t  = 1.0/(1.0+p*x);
-    const REAL t2 = t  * t;
-    const REAL t3 = t  * t2;
-    const REAL t4 = t2 * t2;
-    const REAL t5 = t2 * t3;
+    const real_t t  = 1.0/(1.0+p*x);
+    const real_t t2 = t  * t;
+    const real_t t3 = t  * t2;
+    const real_t t4 = t2 * t2;
+    const real_t t5 = t2 * t3;
 
     return ( 1.0 - (a1*t + a2*t2 + a3*t3 + a4*t4 + a5*t5) * exp(-(x*x)) );
 }
@@ -28,35 +28,35 @@ REAL erff1( const REAL& x ) {
 //-------------------------------------------------------------------------
 // Cumulative Distribution Function for a standard normal distribution
 
-REAL uGaussian_P( const REAL& x ) {
-    const REAL u = x / sqrt(2.0);
-    const REAL e = ( u < 0.0 ) ? -erff1(-u) : erff1(u);
+real_t uGaussian_P( const real_t& x ) {
+    const real_t u = x / sqrt(2.0);
+    const real_t e = ( u < 0.0 ) ? -erff1(-u) : erff1(u);
 
     return ( 0.5 * (1.0 + e) );
 }
 
 
-REAL erff_poly_only( const REAL& x ) {
-    const REAL p = 0.3275911;
-    const REAL a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
+real_t erff_poly_only( const real_t& x ) {
+    const real_t p = 0.3275911;
+    const real_t a1 = 0.254829592, a2 = -0.284496736, a3 = 1.421413741, a4 = -1.453152027, a5 = 1.061405429;
 
-    const REAL t  = 1.0/(1.0+p*x);
-    const REAL t2 = t  * t;
-    const REAL t3 = t  * t2;
-    const REAL t4 = t2 * t2;
-    const REAL t5 = t2 * t3;
+    const real_t t  = 1.0/(1.0+p*x);
+    const real_t t2 = t  * t;
+    const real_t t3 = t  * t2;
+    const real_t t4 = t2 * t2;
+    const real_t t5 = t2 * t3;
 
-    const REAL res = (a1*t + a2*t2 + a3*t3 + a4*t4 + a5*t5);
+    const real_t res = (a1*t + a2*t2 + a3*t3 + a4*t4 + a5*t5);
     return res;
     // erff was: ( 1.0 - res * exp(-(x*x)) );
 }
 
 
-REAL uGaussian_P_withExpFactor( const REAL& x, const REAL exp_factor ) {
-    const REAL u = fabs( x / sqrt(2.0) );
-    const REAL e = erff_poly_only(u);
+real_t uGaussian_P_withExpFactor( const real_t& x, const real_t exp_factor ) {
+    const real_t u = fabs( x / sqrt(2.0) );
+    const real_t e = erff_poly_only(u);
 
-    REAL res = 0.5 * e * exp(exp_factor-u*u);
+    real_t res = 0.5 * e * exp(exp_factor-u*u);
 
     if( x >= 0.0 ) {
         res = exp(exp_factor) - res;
@@ -73,10 +73,10 @@ REAL uGaussian_P_withExpFactor( const REAL& x, const REAL exp_factor ) {
 // otherwise follows the real implementation
 ////////////////////////////////////////////////////////////////////////
 // N is the size of scales (bbi)
-REAL to_solve( const UINT& fid, const UINT& N, const REAL* scales, const REAL* bbi, const REAL& yhat ) { 
+real_t to_solve( const UINT& fid, const UINT& N, const real_t* scales, const real_t* bbi, const real_t& yhat ) { 
     if ( fid == 33 ) return (yhat+3.0)*(yhat-1.0)*(yhat-1.0);
     else {
-        REAL accum = 0.0;
+        real_t accum = 0.0;
         for( UINT i = 0; i < N; i++ ) {
             accum += scales[i] * exp( - bbi[i] * yhat );
         }
@@ -96,26 +96,26 @@ def bisection(f,lb,ub,N=50):
 void rootBisection( 
                             const UINT&   fid, 
                             const UINT&   N, 
-                            const REAL*   scale, 
-                            const REAL*   bbi, 
-                            const REAL&   lb, 
-                            const REAL&   ub, 
-                            const REAL&   toll, 
+                            const real_t*   scale, 
+                            const real_t*   bbi, 
+                            const real_t&   lb, 
+                            const real_t&   ub, 
+                            const real_t&   toll, 
                             const UINT&   it_mx,
-                                  REAL&   root,  // result
+                                  real_t&   root,  // result
                                   UINT&   it,
-                                  REAL&   fb
+                                  real_t&   fb
 ) {
    // IMPLEMENT THIS HERE!!!
-    const REAL tol      = (toll  <= 0.0) ?  1.0e-9 : toll;
-    const REAL iter_max = (it_mx <= 0  ) ?  IT_MAX : it_mx;
+    const real_t tol      = (toll  <= 0.0) ?  1.0e-9 : toll;
+    const real_t iter_max = (it_mx <= 0  ) ?  IT_MAX : it_mx;
 
-    REAL a = lb, b = ub;
+    real_t a = lb, b = ub;
 
-    REAL x, fx;
+    real_t x, fx;
     it         = 0;
 
-    REAL fa = to_solve(fid, N, scale, bbi, a);
+    real_t fa = to_solve(fid, N, scale, bbi, a);
          fb = to_solve(fid, N, scale, bbi, b);
 
     if( fa*fb >= 0.0 ) {
@@ -152,22 +152,22 @@ void rootBisection(
 void rootFinding_Brent ( 
                             const UINT&   fid, 
                             const UINT&   N, 
-                            const REAL*   scale, 
-                            const REAL*   bbi, 
-                            const REAL&   lb, 
-                            const REAL&   ub, 
-                            const REAL&   toll, 
+                            const real_t*   scale, 
+                            const real_t*   bbi, 
+                            const real_t&   lb, 
+                            const real_t&   ub, 
+                            const real_t&   toll, 
                             const UINT&   it_mx,
-                                  REAL&   root,  // result
+                                  real_t&   root,  // result
                                   UINT&   it,
-                                  REAL&   fb
+                                  real_t&   fb
 ) { 
-    const REAL tol      = (toll  <= 0.0) ?  1.0e-9 : toll;
-    const REAL iter_max = (it_mx <= 0  ) ?  IT_MAX : it_mx;
+    const real_t tol      = (toll  <= 0.0) ?  1.0e-9 : toll;
+    const real_t iter_max = (it_mx <= 0  ) ?  IT_MAX : it_mx;
 
-    REAL a = lb, b = ub;
+    real_t a = lb, b = ub;
 
-    REAL fa = to_solve(fid, N, scale, bbi, a);
+    real_t fa = to_solve(fid, N, scale, bbi, a);
          fb = to_solve(fid, N, scale, bbi, b);
 
     if( fa*fb >= 0.0 ) {
@@ -177,22 +177,22 @@ void rootFinding_Brent (
         return;
     } 
 
-    if( fabs(fa) < fabs(fb) ) { REAL tmp = fa; fa = fb; fb = tmp; tmp = a; a = b; b = tmp; }
+    if( fabs(fa) < fabs(fb) ) { real_t tmp = fa; fa = fb; fb = tmp; tmp = a; a = b; b = tmp; }
     
-    REAL c = a, fc = fa;
+    real_t c = a, fc = fa;
     bool mflag = true;
-    REAL d     = 0.0;
+    real_t d     = 0.0;
     it         = 0;
 
     for( UINT i = 0; i < iter_max; i++ ) {
         if ( fb != 0.0 && fabs(b-a) >= tol ) {
-            REAL s;
+            real_t s;
             if( fa == fc || fb == fc ) {
                 s = b - fb * (b - a) / (fb - fa);
             } else {
-                REAL s1 = (a*fb*fc)/( (fa-fb)*(fa-fc) );
-                REAL s2 = (b*fa*fc)/( (fb-fa)*(fb-fc) );
-                REAL s3 = (c*fa*fb)/( (fc-fa)*(fc-fb) );
+                real_t s1 = (a*fb*fc)/( (fa-fb)*(fa-fc) );
+                real_t s2 = (b*fa*fc)/( (fb-fa)*(fb-fc) );
+                real_t s3 = (c*fa*fb)/( (fc-fa)*(fc-fb) );
                 s = s1 + s2 + s3;
             }
 
@@ -207,7 +207,7 @@ void rootFinding_Brent (
                 mflag = false;
             }
     
-            REAL fs = to_solve(fid, N, scale, bbi, s);
+            real_t fs = to_solve(fid, N, scale, bbi, s);
 
             // d is assigned for the first time here:
             // it's not used above because mflag is set
@@ -218,7 +218,7 @@ void rootFinding_Brent (
             else              { a = s; fa = fs; }
 
             if( fabs(fa) < fabs(fb) ) { 
-                REAL tmp;
+                real_t tmp;
                 tmp = a;   a =  b;  b = tmp;
                 tmp = fa; fa = fb; fb = tmp;
             }
@@ -243,9 +243,9 @@ void rootFinding_Brent (
 int test_math() {
     // Rootfinder.brent (-4.) (4./.3.) (fun x -> (x+.3.)*.(x-.1.)**2.) 1e-4 == -3
     printf("# Brent test: %f => ", -3.0);
-    REAL scale[1] = { 0.0 }, bbi[1] = { 0.0 };
+    real_t scale[1] = { 0.0 }, bbi[1] = { 0.0 };
 
-    REAL root, err; UINT it;
+    real_t root, err; UINT it;
     rootFinding_Brent(33, 1, scale, bbi, -4.0, 4.0/3.0, 0.0, 0, root, it, err); 
     if( equalEps(root, -3.0) ) printf(" SUCCESS!\n\n");
     else                       printf(" %f FAILS!\n\n", root);

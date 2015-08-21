@@ -53,7 +53,7 @@ short* getIregShapeAdjusted( const int   LWG,
         }
         N = Ncur;
 
-        REAL overhead = ((REAL)Ncur)/(Ncur-tot_iddle_thds);
+        real_t overhead = ((real_t)Ncur)/(Ncur-tot_iddle_thds);
         overhead = (overhead - 1.0) * 100.0;
 
 //        printf("Summary: Ncurr: %d, tot_iddle_thds: %d, overhead: %f percent\n", 

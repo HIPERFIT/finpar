@@ -2,7 +2,7 @@
 # variables will be missing.  Set these to hopefully-working values to
 # support standalone compilation.
 HIPERMARK_BENCHMARK_LIB_DIR ?= ../../lib/
-HIPERMARK_IMPLEMENTATION    ?= .
+HIPERMARK_IMPLEMENTATION_DIR    ?= .
 
 OS=$(shell uname -s)
 

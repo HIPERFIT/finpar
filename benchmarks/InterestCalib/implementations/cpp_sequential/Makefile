@@ -16,8 +16,11 @@ EXECUTABLE  =SwapCalib
 
 default: $(EXECUTABLE)
 
-%.o: $(HIPERMARK_IMPLEMENTATION)/%.cpp $(HELPERS)
+%.o: $(HIPERMARK_IMPLEMENTATION_DIR)/%.cpp $(HELPERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS)
 
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)

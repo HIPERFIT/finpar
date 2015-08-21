@@ -32,9 +32,9 @@
 /*********************************************/
 
 #if REAL_IS_FLOAT
-    #define EPS0   (0.3e-2)
-    #define EPS    (0.2e-4) 
-    #define PI     (3.14159265358)
+    #define EPS0   (0.3e-2F)
+    #define EPS    (0.2e-4F)
+    #define PI     (3.14159265358F)
 
 #else
     #define EPS0   (1.0e-3)

@@ -11,6 +11,7 @@
 #include "Constants.h"
 #include "ParseInput.h"
 #include "GenAlgFlat.h"
+#include "WriteResult.h"
 
 int main()
 {
@@ -45,17 +46,17 @@ int main()
         fclose(runtime);
 
         writeResult(result,
-                    wg_a,
-                    wg_b,
-                    wg_sigma,
-                    wg_nu,
-                    wg_rho,
-                    wg_logLik,
+                    gene.a,
+                    gene.b,
+                    gene.sigma,
+                    gene.nu,
+                    gene.rho,
+                    gene.logLik,
                     calib_arr);
 
         fclose(result);
     }
 
-	return 1;
+    return 0;
 }
 

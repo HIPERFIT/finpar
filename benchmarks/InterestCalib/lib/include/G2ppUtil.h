@@ -5,34 +5,34 @@
 #include "Constants.h"
 #include "MathModule.h"
 
-REAL zc( const REAL& t ) {
+real_t zc( const real_t& t ) {
     return exp( - R * date_act_365( t, TODAY ) );
 }
 
 /**
-Triple<REAL> accumSched( Triple<REAL> xx, Triple<REAL> yy ) {
-    REAL x = xx.fst, d1 = xx.snd, d2 = xx.thrd, y = yy.fst, tf = yy.snd, tp = yy.thrd;
-    return Triple<REAL>( x + zc(tp) * date_act_365(tp, tf), std::min(d1,tf), std::max(d2,tp) );
+Triple<real_t> accumSched( Triple<real_t> xx, Triple<real_t> yy ) {
+    real_t x = xx.fst, d1 = xx.snd, d2 = xx.thrd, y = yy.fst, tf = yy.snd, tp = yy.thrd;
+    return Triple<real_t>( x + zc(tp) * date_act_365(tp, tf), std::min(d1,tf), std::max(d2,tp) );
 }
 **/
 
 
 SwapOfSwap extended_swaption_of_swaption( 
-            const REAL& sw_mat, 
-            const REAL& freq, 
-            const REAL& sw_ty  
+            const real_t& sw_mat, 
+            const real_t& freq, 
+            const real_t& sw_ty  
 ) { 
-    const REAL maturity  = add_years( TODAY, sw_mat );
+    const real_t maturity  = add_years( TODAY, sw_mat );
     const UINT nschedule  = static_cast<UINT>(12.0 * sw_ty / freq);
 
     SwapOfSwap sos(nschedule);
 
-    REAL lvl = 0.0, t0 = MAX_DATE, tn = MIN_DATE; 
+    real_t lvl = 0.0, t0 = MAX_DATE, tn = MIN_DATE; 
     for(UINT i=0; i<nschedule; i++) {
-        REAL a1 = add_months( maturity, freq*i );
+        real_t a1 = add_months( maturity, freq*i );
         sos.swap_sched1[i] = a1;
 
-        REAL a2 = add_months( a1, freq );
+        real_t a2 = add_months( a1, freq );
         sos.swap_sched2[i] = a2;
 
         // Reduction( lvl: +, t0 : min, tn : max )
@@ -48,15 +48,15 @@ SwapOfSwap extended_swaption_of_swaption(
 }
 
 
-REAL b_fun( const REAL& z0, const REAL& tau ) {
-    //const REAL z0 = (z == 0.0) ? EPS0 : z; 
+real_t b_fun( const real_t& z0, const real_t& tau ) {
+    //const real_t z0 = (z == 0.0) ? EPS0 : z; 
     return ( 1.0 - exp(-z0*tau) ) / z0;
 }
 
-REAL t_fun( const REAL& sigma, const REAL& x0, const REAL& tau ) {
-    //const REAL x0       = ( fabs(x) >= EPS ) ? x : ( x >= 0.0 ) ? EPS : -EPS; 
-    const REAL expxtau  = exp( -x0*tau ) ;
-    const REAL exp2xtau = expxtau*expxtau;
+real_t t_fun( const real_t& sigma, const real_t& x0, const real_t& tau ) {
+    //const real_t x0       = ( fabs(x) >= EPS ) ? x : ( x >= 0.0 ) ? EPS : -EPS; 
+    const real_t expxtau  = exp( -x0*tau ) ;
+    const real_t exp2xtau = expxtau*expxtau;
 
     return sigma*sigma/(x0*x0) * ( tau + 2.0/x0*expxtau-1.0/(2.0*x0)*exp2xtau-3.0/(2.0*x0) );
 }
@@ -69,17 +69,17 @@ REAL t_fun( const REAL& sigma, const REAL& x0, const REAL& tau ) {
 // the result is V in Brigo and Mercurio's book page 148.
 //     \var(\int_t^T [x(u)+y(u)]du)
 ///////////////////////////////////////////////////////////////////
-void bigv(  const REAL& g_a, 
-            const REAL& g_b, 
-            const REAL& g_rho, 
-            const REAL& g_nu, 
-            const REAL& g_sig,
-            const REAL& tau,
-                  REAL& v, 
-                  REAL& bai, 
-                  REAL& bbi
+void bigv(  const real_t& g_a, 
+            const real_t& g_b, 
+            const real_t& g_rho, 
+            const real_t& g_nu, 
+            const real_t& g_sig,
+            const real_t& tau,
+                  real_t& v, 
+                  real_t& bai, 
+                  real_t& bbi
 ) {
-    const REAL g_sigma = g_sig; //(g_sig == 0.0) ? 1.0e-10 : g_sig;
+    const real_t g_sigma = g_sig; //(g_sig == 0.0) ? 1.0e-10 : g_sig;
 
     bai = b_fun(g_a,        tau);
     bbi = b_fun(g_b,        tau);
@@ -98,25 +98,25 @@ void bigv(  const REAL& g_a,
 //
 // the result is: x drift term in tmat-forward measure
 ///////////////////////////////////////////////////////////////////
-REAL bigmx( const REAL& a, 
-            const REAL& b, 
-            const REAL& rho, 
-            const REAL& nu, 
-            const REAL& sigma,  // ends genome
-            const REAL& today,
-            const REAL& tmat,
-            const REAL& s,
-            const REAL& t
+real_t bigmx( const real_t& a, 
+            const real_t& b, 
+            const real_t& rho, 
+            const real_t& nu, 
+            const real_t& sigma,  // ends genome
+            const real_t& today,
+            const real_t& tmat,
+            const real_t& s,
+            const real_t& t
 ) {
-    const REAL ts    = date_act_365(t,    s)    ;
-    const REAL tmatt = date_act_365(tmat, t)    ;
+    const real_t ts    = date_act_365(t,    s)    ;
+    const real_t tmatt = date_act_365(tmat, t)    ;
 
-    const REAL tmat0 = date_act_365(tmat, today);
-    const REAL tmats = date_act_365(tmat, s)    ;
-    const REAL t0    = date_act_365(t,    today);
-    const REAL s0    = date_act_365(s,    today);
+    const real_t tmat0 = date_act_365(tmat, today);
+    const real_t tmats = date_act_365(tmat, s)    ;
+    const real_t t0    = date_act_365(t,    today);
+    const real_t s0    = date_act_365(s,    today);
 
-    REAL tmp, res = 0.0;
+    real_t tmp, res = 0.0;
 
     tmp   = (sigma*sigma)/(a*a)+(sigma*rho*nu)/(a*b);
     tmp  *= ( 1.0 - exp(- a * ts) );
@@ -143,24 +143,24 @@ REAL bigmx( const REAL& a,
 // the result is: y drift term in tmat-forward measure
 ///////////////////////////////////////////////////////////////////
 
-REAL bigmy( const REAL& a, 
-            const REAL& b, 
-            const REAL& rho, 
-            const REAL& nu, 
-            const REAL& sigma,  // ends genome
-            const REAL& today,
-            const REAL& tmat,
-            const REAL& s,
-            const REAL& t
+real_t bigmy( const real_t& a, 
+            const real_t& b, 
+            const real_t& rho, 
+            const real_t& nu, 
+            const real_t& sigma,  // ends genome
+            const real_t& today,
+            const real_t& tmat,
+            const real_t& s,
+            const real_t& t
 ) {
-    const REAL ts    = date_act_365(t,    s)    ;
-    const REAL tmatt = date_act_365(tmat, t)    ;
-    const REAL tmat0 = date_act_365(tmat, today);
-    const REAL tmats = date_act_365(tmat, s)    ;
-    const REAL t0    = date_act_365(t,    today);
-    const REAL s0    = date_act_365(s,    today);
+    const real_t ts    = date_act_365(t,    s)    ;
+    const real_t tmatt = date_act_365(tmat, t)    ;
+    const real_t tmat0 = date_act_365(tmat, today);
+    const real_t tmats = date_act_365(tmat, s)    ;
+    const real_t t0    = date_act_365(t,    today);
+    const real_t s0    = date_act_365(s,    today);
 
-    REAL tmp, res = 0.0;
+    real_t tmp, res = 0.0;
 
     tmp  = nu*nu/(b*b)+sigma*rho*nu/(a*b);
     tmp *= 1.0 - exp(-b * ts);
@@ -178,23 +178,23 @@ REAL bigmy( const REAL& a,
 }
 
 
-REAL black_price (  const REAL& today, 
-                    const REAL& sw_mat, // swaption.1
-                    const REAL& freq,   // swaption.2
-                    const REAL& sw_ty,  // swaption.3
-                    const REAL& vol
+real_t black_price (  const real_t& today, 
+                    const real_t& sw_mat, // swaption.1
+                    const real_t& freq,   // swaption.2
+                    const real_t& sw_ty,  // swaption.3
+                    const real_t& vol
 ) {  
     // inlined extended_swaption_of_swaptions
-    const REAL maturity   = add_years( TODAY, sw_mat );
+    const real_t maturity   = add_years( TODAY, sw_mat );
     const UINT nschedule  = static_cast<UINT>(12.0 * sw_ty / freq);
-    const REAL sqrtt      = date_act_365( maturity, today );
+    const real_t sqrtt      = date_act_365( maturity, today );
 
     // morally equivalent to `swap_schedule2lvl(swap_schedule)' but in map-reduce form!!
 
-    REAL lvl = 0.0, t0 = MAX_DATE, tn = MIN_DATE; 
+    real_t lvl = 0.0, t0 = MAX_DATE, tn = MIN_DATE; 
     for(UINT i=0; i<nschedule; i++) {
-        const REAL a1 = add_months( maturity, freq*i );
-        const REAL a2 = add_months( a1, freq );
+        const real_t a1 = add_months( maturity, freq*i );
+        const real_t a2 = add_months( a1, freq );
 
         // Reduction( lvl: +, t0 : min, tn : max )
         lvl += zc(a2) * date_act_365(a2, a1);
@@ -202,10 +202,10 @@ REAL black_price (  const REAL& today,
         tn   = std::max(tn, a2);
     }
 
-    const REAL strike = ( zc(t0) - zc(tn) ) / lvl;
-//    const REAL d1     = log( strike / strike ) / ( vol * sqrtt ) + 0.5 * vol * sqrtt;
-    const REAL d1     = 0.5 * vol * sqrtt;
-    const REAL d2     = 0.0 - d1; //d1 - vol * sqrtt;
+    const real_t strike = ( zc(t0) - zc(tn) ) / lvl;
+//    const real_t d1     = log( strike / strike ) / ( vol * sqrtt ) + 0.5 * vol * sqrtt;
+    const real_t d1     = 0.5 * vol * sqrtt;
+    const real_t d2     = 0.0 - d1; //d1 - vol * sqrtt;
 
     return ( lvl * ( strike * uGaussian_P(d1) - strike * uGaussian_P(d2) ) );
 }
@@ -218,20 +218,20 @@ REAL black_price (  const REAL& today,
 /////////////////////////////////////////////////
 
 void test_g2ppUtil() {
-    REAL today = 9000.0;
-    REAL tmat  = 18000.0;
-    REAL s     = 400000.0;
-    REAL t     = 9000000.0;
+    real_t today = 9000.0;
+    real_t tmat  = 18000.0;
+    real_t s     = 400000.0;
+    real_t t     = 9000000.0;
 
     ///////////////////////////////////////////
     // testing b_fun, bigv, bigmx, bigmy
     ///////////////////////////////////////////
 
-    REAL res_b_fun = b_fun(3.24, 1.362);
-    REAL res_bigmx = bigmx(0.02, 0.02, 0.0, 0.01, 0.04, today, tmat, s, t);
-    REAL res_bigmy = bigmy(0.02, 0.02, 0.0, 0.01, 0.04, today, tmat, s, t);
+    real_t res_b_fun = b_fun(3.24, 1.362);
+    real_t res_bigmx = bigmx(0.02, 0.02, 0.0, 0.01, 0.04, today, tmat, s, t);
+    real_t res_bigmy = bigmy(0.02, 0.02, 0.0, 0.01, 0.04, today, tmat, s, t);
 
-    REAL res_bigv1, res_bigv2, res_bigv3;
+    real_t res_bigv1, res_bigv2, res_bigv3;
     bigv (0.02, 0.02, 0.0, 0.01, 0.04, 1.12, res_bigv1, res_bigv2, res_bigv3);
 
     printf("b_fun test = 0.30490117 : ");
@@ -262,14 +262,14 @@ void test_g2ppUtil() {
     //////////////////////////////////
 
     //let swaption = {10.0, 6.0, 4.0}     in
-    const REAL sw_mat = 10.0; 
-    const REAL freq   =  6.0;
-    const REAL sw_ty  =  4.0;
+    const real_t sw_mat = 10.0; 
+    const real_t freq   =  6.0;
+    const real_t sw_ty  =  4.0;
 
-    REAL maturity          = 22094640.0;
-    REAL strike            = 0.030226283149239714;
-    REAL swap_schedule1[8] = { 22094640.0, 22355280.0, 22620240.0, 22880880.0, 23145840.0, 23407920.0, 23672880.0, 23933520.0 };
-    REAL swap_schedule2[8] = { 22355280.0, 22620240.0, 22880880.0, 23145840.0, 23407920.0, 23672880.0, 23933520.0, 24198480.0 };
+    real_t maturity          = 22094640.0;
+    real_t strike            = 0.030226283149239714;
+    real_t swap_schedule1[8] = { 22094640.0, 22355280.0, 22620240.0, 22880880.0, 23145840.0, 23407920.0, 23672880.0, 23933520.0 };
+    real_t swap_schedule2[8] = { 22355280.0, 22620240.0, 22880880.0, 23145840.0, 23407920.0, 23672880.0, 23933520.0, 24198480.0 };
     //SwapOfSwap sos(8, 22094640.0, 0.030226283149239714, swap_schedule1, swap_schedule2);
 
     SwapOfSwap sos = extended_swaption_of_swaption(sw_mat, freq, sw_ty);
@@ -297,8 +297,8 @@ void test_g2ppUtil() {
     // is very approximatively implemented, we test against ``654.1689526995502''
     //////////////////////////////////
 
-    const REAL vol       = 0.2454;
-    REAL black_price_res = black_price( TODAY, sw_mat, freq, sw_ty, vol) * 10000.0;
+    const real_t vol       = 0.2454;
+    real_t black_price_res = black_price( TODAY, sw_mat, freq, sw_ty, vol) * 10000.0;
 
     printf("\n\nTesting Black Price = 654.1429648454:  ");
     if( equalEps(black_price_res, 654.1429648454) ) printf(" SUCCESS!\n\n");
