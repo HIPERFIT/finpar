@@ -9,7 +9,7 @@
 
 //using namespace std;
 
-#if WITH_FLOAT
+#if REAL_IS_FLOAT
     #define read_real read_float
 #else
     #define read_real read_double

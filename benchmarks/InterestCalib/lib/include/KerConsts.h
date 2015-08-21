@@ -17,16 +17,6 @@
  */
 #define GPU_VERSION 2
 
-/**
- * If WITH_FLOAT == 0 THEN double precision is used, 
- * Otherwise single float precision.
- * 
- * If you modify this flag, DO NOT forget to perform
- *    a dummy change in file `SrcCL/CalibKers.cl',
- *    so that the cached version will be invalidated!
- */
-#define WITH_FLOAT 1
-
 /*********************************************/
 /*********************************************/
 /*********************************************/

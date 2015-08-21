@@ -11,7 +11,7 @@ using namespace std;
 
 #include <iostream>
 
-#if WITH_FLOATS
+#if REAL_IS_FLOAT
     #define read_real read_float
 #else
     #define read_real read_double

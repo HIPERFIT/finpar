@@ -5,6 +5,7 @@ HIPERMARK_LIB_DIR ?= ../../../../lib/
 HIPERMARK_CONFIG_REAL_TYPE ?= double
 
 include $(HIPERMARK_LIB_DIR)/setup.mk
+include $(HIPERMARK_LIB_DIR)/setup_real_type.mk
 
 INCLUDES    += -I$(HIPERMARK_BENCHMARK_LIB_DIR)/include
 INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
