@@ -1,9 +1,0 @@
-#!/bin/bash
-
-clear
-echo Deleting all files in instantiations/CalibVolDiff
-echo Running hipermark CalibVolDiff cpp_openmp_naive + cpp_sequential small + medium dataset, two times.
-echo Storing all results in instantiations/
-
-rm -rf instantiations/CalibVolDiff
-../hipermark/hipermark instantiations/ 2 benchmarks/CalibVolDiff cpp_openmp_naive,cpp_sequential small,medium

@@ -1,0 +1,9 @@
+#!/bin/bash
+
+clear
+echo Deleting all files in instantiations/LocVolCalib
+echo Running hipermark LocVolCalib cpp_openmp_naive + cpp_sequential medium dataset, two times.
+echo Storing all results in instantiations/
+
+rm -rf instantiations/LocVolCalib
+../hipermark/hipermark instantiations/ 2 benchmarks/LocVolCalib cpp_openmp_naive,cpp_sequential medium
