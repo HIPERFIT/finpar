@@ -34,40 +34,40 @@ unsigned int NUM_XY          ; //NUM_X*NUM_Y;
 ///////////////////////////////////////////////////////
 
 ///  grid  ///
-REAL* myX       ; // 1-dim, size: NUM_X
-REAL* myY       ; // 1-dim, size: NUM_Y
-REAL* myTimeline; // 1-dim, size: NUM_T
+real_t* myX       ; // 1-dim, size: NUM_X
+real_t* myY       ; // 1-dim, size: NUM_Y
+real_t* myTimeline; // 1-dim, size: NUM_T
 
 unsigned int myXindex, myYindex;
 
 ///  variable  ///
-REAL* myResArr; //[OUTER_LOOP_COUNT * NUM_Y * NUM_X]; // 3-dim, size: OUTER_LOOP_COUNT x NUM_Y x NUM_X
+real_t* myResArr; //[OUTER_LOOP_COUNT * NUM_Y * NUM_X]; // 3-dim, size: OUTER_LOOP_COUNT x NUM_Y x NUM_X
 
 
 ///  coeffs  ///
-REAL *myMuX, *myVarX; // 2-dim, size: NUM_X x NUM_Y
-REAL *myMuY, *myVarY; // 2-dim, size: NUM_X x NUM_Y
+real_t *myMuX, *myVarX; // 2-dim, size: NUM_X x NUM_Y
+real_t *myMuY, *myVarY; // 2-dim, size: NUM_X x NUM_Y
 
 //  operators
-REAL *myDx, *myDxx; // 2-dim, size: NUM_X x REAL3_CT
-REAL *myDy, *myDyy; // 2-dim, size: NUM_Y x REAL3_CT
+real_t *myDx, *myDxx; // 2-dim, size: NUM_X x REAL3_CT
+real_t *myDy, *myDyy; // 2-dim, size: NUM_Y x REAL3_CT
 
 void allocGlobArrs() {
-    myX = new REAL[NUM_X];
-    myY = new REAL[NUM_Y];
-    myTimeline = new REAL[NUM_T];
+    myX = new real_t[NUM_X];
+    myY = new real_t[NUM_Y];
+    myTimeline = new real_t[NUM_T];
 
-    myMuX = new REAL[NUM_X * NUM_Y];
-    myVarX= new REAL[NUM_X * NUM_Y];
-    myMuY = new REAL[NUM_X * NUM_Y];
-    myVarY= new REAL[NUM_X * NUM_Y];
+    myMuX = new real_t[NUM_X * NUM_Y];
+    myVarX= new real_t[NUM_X * NUM_Y];
+    myMuY = new real_t[NUM_X * NUM_Y];
+    myVarY= new real_t[NUM_X * NUM_Y];
 
-    myDx  = new REAL[NUM_X * REAL3_CT];
-    myDxx = new REAL[NUM_X * REAL3_CT];
-    myDy  = new REAL[NUM_Y * REAL3_CT];
-    myDyy = new REAL[NUM_Y * REAL3_CT];
+    myDx  = new real_t[NUM_X * REAL3_CT];
+    myDxx = new real_t[NUM_X * REAL3_CT];
+    myDy  = new real_t[NUM_Y * REAL3_CT];
+    myDyy = new real_t[NUM_Y * REAL3_CT];
 
-    myResArr = new REAL[OUTER_LOOP_COUNT * NUM_Y * NUM_X];
+    myResArr = new real_t[OUTER_LOOP_COUNT * NUM_Y * NUM_X];
 }
 
 void deallocGlobArrs() {

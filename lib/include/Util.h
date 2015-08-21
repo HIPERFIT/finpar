@@ -15,7 +15,7 @@
 #include <omp.h>
 #endif
 
-
+#define STRINGIFY(x) #x
 #define TIME_RESOLUTION_MICROSECOND
 
 #ifdef TIME_RESOLUTION_MICROSECOND

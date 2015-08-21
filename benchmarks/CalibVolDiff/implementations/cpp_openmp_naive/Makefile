@@ -5,6 +5,7 @@ HIPERMARK_LIB_DIR ?= ../../../../lib/
 HIPERMARK_CONFIG_REAL_TYPE ?= double
 
 include $(HIPERMARK_LIB_DIR)/setup.mk
+include $(HIPERMARK_LIB_DIR)/setup_real_type.mk
 
 INCLUDES    += -I$(HIPERMARK_BENCHMARK_LIB_DIR)/include
 INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
@@ -12,8 +13,6 @@ INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
 HELPERS     =$(HIPERMARK_BENCHMARK_LIB_DIR)/include/ParseInput.h
 OBJECTS     =VolCalibOrig.o
 EXECUTABLE  =VolCalibOrig
-
-CXXFLAGS    += -DREAL_TYPE=$(HIPERMARK_CONFIG_REAL_TYPE)
 
 default: $(EXECUTABLE)
 
@@ -32,4 +31,4 @@ data: $(HIPERMARK_INPUT)
 
 run:
 	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | \
-	 OMP_NUM_THREADS=$(HIPERMARK_NUM_THREADS) ./$(EXECUTABLE)
+	 OMP_NUM_THREADS=$(HIPERMARK_CONFIG_NUM_THREADS) ./$(EXECUTABLE)

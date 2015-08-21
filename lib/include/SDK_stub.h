@@ -1,6 +1,7 @@
 #ifndef SDK_INTERNALS
 #define SDK_INTERNALS
 
+#include <unistd.h>
 #include <string.h>
 #include <iostream>
 
@@ -799,14 +800,35 @@ void build_for_GPU(
         shrLog(stdlog, "Program built 1...\n");
 
         // 7. check errors!
+        int failed = 0;
+        cl_build_status status;
+
         if (ciErr1 != CL_SUCCESS) {
+          failed = 1;
+        } else {
+          /* clBuildProgram may return CL_SUCCESS just because the
+             build was started - it may yet not finish succesfully. */
+          do {
+              sleep(1);
+              clGetProgramBuildInfo(cpProgram, cdDevices[dev_id],
+                                    CL_PROGRAM_BUILD_STATUS, sizeof(status),
+                                    &status, NULL);
+              fprintf(stderr, "status: %d (%d?)\n", status, CL_BUILD_SUCCESS);
+          } while (status == CL_BUILD_IN_PROGRESS);
+
+          if (status != CL_BUILD_SUCCESS) {
+              failed = 1;
+          }
+        }
+
+        if (true || failed) {
             // write out standard error, Build Log and PTX, then cleanup and exit
   	    shrLog(stdlog, "BUILDING ERROR: %d: %s\n", ciErr1, oclErrorString(ciErr1));
             //oclLogBuildInfo(cpProgram, cdDevices[dev_id]);
 
             //oclLogPtx(cpProgram, cdDevices[dev_id], ptx_name.c_str());
 
-            if (ciErr1 == CL_BUILD_PROGRAM_FAILURE) {
+            if (true || ciErr1 == CL_BUILD_PROGRAM_FAILURE) {
                 // Determine the size of the log
                 size_t log_size;
                 clGetProgramBuildInfo(cpProgram, cdDevices[dev_id], CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);

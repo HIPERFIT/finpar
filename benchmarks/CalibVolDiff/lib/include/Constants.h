@@ -1,41 +1,61 @@
 #ifndef   CONSTANTS_H
 #define   CONSTANTS_H
 
-#define WITH_FLOATS 1
-
 #define REAL3_CT 4
 #define TRANSPOSE_UV 1
 
-#if (WITH_FLOATS)
-    typedef float        REAL;
-    typedef unsigned int ULONG;
-#else
-    #pragma OPENCL EXTENSION cl_khr_fp64: enable
-    typedef double         REAL;
-    typedef unsigned long  ULONG;
+#ifdef REAL_IS_DOUBLE
+
+/* Some OpenCL implementations require us to define a pragma if we
+   want to use double-precision numbers. */
+#ifdef __OPENCL_VERSION__
+#pragma OPENCL EXTENSION cl_khr_fp64 : enable
 #endif
 
-#define WARP            (1<<lgWARP) 
+typedef double real_t;
+#define REAL_FLAG "REAL_IS_DOUBLE"
 
-#define BLOCK_DIM           16
-#define logWORKGROUP_SIZE   8
-#define    WORKGROUP_SIZE   (1<<logWORKGROUP_SIZE) 
-    
+#ifdef __OPENCL_VERSION__
+#define real4_t double4
+#define real3_t double3
+#define real2_t double2
+#endif
+
+#elif REAL_IS_FLOAT
+
+typedef float real_t;
+#define REAL_FLAG "REAL_IS_FLOAT"
+
+#ifdef __OPENCL_VERSION__
+#define real4_t float4
+#define real3_t float3
+#define real2_t float2
+#endif
+
+#else
+
+#error "Must set REAL_IS_DOUBLE or REAL_IS_FLOAT."
+
+#endif
+
+#define WARP            (1<<lgWARP)
+
+#define BLOCK_DIM         16
+#define logWORKGROUP_SIZE 8
+#define WORKGROUP_SIZE    (1<<logWORKGROUP_SIZE)
+
 typedef struct {
-    REAL   nu;
-    REAL   alpha;
-    REAL   beta;
+    real_t   nu;
+    real_t   alpha;
+    real_t   beta;
 
-    REAL   dtInv;
-    REAL   timeline_i;
-    int    t_ind;
+    real_t   dtInv;
+    real_t   timeline_i;
+    int      t_ind;
 
     unsigned int NUM_X;
     unsigned int NUM_Y;
     unsigned int NUM_XY;
-
-    //REAL   timeline_i;
-    //REAL   timeline_ip1;
 } RWScalars __attribute__ ((aligned (32)));
 
 

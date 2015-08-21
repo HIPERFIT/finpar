@@ -341,12 +341,13 @@ int main()
         elapsed_usec = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
 
-    {   FILE* runtime = fopen(getenv("HIPERMARK_RUNTIME"), "w");
+    {
+      FILE* runtime = fopen(getenv("HIPERMARK_RUNTIME"), "w");
       FILE* result = fopen(getenv("HIPERMARK_RESULT"), "w");
-        fprintf(runtime, "%d\n", elapsed_usec / 1000);
-        fclose(runtime);
-        write_1Darr(result, res.data(), OUTER_LOOP_COUNT);
-        fclose(result);
+      fprintf(runtime, "%d\n", elapsed_usec / 1000);
+      fclose(runtime);
+      write_1Darr(result, res.data(), OUTER_LOOP_COUNT);
+      fclose(result);
     }
 
     return 0;

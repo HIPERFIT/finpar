@@ -16,13 +16,13 @@ typedef struct timeb mlfi_timeb;
 /// CLASSIC, SEQUENTIAL TRIDAG
 //////////////////////////////////////////
 void tridag(
-    REAL*   a,
-    REAL*   b,
-    REAL*   c,
-    REAL*   d,
+    real_t*   a,
+    real_t*   b,
+    real_t*   c,
+    real_t*   d,
     int     n,
-    REAL*   y,
-    REAL*   u)
+    real_t*   y,
+    real_t*   u)
 {
     int    i;
     double beta;
@@ -51,8 +51,8 @@ void tridag(
  * Multiplies 2x2 matrixes `a' and `b' and
  * stores the result in(-place in) `a'.
  */
-void matmult2(REAL* a, REAL* b) {
-    REAL a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
+void matmult2(real_t* a, real_t* b) {
+    real_t a0 = a[0], a1 = a[1], a2 = a[2], a3 = a[3],
          val = 1.0/(a0*b[0]);
             //val = 1.0/(a0*b[0]+a1*b[2]);
     a[0] = (a0*b[0] + a1*b[2])*val;
@@ -62,8 +62,8 @@ void matmult2(REAL* a, REAL* b) {
 }
 
 
-void scan_matmult_2by2(REAL* tmp, int N) {
-    REAL* prev = NULL;
+void scan_matmult_2by2(real_t* tmp, int N) {
+    real_t* prev = NULL;
 
     for(int i=1; i<N; i++) {
         prev = tmp;
@@ -74,22 +74,22 @@ void scan_matmult_2by2(REAL* tmp, int N) {
     }
 }
 
-REAL map_matmult(REAL* tmp, REAL val1, REAL val2) {
+real_t map_matmult(real_t* tmp, real_t val1, real_t val2) {
 #if 1
-    REAL nom   = tmp[0]*val1+tmp[1]*val2;
-    REAL denom = tmp[2]*val1+tmp[3]*val2;
+    real_t nom   = tmp[0]*val1+tmp[1]*val2;
+    real_t denom = tmp[2]*val1+tmp[3]*val2;
 
     return nom/denom;
 #else
-    REAL denom = tmp[2]*val1+tmp[3]*val2;
-    REAL nom = (tmp[0]/denom)*val1 + (tmp[1]/denom)*val2;
+    real_t denom = tmp[2]*val1+tmp[3]*val2;
+    real_t nom = (tmp[0]/denom)*val1 + (tmp[1]/denom)*val2;
 
     return nom;
 #endif
 }
 
 // Linear Function Composition and Scan
-void linfuncomp(REAL* ab1, REAL* ab2) {
+void linfuncomp(real_t* ab1, real_t* ab2) {
     //ab2[0] = ab1[0]+ab1[1]*ab2[0];
     //ab2[1] = ab1[1]*ab2[1];
 
@@ -97,8 +97,8 @@ void linfuncomp(REAL* ab1, REAL* ab2) {
     ab2[1] = ab1[1]*ab2[1];
 }
 
-void scan_linfuncomp(REAL* tmp, int N) {
-    REAL* prev = NULL;
+void scan_linfuncomp(real_t* tmp, int N) {
+    real_t* prev = NULL;
 
     for(int i=1; i<N; i++) {
         prev = tmp;
@@ -108,24 +108,24 @@ void scan_linfuncomp(REAL* tmp, int N) {
     }
 }
 
-REAL map_linfuncomp(REAL* tmp, REAL val) {
+real_t map_linfuncomp(real_t* tmp, real_t val) {
     return tmp[0] + tmp[1]*val;
 }
 
 
 //  tridag
 void tridag_scan_array(
-    const REAL*   a,
-    const REAL*   b,
-    const REAL*   c,
-    const REAL*   d,
+    const real_t*   a,
+    const real_t*   b,
+    const real_t*   c,
+    const real_t*   d,
     int           n,
-    REAL*         y,
-    REAL*         u,
-    REAL*         tmp)
+    real_t*         y,
+    real_t*         u,
+    real_t*         tmp)
 {
     int    i, k;
-    REAL beta;
+    real_t beta;
 
     // initialize u[0]
     u[0] = b[0];
@@ -193,8 +193,8 @@ void tridag_scan_array(
 
 void test_matmult(){
     int N = 16;
-    REAL* arr = new REAL[N*4];
-    REAL* tmp = arr;
+    real_t* arr = new real_t[N*4];
+    real_t* tmp = arr;
     for(int i=0; i<N; i++){
         tmp[0] = 1.0+i; tmp[1] = 0.0;
         tmp[2] = 1.0+i; tmp[3] = 0.0;
@@ -218,17 +218,17 @@ void test_matmult(){
 //////////////////////////////////////////////////////////////////////////
 
 void tridag_scan_array_womatmult(
-    const REAL*   a,
-    const REAL*   b,
-    const REAL*   c,
-    const REAL*   d,
+    const real_t*   a,
+    const real_t*   b,
+    const real_t*   c,
+    const real_t*   d,
     int           n,
-    REAL*         y,
-    REAL*         u,
-    REAL*         tmp)
+    real_t*         y,
+    real_t*         u,
+    real_t*         tmp)
 {
     int    i, k;
-    REAL beta;
+    real_t beta;
 
     // scan with matrix multiplication on tmp
     scan_matmult_2by2(tmp, n-1);
@@ -258,16 +258,16 @@ void tridag_scan_array_womatmult(
 }
 
 inline void tridag_seq_32(
-    REAL*   a,
-    REAL*   b,
-    REAL*   c,
-    REAL*   d,
+    real_t*   a,
+    real_t*   b,
+    real_t*   c,
+    real_t*   d,
     int     n,
-    REAL*   y,
-    REAL*   u)
+    real_t*   y,
+    real_t*   u)
 {
     int    i, UB, offset;
-    REAL   beta;
+    real_t   beta;
 
     y[0] = d[0];
     u[0] = b[0];
@@ -290,16 +290,16 @@ inline void tridag_seq_32(
 }
 
 inline void tridag_seq_1(
-    REAL*   a,
-    REAL*   b,
-    REAL*   c,
-    REAL*   d,
+    real_t*   a,
+    real_t*   b,
+    real_t*   c,
+    real_t*   d,
     int     n,
-    REAL*   y,
-    REAL*   u)
+    real_t*   y,
+    real_t*   u)
 {
     int    i, UB, offset;
-    REAL   beta;
+    real_t   beta;
 
     y[0] = d[0];
     u[0] = b[0];

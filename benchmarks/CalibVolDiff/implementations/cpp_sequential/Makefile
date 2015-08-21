@@ -5,6 +5,7 @@ HIPERMARK_LIB_DIR ?= ../../../../lib/
 HIPERMARK_CONFIG_REAL_TYPE ?= double
 
 include $(HIPERMARK_LIB_DIR)/setup.mk
+include $(HIPERMARK_LIB_DIR)/setup_real_type.mk
 
 INCLUDES    += -I$(HIPERMARK_BENCHMARK_LIB_DIR)/include
 INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
@@ -12,8 +13,6 @@ INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
 HELPERS     =$(HIPERMARK_BENCHMARK_LIB_DIR)/include/ParseInput.h
 OBJECTS     =VolCalibOrig.o
 EXECUTABLE  =VolCalibOrig
-
-CXXFLAGS    += -DREAL_TYPE=$(HIPERMARK_CONFIG_REAL_TYPE)
 
 default: $(EXECUTABLE)
 
@@ -37,7 +36,7 @@ clean:
 
 data: $(HIPERMARK_INPUT)
 	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
-	$HIPERMARK_LIB_DIR/linearise_data.py $HIPERMARK_INPUT population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs > datasets/$HIPERMARK_INPUT_NAME/input.data
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) outer num_x num_y num_t > datasets/$(HIPERMARK_INPUT_NAME)/input.data
 
 run:
 	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | ./$(EXECUTABLE)
