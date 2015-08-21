@@ -1,10 +1,10 @@
 {
-    "a_field": 0.325608,
-    "b_field": 0.001000,
-    "sigma_field": 0.009058,
-    "nu_field": 0.018683,
-    "rho_field": -0.083963,
-    "lg_likelyhood": 624.116935,
+    "a_field": 0.023511,
+    "b_field": 0.964110,
+    "sigma_field": 0.025390,
+    "nu_field": 0.142763,
+    "rho_field": -0.912444,
+    "lg_likelyhood": 504.367344,
     "swaption_calibration_result":
     [
         [ 74.172585 , 115.320470 , 35.681337  ],

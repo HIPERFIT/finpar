@@ -1,6 +1,6 @@
 {
-    "population_size": 256,
-    "convergence_iterations": 128,
+    "population_size": 128,
+    "convergence_iterations": 424,
     "num_swaption_quotes": 196,
     "swaption_quotes":
     [
