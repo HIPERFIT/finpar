@@ -8,8 +8,8 @@ cp $HIPERMARK_LIB_DIR/include/Util.h .
 cp $HIPERMARK_BENCHMARK_LIB_DIR/include/Constants.h .
 cp $HIPERMARK_BENCHMARK_LIB_DIR/include/Optimizations.h .
 cp $HIPERMARK_BENCHMARK_LIB_DIR/include/ParseInput.h .
-cp $HIPERMARK_IMPLEMENTATION/*cpp $HIPERMARK_IMPLEMENTATION/*h $HIPERMARK_IMPLEMENTATION/Makefile .
-cp $HIPERMARK_IMPLEMENTATION/run .
+cp $HIPERMARK_IMPLEMENTATION_DIR/*cpp $HIPERMARK_IMPLEMENTATION/*h $HIPERMARK_IMPLEMENTATION/Makefile .
+cp $HIPERMARK_IMPLEMENTATION_DIR/run .
 
 #$HIPERMARK_LIB_DIR/linearise_data.py $HIPERMARK_INPUT contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > input.data
 $HIPERMARK_LIB_DIR/generate_platform_mk.py $HIPERMARK_PLATFORM > platform.mk

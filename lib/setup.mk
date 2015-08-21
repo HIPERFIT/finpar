@@ -2,7 +2,7 @@
 # variables will be missing.  Set these to hopefully-working values to
 # support standalone compilation.
 HIPERMARK_BENCHMARK_LIB_DIR ?= ../../lib/
-HIPERMARK_IMPLEMENTATION    ?= .
+HIPERMARK_IMPLEMENTATION_DIR    ?= .
 
 OS=$(shell uname -s)
 
@@ -24,6 +24,6 @@ else
   INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../../include
 endif
 
-CXXFLAGS    += -DIMPLEMENTATION_DIR='"$(HIPERMARK_IMPLEMENTATION)"'
+CXXFLAGS    += -DIMPLEMENTATION_DIR='"$(HIPERMARK_IMPLEMENTATION_DIR)"'
 CXXFLAGS    += -DHIPERMARK_BENCHMARK_LIB_DIR='"$(HIPERMARK_BENCHMARK_LIB_DIR)"'
 CXXFLAGS    += -DHIPERMARK_LIB_DIR='"$(HIPERMARK_LIB_DIR)"'

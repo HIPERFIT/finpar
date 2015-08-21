@@ -8,7 +8,7 @@ include $(HIPERMARK_LIB_DIR)/setup.mk
 
 INCLUDES    += -I$(HIPERMARK_BENCHMARK_LIB_DIR)/include
 INCLUDES    += -I$(HIPERMARK_LIB_DIR)/include
-INCLUDES    += -I$(HIPERMARK_IMPLEMENTATION)
+INCLUDES    += -I$(HIPERMARK_IMPLEMENTATION_DIR)
 
 #-fno-unsafe-math-optimizations -fno-finite-math-only 
 #-fmath-errno -ftrapping-math -fno-rounding-math -fsignaling-nans
@@ -19,7 +19,7 @@ EXECUTABLE  =SwapCalib
 
 default: $(EXECUTABLE)
 
-%.o: $(HIPERMARK_IMPLEMENTATION)/%.cpp $(HELPERS)
+%.o: $(HIPERMARK_IMPLEMENTATION_DIR)/%.cpp $(HELPERS)
 	$(CXX) $(CXXFLAGS) $(INCLUDES) -c -o $@ $<
 
 $(EXECUTABLE): $(OBJECTS)
