@@ -74,12 +74,12 @@ bool check_date(const int& year, const int& month, const int& day) {
     return tmp1 && (tmp2 || tmp3);
 }
 
-REAL days_between(const REAL& t1, const REAL& t2) {
-    REAL diff = static_cast<REAL>(t1 - t2);
+real_t days_between(const real_t& t1, const real_t& t2) {
+    real_t diff = static_cast<real_t>(t1 - t2);
     return diff / minutes_in_day; 
 }
 
-REAL date_act_365(const REAL& t1, const REAL& t2) { 
+real_t date_act_365(const real_t& t1, const real_t& t2) { 
     return days_between(t1, t2) / 365.0; 
 }
 
@@ -96,7 +96,7 @@ int end_of_month( const int& year, const int& month ) {
     else                                                              return 31;
 }
 
-REAL add_months ( const REAL& time, const REAL& rnbmonths ) {
+real_t add_months ( const real_t& time, const real_t& rnbmonths ) {
     int nbmonths = static_cast<int>( rnbmonths );
     Date date    = gregorian_of_date( static_cast<int> ( time ) );
 
@@ -113,15 +113,15 @@ REAL add_months ( const REAL& time, const REAL& rnbmonths ) {
         date.min  = 0;
     }
 
-    return static_cast<REAL>( date_of_gregorian( date ) );
+    return static_cast<real_t>( date_of_gregorian( date ) );
 }
 
-REAL add_years( const REAL& date, const REAL& nbyears ) {
+real_t add_years( const real_t& date, const real_t& nbyears ) {
     return add_months( date, nbyears * 12.0 );
 }
 
 void test_dates() {
-    REAL tmp;
+    real_t tmp;
 
     fprintf(stderr, "add_months(min_date,1)==48240 : ");
     tmp = add_months(MIN_DATE, 1.0);

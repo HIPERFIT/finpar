@@ -9,7 +9,7 @@
 /************** RANDOM NUMBERS ***********/
 /*****************************************/
 
-REAL getSobolNum( uint n ) {
+real_t getSobolNum( uint n ) {
     int n_gray = (n >> 1) ^ n;
     int res = 0;
     for( int i=0; i < NUM_SOBOL_BITS; i++ ) {
@@ -19,7 +19,7 @@ REAL getSobolNum( uint n ) {
             res = res ^ SobolDirVct[i];
         }
     }
-    REAL rres = static_cast<REAL>(res) / ( (1<<NUM_SOBOL_BITS) + 1.0);
+    real_t rres = static_cast<real_t>(res) / ( (1<<NUM_SOBOL_BITS) + 1.0);
     if ( rres >= 1.0 || rres < 0 ) { printf("sobol(%d) = %f. Exiting!\n", n, rres); exit(0);}
     return rres;
 }
@@ -27,23 +27,23 @@ REAL getSobolNum( uint n ) {
 //unsigned int rand_count = 1;
 uint sobol_offset = 1; //11;
 
-REAL getRandRandNorm() {
+real_t getRandRandNorm() {
 #if WITH_SOBOL
     return getSobolNum( sobol_offset++ );
 #endif
     double r   = static_cast<double>(std::rand()); // drand48()
     double d   = static_cast<double>(RAND_MAX)+0.1;
-    return static_cast<REAL>(r / d);
+    return static_cast<real_t>(r / d);
 }
 
-REAL getRandUnifNorm() {
+real_t getRandUnifNorm() {
     return getRandRandNorm();
-    //return static_cast<REAL>(drand48());
+    //return static_cast<real_t>(drand48());
 }
 
 //Returns a (pseudo) random integer in [0, ub)
 UINT getRandIntNorm(long int ub) {  
-    REAL r01 = getRandRandNorm();
+    real_t r01 = getRandRandNorm();
     return static_cast<UINT>(r01 * ub);
 }
 
@@ -54,38 +54,38 @@ UINT getRandIntNorm(long int ub) {
 /********************************************/
 
 //=========================================================================
-const REAL sqrtTwoPi = sqrt(2*PI);
+const real_t sqrtTwoPi = sqrt(2*PI);
 
-REAL normal_pdf( const REAL& z, const REAL& mu, const REAL& sigma ) {
-    REAL sigmap = fabs(sigma);
-    REAL res    = 1.0 / (sigmap * sqrtTwoPi);
-    REAL ecf    = (z-mu) * (z-mu) / (2.0 * sigmap * sigmap);
+real_t normal_pdf( const real_t& z, const real_t& mu, const real_t& sigma ) {
+    real_t sigmap = fabs(sigma);
+    real_t res    = 1.0 / (sigmap * sqrtTwoPi);
+    real_t ecf    = (z-mu) * (z-mu) / (2.0 * sigmap * sigmap);
     return res * exp( -ecf );
 }
 
 
-REAL cauchy_pdf( const REAL& z, const REAL mu = 0.0, const REAL gamma = 4.0) {
-    REAL x = (z-mu) / gamma;
+real_t cauchy_pdf( const real_t& z, const real_t mu = 0.0, const real_t gamma = 4.0) {
+    real_t x = (z-mu) / gamma;
     return 1.0 / ( PI * gamma * (1+x*x) );
 }
 
-REAL logLikelihood_normal(const REAL& y_ref, const REAL& y) {
-    //REAL mu    = y_ref;
-    REAL sigma = (y_ref / 50.0) * LLHOOD_NORMAL_OFFS;
-    REAL pdfs  = normal_pdf( y, y_ref, sigma );
+real_t logLikelihood_normal(const real_t& y_ref, const real_t& y) {
+    //real_t mu    = y_ref;
+    real_t sigma = (y_ref / 50.0) * LLHOOD_NORMAL_OFFS;
+    real_t pdfs  = normal_pdf( y, y_ref, sigma );
     pdfs += 1.0e-20; // avoid NaNs
 
     return log(pdfs);
 }
 
-REAL logLikelihood_cauchy(const REAL& y_ref, const REAL& y) {
-    REAL gamma = ( fabs(y_ref) / 50.0 ) * LLHOOD_CAUCHY_OFFS + 0.01;
-    REAL pdfs  = cauchy_pdf( y, y_ref, gamma );
+real_t logLikelihood_cauchy(const real_t& y_ref, const real_t& y) {
+    real_t gamma = ( fabs(y_ref) / 50.0 ) * LLHOOD_CAUCHY_OFFS + 0.01;
+    real_t pdfs  = cauchy_pdf( y, y_ref, gamma );
     pdfs += 1.0e-20; // avoid NaNs
     return log(pdfs);
 }
 
-REAL logLikelihood(const REAL& y_ref, const REAL& y) {
+real_t logLikelihood(const real_t& y_ref, const real_t& y) {
     if   ( LLHOOD_TYPE == NORMAL ) return logLikelihood_normal(y_ref, y);
     else/* LLHOOD_TYPE == CAUCHY */return logLikelihood_cauchy(y_ref, y);
 }

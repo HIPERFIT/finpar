@@ -27,28 +27,28 @@
  * Genome min/max ranges and proposed initial values (not used)
  * { g_a, g_b, g_rho, g_nu, g_sigma }
  */
-const REAL g_mins [GENOME_DIM] = { EPS0,      EPS0,      -1.0+EPS0, EPS0, EPS0  }; 
-const REAL g_maxs [GENOME_DIM] = { 1.0-EPS0,  1.0-EPS0,   1.0-EPS0, 0.2,  0.2   };
-const REAL g_inis [GENOME_DIM] = { 0.02,      0.02,       0.0,      0.01, 0.04  };
-//const REAL Candidate::p_ref[GENOME_DIM] = { 1.0, -2.0, 0.5, -0.3, -0.5, 0.1 };
+const real_t g_mins [GENOME_DIM] = { EPS0,      EPS0,      -1.0+EPS0, EPS0, EPS0  }; 
+const real_t g_maxs [GENOME_DIM] = { 1.0-EPS0,  1.0-EPS0,   1.0-EPS0, 0.2,  0.2   };
+const real_t g_inis [GENOME_DIM] = { 0.02,      0.02,       0.0,      0.01, 0.04  };
+//const real_t Candidate::p_ref[GENOME_DIM] = { 1.0, -2.0, 0.5, -0.3, -0.5, 0.1 };
 
 
 /**
  * perturbing a genome; requires one random uniform number in [0,1)
  */
 inline
-REAL perturbation(  
-                const REAL  gene,
-                const REAL  gene_k,
-                const REAL  gene_l,
+real_t perturbation(  
+                const real_t  gene,
+                const real_t  gene_k,
+                const real_t  gene_l,
                 const UINT  i, 
-                const REAL  gamma1,
-                const REAL  amplitude_ratio
+                const real_t  gamma1,
+                const real_t  amplitude_ratio
 ) {
-    REAL amplitude     = fabs( (g_maxs[i] - g_mins[i]) * amplitude_ratio );
-    REAL semiamplitude = amplitude / 2.0;
-    REAL r01           = getRandRandNorm();
-    REAL perturb       = ( amplitude * r01 - semiamplitude );
+    real_t amplitude     = fabs( (g_maxs[i] - g_mins[i]) * amplitude_ratio );
+    real_t semiamplitude = amplitude / 2.0;
+    real_t r01           = getRandRandNorm();
+    real_t perturb       = ( amplitude * r01 - semiamplitude );
 
     return ( gene + perturb + gamma1 * ( gene_k - gene_l ) );
 }
@@ -57,7 +57,7 @@ REAL perturbation(
  * contraining gene i to be within accepted bounds!
  */
 inline 
-REAL constrain_dim1( const int i, const REAL gene ) {
+real_t constrain_dim1( const int i, const real_t gene ) {
     return std::max( g_mins[i], std::min( g_maxs[i], gene ) );
 }
 
@@ -65,12 +65,12 @@ REAL constrain_dim1( const int i, const REAL gene ) {
  * accepting the proposal
  */
 void accept(const int i,  
-            REAL* g_a,     // genome begins
-            REAL* g_b, 
-            REAL* g_rho, 
-            REAL* g_nu, 
-            REAL* g_sigma,
-            REAL* logLik
+            real_t* g_a,     // genome begins
+            real_t* g_b, 
+            real_t* g_rho, 
+            real_t* g_nu, 
+            real_t* g_sigma,
+            real_t* logLik
 ) {
     g_a     [i] = g_a    [i+POP_SIZE];
     g_b     [i] = g_b    [i+POP_SIZE];
@@ -83,12 +83,12 @@ void accept(const int i,
 /**
  * Helper mutate function: requires one uniform random number
  */
-Tuple<REAL,REAL> mutate_helper( const REAL gene, const REAL gene_prop, const int i, const REAL amplitude_ratio ) {
-    REAL forward_range, backward_range;
-    REAL tmp_min_max,   tmp_max_min;
+Tuple<real_t,real_t> mutate_helper( const real_t gene, const real_t gene_prop, const int i, const real_t amplitude_ratio ) {
+    real_t forward_range, backward_range;
+    real_t tmp_min_max,   tmp_max_min;
 
-    const REAL amplitude     = fabs( (g_maxs[i] - g_mins[i]) * amplitude_ratio );
-    const REAL semiamplitude = amplitude / 2.0;
+    const real_t amplitude     = fabs( (g_maxs[i] - g_mins[i]) * amplitude_ratio );
+    const real_t semiamplitude = amplitude / 2.0;
 
     tmp_min_max = std::min( g_maxs[i], gene + semiamplitude );
     tmp_max_min = std::max( g_mins[i], gene - semiamplitude );
@@ -98,12 +98,12 @@ Tuple<REAL,REAL> mutate_helper( const REAL gene, const REAL gene_prop, const int
     tmp_max_min = std::max( g_mins[i], gene_prop - semiamplitude );
     backward_range = tmp_min_max - tmp_max_min;
 
-    const REAL bf_fact = ( semiamplitude > 0.0 ) ? (backward_range / forward_range) : 1.0;
+    const real_t bf_fact = ( semiamplitude > 0.0 ) ? (backward_range / forward_range) : 1.0;
 
     // assign p'
-    REAL r01 = getRandRandNorm();
-    REAL diff = amplitude * r01 - semiamplitude;
-    return Tuple<REAL,REAL>(gene + diff, bf_fact);
+    real_t r01 = getRandRandNorm();
+    real_t diff = amplitude * r01 - semiamplitude;
+    return Tuple<real_t,real_t>(gene + diff, bf_fact);
 }
 
 /**
@@ -112,17 +112,17 @@ Tuple<REAL,REAL> mutate_helper( const REAL gene, const REAL gene_prop, const int
  * I took out the evaluation of the proposal, since it should be
  *   done for all types of crossover/mutation/etc
  */
-void mutate_dims_all(   REAL* g_a,     // genome begins
-                        REAL* g_b, 
-                        REAL* g_rho, 
-                        REAL* g_nu, 
-                        REAL* g_sigma,
-                        REAL* g_fb_rat,
+void mutate_dims_all(   real_t* g_a,     // genome begins
+                        real_t* g_b, 
+                        real_t* g_rho, 
+                        real_t* g_nu, 
+                        real_t* g_sigma,
+                        real_t* g_fb_rat,
                   const int   i,
-                  const REAL  amplitude_ratio = MOVES_UNIF_AMPL_RATIO ) {
-    REAL fb_rat = 1.0;
+                  const real_t  amplitude_ratio = MOVES_UNIF_AMPL_RATIO ) {
+    real_t fb_rat = 1.0;
 
-    Tuple<REAL, REAL> tmp(EPS0, 1.0);
+    Tuple<real_t, real_t> tmp(EPS0, 1.0);
     tmp = mutate_helper( g_a    [i], g_a    [i+POP_SIZE], 0, amplitude_ratio );
     g_a     [i + POP_SIZE] = constrain_dim1(0, tmp.fst); fb_rat *= tmp.snd;
     
@@ -148,19 +148,19 @@ void mutate_dims_all(   REAL* g_a,     // genome begins
  *   all population. Memory coalescence?
  * Requires POP_SIZE random uniform numbers!
  */
-void mutate_dims_one(   REAL* g_a,     // genome begins
-                        REAL* g_b, 
-                        REAL* g_rho, 
-                        REAL* g_nu, 
-                        REAL* g_sigma,
-                        REAL* g_fb_rat,
+void mutate_dims_one(   real_t* g_a,     // genome begins
+                        real_t* g_b, 
+                        real_t* g_rho, 
+                        real_t* g_nu, 
+                        real_t* g_sigma,
+                        real_t* g_fb_rat,
                   const int   i,
                   const int   dim_j,
-                  const REAL  amplitude_ratio = MOVES_UNIF_AMPL_RATIO 
+                  const real_t  amplitude_ratio = MOVES_UNIF_AMPL_RATIO 
 ) {    
-    REAL fb_rat = 1.0;
+    real_t fb_rat = 1.0;
 
-    Tuple<REAL, REAL> tmp(EPS0, 1.0);
+    Tuple<real_t, real_t> tmp(EPS0, 1.0);
     tmp = mutate_helper( g_a    [i], g_a    [i+POP_SIZE], 0, (dim_j == 0) ? amplitude_ratio : 0.0 );
     g_a     [i + POP_SIZE] = constrain_dim1(0, tmp.fst); fb_rat *= tmp.snd;
     
@@ -183,15 +183,15 @@ void mutate_dims_one(   REAL* g_a,     // genome begins
  * Crossover
  * Requires a vector of size [ POP_SIZE*8 ] of random uniform numbers.
  */
-void mcmc_DE(               REAL* g_a,     // genome begins
-                            REAL* g_b, 
-                            REAL* g_rho, 
-                            REAL* g_nu, 
-                            REAL* g_sigma, // genome ends
-                            REAL* bf_rat,  // fwd_bwd_ratio
+void mcmc_DE(               real_t* g_a,     // genome begins
+                            real_t* g_b, 
+                            real_t* g_rho, 
+                            real_t* g_nu, 
+                            real_t* g_sigma, // genome ends
+                            real_t* bf_rat,  // fwd_bwd_ratio
                       const int   j,
-                      const REAL  gamma_avg = 2.38 / sqrt(2.0*GENOME_DIM),
-                      const REAL  ampl_ratio = 0.1 * MOVES_UNIF_AMPL_RATIO
+                      const real_t  gamma_avg = 2.38 / sqrt(2.0*GENOME_DIM),
+                      const real_t  ampl_ratio = 0.1 * MOVES_UNIF_AMPL_RATIO
 ) {
         UINT cand_UB = POP_SIZE - 1;
         UINT k = getRandIntNorm(cand_UB); // random in [0,pop_size-1)
@@ -207,7 +207,7 @@ void mcmc_DE(               REAL* g_a,     // genome begins
         // proposal
         //   gamma: integrated out from the adviced 
         //          Multivariate Gaussian with Gaussian target (Braak, 2006)
-        REAL gamma1 = gamma_avg - 0.5 + getRandUnifNorm();
+        real_t gamma1 = gamma_avg - 0.5 + getRandUnifNorm();
 
         g_a     [j + POP_SIZE] = constrain_dim1( 0, perturbation( g_a    [j], g_a    [k], g_a    [l], 0, gamma1, ampl_ratio ) );
         g_b     [j + POP_SIZE] = constrain_dim1( 1, perturbation( g_b    [j], g_b    [k], g_b    [l], 1, gamma1, ampl_ratio ) );

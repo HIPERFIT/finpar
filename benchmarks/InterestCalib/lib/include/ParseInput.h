@@ -22,11 +22,11 @@
 void readDataSet(   UINT&  pop_size,
                     UINT&  num_conv_iters,   
                     UINT&  num_swap_quotes, 
-                    REAL*& swaption_quotes,  // [num_swap_quotes,4]
+                    real_t*& swaption_quotes,  // [num_swap_quotes,4]
                     
                     UINT&  num_hermitians,
-                    REAL*& hermite_coefs,   // [num_hermite]
-                    REAL*& hermite_weights,  // [num_hermite]
+                    real_t*& hermite_coefs,   // [num_hermite]
+                    real_t*& hermite_weights,  // [num_hermite]
                 
                     UINT&  num_sobol_bits,
                     int*&  sobol_dirs_vct   // [num_sobol_bits]
@@ -50,7 +50,7 @@ void readDataSet(   UINT&  pop_size,
         atr_ok  = num_swap_quotes > 0;
         assert(atr_ok && "Number of swaptions LESS or equal to ZERO!\n");
 
-        if ( read_array(sizeof(REAL), read_real, (void**)&swaption_quotes, shape, 2) ) {
+        if ( read_array(sizeof(real_t), read_real, (void**)&swaption_quotes, shape, 2) ) {
             fprintf(stderr, "Syntax error when reading the swaption quotes.\n");
             exit(1);
         }
@@ -66,14 +66,14 @@ void readDataSet(   UINT&  pop_size,
         atr_ok  = num_hermitians > 0;
         assert(atr_ok && "Number of hermitians LESS or equal to ZERO!\n");
 
-        if ( read_array(sizeof(REAL), read_real, (void**)&hermite_coefs, shape, 1) ) {
+        if ( read_array(sizeof(real_t), read_real, (void**)&hermite_coefs, shape, 1) ) {
             fprintf(stderr, "Syntax error when reading the hermitian coeficients.\n");
             exit(1);
         }
         atr_ok = ( shape[0] == num_hermitians );
         assert(atr_ok && "Incorrect shape of the hermitian coefficients!");
 
-        if ( read_array(sizeof(REAL), read_real, (void**)&hermite_weights, shape, 1) ) {
+        if ( read_array(sizeof(real_t), read_real, (void**)&hermite_weights, shape, 1) ) {
             fprintf(stderr, "Syntax error when reading the hermitian weights.\n");
             exit(1);
         }

@@ -125,7 +125,7 @@ TYPE segm_scan_reg_warp(
 **/
 inline
 void segm_scan_reg_block (
-            __local volatile REAL* sh_data,
+            __local volatile real_t* sh_data,
                              uint  sh_size,
                              uint  sgm_size
 ) {
@@ -235,8 +235,8 @@ void segm_red_reg_block_K (
  * ASSERTS: 
  *    1. ptr & hd are adjusted for each warp
  */
-inline REAL segm_scan_warp( 
-            __local volatile REAL* ptr,  
+inline real_t segm_scan_warp( 
+            __local volatile real_t* ptr,  
             __local volatile FLAG* hd ) {
     const uint th_id = TH_ID & (WARP-1);
 
@@ -265,8 +265,8 @@ inline REAL segm_scan_warp(
     return ptr[th_id];
 }
 
-inline REAL segm_scan_block( 
-            __local volatile REAL *ptr, 
+inline real_t segm_scan_block( 
+            __local volatile real_t *ptr, 
             __local volatile FLAG *hd  
 ) {
     // 1a: record whether this warp begins 
@@ -276,10 +276,10 @@ inline REAL segm_scan_block(
     barrier(CLK_LOCAL_MEM_FENCE);
 
     // 1b: intra-warp segmented scan for each warp
-    REAL val = segm_scan_warp( ptr + WARP_FST, hd + WARP_FST );
+    real_t val = segm_scan_warp( ptr + WARP_FST, hd + WARP_FST );
 
     // 2a: the last value is the correct partial result
-    REAL warp_total = ptr[WARP_LST];
+    real_t warp_total = ptr[WARP_LST];
     
     // 2b: warp_flag is the OR-reduction of the flags 
     //     in a warp, and is computed indirectly from
@@ -330,7 +330,7 @@ inline REAL segm_scan_block(
  *     2. size of ptr and hd is [K * local_group_size(0)]
  */
 inline void segm_scan_block_K( 
-                __local volatile REAL *ptr, 
+                __local volatile real_t *ptr, 
                 __local volatile FLAG *hd ,   
                                  uint  K  ,
                                  bool  warp_level
@@ -339,7 +339,7 @@ inline void segm_scan_block_K(
         segm_scan_block(ptr, hd);
     } else {
         uint th_idmK  = TH_ID * K;
-        REAL reg_ptr[SEQ_ELMS];
+        real_t reg_ptr[SEQ_ELMS];
         bool reg_hd [SEQ_ELMS];
 
         { // 1) each threads copies its elems in regs
@@ -351,7 +351,7 @@ inline void segm_scan_block_K(
 
         { // 2) now write to shared memory local_group_size(0) elements
             FLAG flag;
-            REAL data; 
+            real_t data; 
             data = reg_ptr[K-1];     
     
             if ( reg_hd[K-1] == 0 ) { // the sum of the last segm
@@ -375,7 +375,7 @@ inline void segm_scan_block_K(
         }
 
         { // 3) perform the segmented scan for get_local_size(0) elements
-            REAL accum;
+            real_t accum;
 
             if(warp_level) {
                 segm_scan_warp ( ptr + WARP_FST, hd + WARP_FST );
@@ -410,15 +410,15 @@ inline void segm_scan_block_K(
 
 inline void ComparatorPrivate(
     uint *keyA,
-    REAL *valA,
+    real_t *valA,
     uint *keyB,
-    REAL *valB,
+    real_t *valB,
     uint arrowDir
 ){
     if( (*keyA > *keyB) == arrowDir ){
         uint t;
         t = *keyA; *keyA = *keyB; *keyB = t;
-        REAL r;
+        real_t r;
         r = *valA; *valA = *valB; *valB = r;
     }
 }
@@ -426,15 +426,15 @@ inline void ComparatorPrivate(
 // volatile
 inline void ComparatorLocal(
     __local  uint *keyA,      
-    __local  REAL *valA,
+    __local  real_t *valA,
     __local  uint *keyB,
-    __local  REAL *valB,
+    __local  real_t *valB,
     uint arrowDir
 ){
     if( (*keyA > *keyB) == arrowDir ){
         uint t;
         t = *keyA; *keyA = *keyB; *keyB = t;
-        REAL r;
+        real_t r;
         r = *valA; *valA = *valB; *valB = r;
     }
 }
@@ -445,7 +445,7 @@ inline void ComparatorLocal(
  */
 void bitonicSortLocal(
     __local volatile uint *l_key,
-    __local volatile REAL *l_val,
+    __local volatile real_t *l_val,
     uint arrayLength,
     uint sort_len
     //uint sortDir

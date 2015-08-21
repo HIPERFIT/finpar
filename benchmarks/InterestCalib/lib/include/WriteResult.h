@@ -4,19 +4,19 @@
 #include <stdio.h>
 
 /* Writes trailing comma and newline. */
-void writeRealField(FILE *stream, const char* field, REAL x)
+void writeRealField(FILE *stream, const char* field, real_t x)
 {
   fprintf(stream, "\"%s\": %f,\n", field, x);
 }
 
 void writeResult(FILE *stream,
-                 REAL a,
-                 REAL b,
-                 REAL sigma,
-                 REAL nu,
-                 REAL rho,
-                 REAL logLik,
-                 REAL* calib_arr)
+                 real_t a,
+                 real_t b,
+                 real_t sigma,
+                 real_t nu,
+                 real_t rho,
+                 real_t logLik,
+                 real_t* calib_arr)
 {
   /* Hackily manually generate JSON.  It would be nice with some
      proper library support. */
