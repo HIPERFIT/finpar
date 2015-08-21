@@ -11,14 +11,14 @@
 
 /**
  * Printing Swaption / Calibrated Price / Black Price / RMS
- * The result is an array REAL[NUM_SWAP_QUOTES, 3] recording
+ * The result is an array real_t[NUM_SWAP_QUOTES, 3] recording
  *   for each swaption the calibrated price, the black price 
  *   and the percentagewise difference between the two.
  */
-REAL* makeSummary(uint winner, CpuArrays& arrs) {
-    REAL* res = (REAL*) malloc( 3*NUM_SWAP_QUOTES*sizeof(REAL) );
+real_t* makeSummary(uint winner, CpuArrays& arrs) {
+    real_t* res = (real_t*) malloc( 3*NUM_SWAP_QUOTES*sizeof(real_t) );
 
-    REAL rms = 0.0;
+    real_t rms = 0.0;
 
     fprintf(stderr, "\n\nCALIBRATION RESULT: best genome is at index %d: ", winner);
     fprintf(stderr, "{ a = %f, b = %f, sigma = %f, nu = %f, rho = %f  }, Likelihood: %f!\n",
@@ -27,9 +27,9 @@ REAL* makeSummary(uint winner, CpuArrays& arrs) {
     fprintf(stderr, "\nPer-Swaption Approximation w.r.t. Black Price:\n\n");
 
     for( int i = 0; i < NUM_SWAP_QUOTES; i ++ ) {
-        REAL black_price = arrs.get_quote(winner)[i];
-        REAL calib_price = arrs.get_price(winner)[i];
-        REAL err_ratio   =  (calib_price - black_price) / black_price;
+        real_t black_price = arrs.get_quote(winner)[i];
+        real_t calib_price = arrs.get_price(winner)[i];
+        real_t err_ratio   =  (calib_price - black_price) / black_price;
 
         res[3*i + 0] = 10000.0*calib_price;
         res[3*i + 1] = 10000.0*black_price;
@@ -54,7 +54,7 @@ REAL* makeSummary(uint winner, CpuArrays& arrs) {
  *    scans the logLik array and fill in the index and likelihood
  *    of the best genome.
  */
-void find_best(const REAL* logLik, int& best_ind, REAL& best_lik) {
+void find_best(const real_t* logLik, int& best_ind, real_t& best_lik) {
     bool sanity = true;
 
     best_lik = -INFINITY;
@@ -63,7 +63,7 @@ void find_best(const REAL* logLik, int& best_ind, REAL& best_lik) {
     // this is in fact a reduction, but POP_SIZE is
     //     not big enough to warrant a parallel execution.
     for ( UINT i = 0; i < POP_SIZE; i++ ) {  // parallel reduction with MAX
-        REAL val = logLik[i];
+        real_t val = logLik[i];
 
         sanity = !( isnan(val) || isinf(val) );
         assert( sanity && "val is NaN in find_best" );
@@ -72,10 +72,10 @@ void find_best(const REAL* logLik, int& best_ind, REAL& best_lik) {
     }
 }
 
-Move_Type selectMoveType(REAL move_selected) {
+Move_Type selectMoveType(real_t move_selected) {
     Move_Type move_type     = NONE;
 
-    REAL      prob;
+    real_t      prob;
     Move_Type type;
     UINT      k = 0;
     do {
@@ -102,19 +102,19 @@ Move_Type selectMoveType(REAL move_selected) {
  *      price, the black price and the percentage 
  *      difference between the two.
  */
-REAL* mainKernelCPU(REAL& wg_a, 
-                    REAL& wg_b, 
-                    REAL& wg_sigma, 
-                    REAL& wg_nu, 
-                    REAL& wg_rho, 
-                    REAL& wg_logLik
+real_t* mainKernelCPU(real_t& wg_a, 
+                    real_t& wg_b, 
+                    real_t& wg_sigma, 
+                    real_t& wg_nu, 
+                    real_t& wg_rho, 
+                    real_t& wg_logLik
 ) {
     uint   FLAT_SZ;
     short* shape      = getIregShapeAdjusted( LWG_EG, FLAT_SZ );
     int  * start_inds = getStartInd( FLAT_SZ, shape, NUM_SWAP_QUOTES );
 
     CpuArrays cpu_arrs(FLAT_SZ, shape);
-    REAL *g_a, *g_b, *g_rho, *g_nu, *g_sigma, *logLik, *bf_rat;
+    real_t *g_a, *g_b, *g_rho, *g_nu, *g_sigma, *logLik, *bf_rat;
     { // getting the cpu arrays
         g_a     = cpu_arrs.get_a     ();
         g_b     = cpu_arrs.get_b     ();
@@ -131,7 +131,7 @@ REAL* mainKernelCPU(REAL& wg_a,
     // initialized the genomes with random numbers inside 
     //   their acceptable bounds => requires 5*POP_SIZE randoms
     for( int i = 0; i < POP_SIZE; i++ ) {
-        REAL r01, tmp;
+        real_t r01, tmp;
 
         r01 = getRandRandNorm();
         tmp = r01 * ( g_maxs[0] - g_mins[0]) + g_mins[0];
@@ -177,7 +177,7 @@ REAL* mainKernelCPU(REAL& wg_a,
         // select which move to perform.
         // Note: this block can also be a loop (in fixed order) 
         //       over the various move types
-        REAL      move_selected = getRandUnifNorm();
+        real_t      move_selected = getRandUnifNorm();
         Move_Type move_type     = selectMoveType(move_selected);
 
         if ( move_type == DIMS_ALL ) {
@@ -214,11 +214,11 @@ REAL* mainKernelCPU(REAL& wg_a,
         // obtained by mutating/crossover of the individual.
         for ( int i = 0; i < POP_SIZE; i++ ) {  // parallel
             // Metropolis: get a random U[0,1) for each candidate
-            REAL rand = getRandUnifNorm();
+            real_t rand = getRandUnifNorm();
             
             // selection: dimensions considered independent
             // acceptance = min( 1, N.exp(c.logLik_proposal-c.logLik) * c.backward_forward_ratio )
-            REAL acceptance = std::min( 1.0, exp( logLik[i+POP_SIZE] - logLik[i] ) * bf_rat[i] );
+            real_t acceptance = std::min( 1.0, exp( logLik[i+POP_SIZE] - logLik[i] ) * bf_rat[i] );
           
             // if acceptance criterion is met then p->p' else does nothing 
             if ( rand < acceptance ) accept( i, g_a, g_b, g_rho, g_nu, g_sigma, logLik );
@@ -226,16 +226,16 @@ REAL* mainKernelCPU(REAL& wg_a,
 
         // print best candidate for the current iteration:
         if ( (j % 16) == 0 ){ 
-            int best_ind; REAL best_lik;
+            int best_ind; real_t best_lik;
             find_best(logLik, best_ind, best_lik);
             fprintf(stderr, "\n Iteration: %d: Best Likelihood: %f, genome index: %d!\n", 
                             j, best_lik, best_ind );
         }
     }
 
-    REAL* result;
+    real_t* result;
     { // print best candidate for the current iteration:
-        int best_ind; REAL best_lik;
+        int best_ind; real_t best_lik;
         find_best(logLik, best_ind, best_lik);
 
         // recompute the calibrated price and the black price!

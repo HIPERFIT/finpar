@@ -31,16 +31,12 @@
 /*********************************************/
 /*********************************************/
 
-#if WITH_FLOAT
-    typedef float  REAL;
+#if REAL_IS_FLOAT
     #define EPS0   (0.3e-2)
     #define EPS    (0.2e-4) 
     #define PI     (3.14159265358)
 
 #else
-    #pragma OPENCL EXTENSION cl_khr_fp64: enable
-
-    typedef double REAL;
     #define EPS0   (1.0e-3)
     #define EPS    (1.0e-5)
     #define PI     (3.1415926535897932384626433832795)
@@ -57,4 +53,3 @@
 #define R     0.03
 
 #endif // KERNEL_CONSTANTS
-
