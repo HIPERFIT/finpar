@@ -291,7 +291,7 @@ __kernel void mlfi_brownianbridge_wiener_path1(
     __constant int  *bb_li, *bb_bi, *bb_ri;
     __constant real_t *bb_rw, *bb_lw, *bb_sd;
 
-    ULONG cur_it = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it = get_global_id (0) << ro_scal->log_chunk;
     UINT m, i, md_dim = ro_scal->num_under << lgWARP, nb_path_dates = ro_scal->num_dates;
     UINT sobol_dim = ro_scal->num_under * nb_path_dates;
 
@@ -362,7 +362,7 @@ __kernel void mlfi_comp_traj1(
     UINT dim       = ro_scal->num_under;
     UINT dim_sq    = dim*dim;
     UINT dim_paths = dim*ro_scal->num_dates;
-    ULONG cur_it   = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it   = get_global_id (0) << ro_scal->log_chunk;
 
     UINT UB = ( cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ? 
                 cur_it+(1<<ro_scal->log_chunk) : ro_scal->num_gpuits  ; 
@@ -455,7 +455,7 @@ __kernel void mlfi_comp_traj_unopt(
     UINT dim       = ro_scal->num_under;
     UINT dim_sq    = dim*dim;
     UINT dim_paths = dim*ro_scal->num_dates;
-    ULONG cur_it = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it = get_global_id (0) << ro_scal->log_chunk;
 
     UINT UB = ( cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits ) ? 
                 cur_it+(1<<ro_scal->log_chunk) : ro_scal->num_gpuits   ; 
@@ -529,7 +529,7 @@ __kernel void mlfi_reduction_step1(
     UINT  j;
     uint  block_size = get_local_size(0);
     int   sobol_dim  = ro_scal->num_under * ro_scal->num_dates;
-    ULONG cur_it     = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it     = get_global_id (0) << ro_scal->log_chunk;
         
     UINT UB = ( cur_it + (1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ?
                 cur_it + (1<<ro_scal->log_chunk) : ro_scal->num_gpuits  ;
