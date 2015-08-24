@@ -3,12 +3,7 @@
 
 #define WORKGROUP_SIZE  512
 
-#ifdef REAL_TYPE
-typedef REAL_TYPE real_t;
-#else
-typedef double real_t;
-#endif
-
+#include "real.h"
 #include "Util.h"
 #include "ParseInput.h"
 

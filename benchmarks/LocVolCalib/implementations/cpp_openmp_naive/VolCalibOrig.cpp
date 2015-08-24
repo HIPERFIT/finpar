@@ -1,14 +1,9 @@
 #include <vector>
 #include <cmath>
 
-#ifdef REAL_TYPE
-typedef REAL_TYPE real_t;
-#else
-typedef double real_t;
-#endif
-
 #define WORKGROUP_SIZE  512 
 
+#include "real.h"
 #include "Util.h"
 #include "ParseInput.h"
 
