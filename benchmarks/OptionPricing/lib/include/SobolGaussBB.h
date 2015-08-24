@@ -85,8 +85,8 @@ sobolRecOpt(    const int&  sobol_dim,  // size of the quasi-random vector
     (x*(x*(x*(x*(x*(x*(x*a7+a6)+a5)+a4)+a3)+a2)+a1)+a0)/ \
     (x*(x*(x*(x*(x*(x*(x*b7+b6)+b5)+b4)+b3)+b2)+b1)+b0)
 
-inline static REAL small_case(const REAL& q) {
-  REAL x = 0.180625 - q * q;
+inline static real_t small_case(const real_t& q) {
+  real_t x = 0.180625 - q * q;
   return q * rat_eval(
                       3.387132872796366608,
                       133.14166789178437745,
@@ -107,8 +107,8 @@ inline static REAL small_case(const REAL& q) {
                       5226.495278852854561);
 }
 
-inline static REAL intermediate(const REAL& r) {
-  REAL x = r - 1.6;
+inline static real_t intermediate(const real_t& r) {
+  real_t x = r - 1.6;
   return rat_eval(
                   1.42343711074968357734,
                   4.6303378461565452959,
@@ -129,8 +129,8 @@ inline static REAL intermediate(const REAL& r) {
                   1.05075007164441684324e-9);
 }
 
-inline static REAL tail(const REAL& r) {
-  REAL x = r - 5.0;
+inline static real_t tail(const real_t& r) {
+  real_t x = r - 5.0;
   return rat_eval(
                   6.6579046435011037772,
                   5.4637849111641143699,
@@ -156,23 +156,23 @@ inline static REAL tail(const REAL& r) {
  * to a gaussian distribution, uniformely distributed in [-inf, +inf].
  */ 
 inline 
-void uGaussian(  const REAL& fract,    // 2 ^ sobol_bits
+void uGaussian(  const real_t& fract,    // 2 ^ sobol_bits
                  const UINT& dim,      // size of the Sobol quasi-random vector
                  const UINT* sob_vct,  // [dim] Sobol quasi-random (int) vector
-                       REAL* gauss_vct // result
+                       real_t* gauss_vct // result
 ) {
     for ( int i = 0; i < dim; i ++ ) {
         // sobol int number -> sobol real number in [0,1) 
-        REAL sob_real = static_cast<REAL>(sob_vct[i]) * fract;
+        real_t sob_real = static_cast<real_t>(sob_vct[i]) * fract;
 
         // sobol real number [0,1) -> gaussian number in (-inf, +inf)
-        REAL dp  = sob_real - 0.5;
+        real_t dp  = sob_real - 0.5;
         if ( fabs(dp) <= 0.425 ) {
             gauss_vct[i]= small_case(dp);
         } else {
-            REAL pp     = (dp < 0.0) ? (0.5 + dp) : (0.5 - dp);
-            REAL r      = sqrt (- log(pp));
-            REAL x      = (r <= 5.0) ? intermediate(r) : tail(r);
+            real_t pp     = (dp < 0.0) ? (0.5 + dp) : (0.5 - dp);
+            real_t r      = sqrt (- log(pp));
+            real_t x      = (r <= 5.0) ? intermediate(r) : tail(r);
             gauss_vct[i]= (dp < 0.0) ? (0.0 - x) : x;
         }
     }
@@ -190,17 +190,17 @@ void brownianBridge(
         const  UINT&    num_under,
         const  UINT&    num_dates,
         const  int*     bb_inds, // [3, num_dates] Brownian Bridge's indirect indexing
-        const  REAL*    bb_data, // [3, num_dates] Brownian Bridge's data
-               REAL*    md_zd,   // [num_dates, num_under] the gaussian vector
+        const  real_t*    bb_data, // [3, num_dates] Brownian Bridge's data
+               real_t*    md_zd,   // [num_dates, num_under] the gaussian vector
                                  //                        also holds the result!
-               REAL*    res      // [num_dates, num_under] temporary array
+               real_t*    res      // [num_dates, num_under] temporary array
 ) {
     const int * bb_bi = bb_inds;
     const int * bb_li = bb_inds + num_dates;
     const int * bb_ri = bb_inds + 2*num_dates;
-    const REAL* bb_sd = bb_data;
-    const REAL* bb_lw = bb_data + num_dates;
-    const REAL* bb_rw = bb_data + 2*num_dates;
+    const real_t* bb_sd = bb_data;
+    const real_t* bb_lw = bb_data + num_dates;
+    const real_t* bb_rw = bb_data + 2*num_dates;
 
     for ( int m = 0; m < num_under; m ++ ) {
         res[ (bb_bi[0]-1) * num_under + m ] = bb_sd[0] * md_zd[m];

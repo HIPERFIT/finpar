@@ -9,8 +9,8 @@ void trajectory_inner(
         const UINT&     num_cash_flows,
         const UINT&     model_ind,  // the model index
         const UINT&     disct_index,// index of the discount 
-        const REAL&     amount,     // update with amount
-        const REAL*     md_discts,  // [model_num][num_cash_flow] discounts
+        const real_t&     amount,     // update with amount
+        const real_t*     md_discts,  // [model_num][num_cash_flow] discounts
               double*   vhat        // [model_num] Accumulated per-model price
 ) {
 #if 0
@@ -33,13 +33,13 @@ void trajectory_contract1( // SIMPLE
         const UINT&     num_under,  // the number of underlyings
         const UINT&     num_cash_flows,
         const UINT&     num_pricers,// the number of deterministic procers 
-        const REAL*     md_discts,  // [num_models][num_cash_flows] discounts
-        const REAL*     md_detvals, // [num_models, num_det_pricers]  pricers 
-        const REAL*     inst_traj,  // [num_dates, num_under] current trajectory
+        const real_t*     md_discts,  // [num_models][num_cash_flows] discounts
+        const real_t*     md_detvals, // [num_models, num_det_pricers]  pricers 
+        const real_t*     inst_traj,  // [num_dates, num_under] current trajectory
               double*   vhat        // [model_num] Accumulated per-model price
         
 ) {
-    REAL amount = ((underlyings(0,0)) - 4000.0) * md_detvals[model_num*num_pricers];
+    real_t amount = ((underlyings(0,0)) - 4000.0) * md_detvals[model_num*num_pricers];
     amount = fmax(0.0, amount);
 	trajectory_inner( num_cash_flows, model_num, 0, amount, md_discts, vhat );
 }
@@ -50,9 +50,9 @@ void trajectory_contract2( // WORST OFF
         const UINT&     num_under,  // the number of underlyings
         const UINT&     num_cash_flows,
         const UINT&     num_pricers,// the number of deterministic procers 
-        const REAL*     md_discts,  // [num_models][num_cash_flows] discounts
-        const REAL*     md_detvals, // [num_models, num_det_pricers]  pricers 
-        const REAL*     inst_traj,  // [num_dates, num_under] current trajectory
+        const real_t*     md_discts,  // [num_models][num_cash_flows] discounts
+        const real_t*     md_detvals, // [num_models, num_det_pricers]  pricers 
+        const real_t*     inst_traj,  // [num_dates, num_under] current trajectory
               double*   vhat        // [model_num] Accumulated per-model price
 ) {
 	double x50;
@@ -99,9 +99,9 @@ void trajectory_contract3( // BARRIER
         const UINT&     num_under,  // the number of underlyings
         const UINT&     num_cash_flows,
         const UINT&     num_pricers,// the number of deterministic procers 
-        const REAL*     md_discts,  // [num_models][num_scash_flow] discounts
-        const REAL*     md_detvals, // [num_models, num_det_pricers]  pricers 
-        const REAL*     inst_traj,  // [num_dates, num_under] current trajectory
+        const real_t*     md_discts,  // [num_models][num_scash_flow] discounts
+        const real_t*     md_detvals, // [num_models, num_det_pricers]  pricers 
+        const real_t*     inst_traj,  // [num_dates, num_under] current trajectory
               double*   vhat        // [model_num] Accumulated per-model price
 ) {
 	//assert(model_num==0 && "NUM MODELS > 1");
@@ -1226,7 +1226,7 @@ L48:
 
 L40:
 	  //model->notify_cash_flow(model, 0, (1000. * (1. + fmin(((underlyings(366,1) / 11840.) - 1.), fmin(((underlyings(366,2) / 1200.) - 1.), ((underlyings(366,0) / 3758.05) - 1.))))), 1 /*2013-01-27, 2013-01-27, EUR*/);
-    const REAL amount = (1000. * (1. + fmin(((underlyings(366,1) / 11840.) - 1.), fmin(((underlyings(366,2) / 1200.) - 1.), ((underlyings(366,0) / 3758.05) - 1.)))));
+    const real_t amount = (1000. * (1. + fmin(((underlyings(366,1) / 11840.) - 1.), fmin(((underlyings(366,2) / 1200.) - 1.), ((underlyings(366,0) / 3758.05) - 1.)))));
 	trajectory_inner( num_cash_flows, model_num, 1, amount, md_discts, vhat );
 
 	return;
@@ -1241,9 +1241,9 @@ void aggregDiscountedPayoff(
         const UINT&     num_under,  // the number of underlyings
         const UINT&     num_cash_flows,
         const UINT&     num_pricers,// the number of deterministic procers 
-        const REAL*     md_discts,  // [num_models][num_scash_flow] discounts
-        const REAL*     md_detvals, // [num_models, num_det_pricers]  pricers 
-        const REAL*     inst_traj,  // [num_dates, num_under] current trajectory
+        const real_t*     md_discts,  // [num_models][num_scash_flow] discounts
+        const real_t*     md_detvals, // [num_models, num_det_pricers]  pricers 
+        const real_t*     inst_traj,  // [num_dates, num_under] current trajectory
               double*   vhat        // [model_num] Accumulated per-model price
 ) {
     if        (contr_num == 1) {

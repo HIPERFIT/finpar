@@ -1,19 +1,12 @@
 #ifndef   CONSTANTS_H
 #define   CONSTANTS_H
 
+#include "real.h"
 #include "Optimizations.h"
 
 #define WARP            (1<<lgWARP) 
 #define logMAX_CHUNK    8
 
-#if (_OPTIMIZATION_USE_FLOATS)
-    typedef float        REAL;
-    typedef unsigned int ULONG;
-#else
-    #pragma OPENCL EXTENSION cl_khr_fp64: enable
-    typedef double         REAL;
-    typedef unsigned long  ULONG;
-#endif
 
 typedef unsigned int   UINT;
 typedef unsigned char  UCHAR;
@@ -38,7 +31,7 @@ typedef struct {
     UINT   num_mcbigits;    // # of chunked-unrolled iterations
 
     UINT   sobol_count_ini; // initial number from which the Sobol sequence starts 
-    REAL   sob_norm_fact;   // maximal sobol int 1/(1<<sobol_bits)
+    real_t sob_norm_fact;   // maximal sobol int 1/(1<<sobol_bits)
 
     UINT   chunk;           // loop strip mining factor    
     UINT   log_chunk;       // log_2 of strip mining factor

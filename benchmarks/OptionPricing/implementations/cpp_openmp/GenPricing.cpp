@@ -21,8 +21,8 @@ double* run_CPUkernel(  const int&                Ps,
     // allocate for Ps threads
     const UINT Sd = do_padding( sob_dim          );
     UINT* sob_glb_vct = static_cast<UINT*>( malloc( Ps * Sd * sizeof(UINT)) );
-    REAL*  md_glb_vct = static_cast<REAL*>( malloc( Ps * Sd * sizeof(REAL)) );
-    REAL* trj_glb_vct = static_cast<REAL*>( malloc( Ps * Sd * sizeof(REAL)) );
+    real_t*  md_glb_vct = static_cast<real_t*>( malloc( Ps * Sd * sizeof(real_t)) );
+    real_t* trj_glb_vct = static_cast<real_t*>( malloc( Ps * Sd * sizeof(real_t)) );
 
     const UINT Sv = do_padding( scals.num_models );
     double* vhat_glb  = static_cast<double*>( malloc( Ps * Sv * sizeof(double)) );
@@ -31,8 +31,8 @@ double* run_CPUkernel(  const int&                Ps,
     {
         UINT  th_id   = omp_get_thread_num();
         UINT* sob_vct = sob_glb_vct + ( th_id * Sd );
-        REAL*  md_vct =  md_glb_vct + ( th_id * Sd );
-        REAL* trj_vct = trj_glb_vct + ( th_id * Sd );
+        real_t*  md_vct =  md_glb_vct + ( th_id * Sd );
+        real_t* trj_vct = trj_glb_vct + ( th_id * Sd );
         double* vhat  = vhat_glb    + ( th_id * Sv ); 
 
         for(int i = 0; i < scals.num_models; i ++) 
@@ -76,28 +76,28 @@ double* run_CPUkernel(  const int&                Ps,
                                 md_vct,             trj_vct         );
 
 #ifdef FAST_BB
-                REAL* traj = md_vct;
+                real_t* traj = md_vct;
 #else
-                REAL* traj = trj_vct; //md_vct;
+                real_t* traj = trj_vct; //md_vct;
 #endif
 
                 // compute trajectory
                 for ( int m = 0; m < scals.num_models; m ++ ) {
-                    REAL* md_c      = md_arrs.md_c      + ( m * num_under_sq    );
-                    REAL* md_vols   = md_arrs.md_vols   + ( m * sob_dim         );
-                    REAL* md_drifts = md_arrs.md_drifts + ( m * sob_dim         );
-                    REAL* md_starts = md_arrs.md_starts + ( m * scals.num_under );
+                    real_t* md_c      = md_arrs.md_c      + ( m * num_under_sq    );
+                    real_t* md_vols   = md_arrs.md_vols   + ( m * sob_dim         );
+                    real_t* md_drifts = md_arrs.md_drifts + ( m * sob_dim         );
+                    real_t* md_starts = md_arrs.md_starts + ( m * scals.num_under );
     
                     for( int i = 0; i < scals.num_dates; i ++ )  {
                         for( int j = 0; j < scals.num_under; j ++ ) {
-                            REAL temp = 0.0;
+                            real_t temp = 0.0;
                             int k = i*scals.num_under + j;
 
                             for ( int l = 0; l <= j; l ++ ) {
 #ifdef FAST_BB
-                                REAL md_val = trj_vct[i*scals.num_under + l];
+                                real_t md_val = trj_vct[i*scals.num_under + l];
 #else
-                                REAL md_val = md_vct [i*scals.num_under + l];
+                                real_t md_val = md_vct [i*scals.num_under + l];
 #endif
                                 temp += md_c[j*scals.num_under + l] * md_val;
                             }
@@ -170,7 +170,7 @@ int main() {
         elapsed_usec = t_diff.tv_sec*1e6+t_diff.tv_usec;
         {
           FILE* runtime = fopen(getenv("HIPERMARK_RUNTIME"), "w");
-      FILE* result = fopen(getenv("HIPERMARK_RESULT"), "w");
+          FILE* result = fopen(getenv("HIPERMARK_RESULT"), "w");
           fprintf(runtime, "%d\n", elapsed_usec / 1000);
           fclose(runtime);
           write_1Darr(result, prices, scals.num_models);

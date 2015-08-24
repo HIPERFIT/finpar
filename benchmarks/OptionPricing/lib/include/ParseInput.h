@@ -14,7 +14,7 @@
 /*******************************/  
 #define EPS             0.0005
 
-#if _OPTIMIZATION_USE_FLOATS
+#if REAL_IS_FLOAT
     #define read_real read_float
 #else
     #define read_real read_double
@@ -37,7 +37,7 @@ typedef struct {
 
 typedef struct {
     int * bb_inds;    // [3, num_dates], i.e., bi, li, ri
-    REAL* bb_data;    // [3, num_dates], i.e., sd, lw, rw
+    real_t* bb_data;    // [3, num_dates], i.e., sd, lw, rw
 
     void cleanup() {
         free(bb_inds);  free(bb_data);
@@ -46,12 +46,12 @@ typedef struct {
 
 
 typedef struct {
-    REAL* md_c;       // [num_models, num_under, num_under]
-    REAL* md_vols;    // [num_models, num_dates, num_under]
-    REAL* md_drifts;  // [num_models, num_dates, num_under]
-    REAL* md_starts;  // [num_models, num_under]
-    REAL* md_discts;  // [num_models, num_cash_flows]
-    REAL* md_detvals; // [num_models, num_det_pricers]
+    real_t* md_c;       // [num_models, num_under, num_under]
+    real_t* md_vols;    // [num_models, num_dates, num_under]
+    real_t* md_drifts;  // [num_models, num_dates, num_under]
+    real_t* md_starts;  // [num_models, num_under]
+    real_t* md_discts;  // [num_models, num_cash_flows]
+    real_t* md_detvals; // [num_models, num_det_pricers]
 
     void cleanup() {
         free(md_c); // all allocated together, hence free the first one         
@@ -142,7 +142,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         bool ok;
 
         // md_c
-        if (read_array(sizeof(REAL), read_real, (void**)&md_arrs.md_c, shape, 3) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&md_arrs.md_c, shape, 3) ) {
             fprintf(stderr, "Syntax error when reading md_c [%d,%d,%d].\n",
                             scals.num_models, scals.num_under, scals.num_under);
             exit(1);
@@ -153,7 +153,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         assert(ok && "Incorrect shape of md_c!");
 
         // md_vols (volatility)
-        if (read_array(sizeof(REAL), read_real, (void**)&md_arrs.md_vols, shape, 3) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&md_arrs.md_vols, shape, 3) ) {
             fprintf(stderr, "Syntax error when reading md_vols [%d,%d,%d].\n",
                             scals.num_models, scals.num_dates, scals.num_under);
             exit(1);
@@ -164,7 +164,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         assert(ok && "Incorrect shape of md_vols!");
 
         // md_drifts
-        if (read_array(sizeof(REAL), read_real, (void**)&md_arrs.md_drifts, shape, 3) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&md_arrs.md_drifts, shape, 3) ) {
             fprintf(stderr, "Syntax error when reading md_drifts [%d,%d,%d].\n",
                             scals.num_models, scals.num_dates, scals.num_under);
             exit(1);
@@ -175,7 +175,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         assert(ok && "Incorrect shape of md_drifts!");
 
         // md_starts
-        if (read_array(sizeof(REAL), read_real, (void**)&md_arrs.md_starts, shape, 2) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&md_arrs.md_starts, shape, 2) ) {
             fprintf(stderr, "Syntax error when reading md_drifts [%d,%d].\n",
                             scals.num_models, scals.num_under);
             exit(1);
@@ -185,7 +185,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         assert(ok && "Incorrect shape of md_starts!");
 
         // md_detvals (Model deterministic values)
-        if (read_array(sizeof(REAL), read_real, (void**)&md_arrs.md_detvals, shape, 2) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&md_arrs.md_detvals, shape, 2) ) {
             fprintf(stderr, "Syntax error when reading md_detvals [%d,..].\n",
                             scals.num_models);
             exit(1);
@@ -195,7 +195,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         scals.num_det_pricers = shape[1];
 
         // md_discts (Model discounts)
-        if (read_array(sizeof(REAL), read_real, (void**)&md_arrs.md_discts, shape, 2) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&md_arrs.md_discts, shape, 2) ) {
             fprintf(stderr, "Syntax error when reading md_discts [%d,..].\n",
                             scals.num_models);
             exit(1);
@@ -206,13 +206,13 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
 
         { // put all of them in a contiguous memory:
             int   alloc_size, offset;
-            REAL* flat_arr;
+            real_t* flat_arr;
             alloc_size  = scals.num_under * ( scals.num_under + 2*scals.num_dates + 1);
             alloc_size += scals.num_cash_flows + scals.num_det_pricers;
             alloc_size *= scals.num_models;
             alloc_size  = do_padding( alloc_size );
 
-            flat_arr = static_cast<REAL*> ( malloc( alloc_size * sizeof(REAL) ) );
+            flat_arr = static_cast<real_t*> ( malloc( alloc_size * sizeof(real_t) ) );
 
             // copy md_c
             offset     = 0; 
@@ -268,7 +268,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         assert(ok && "Incorrect shape of bb_inds (brownian bridge indirect arrays)!");
 
                 // md_starts
-        if (read_array(sizeof(REAL), read_real, (void**)&bb_arrs.bb_data, shape, 2) ) {
+        if (read_array(sizeof(real_t), read_real, (void**)&bb_arrs.bb_data, shape, 2) ) {
             fprintf(stderr, "Syntax error when reading md_drifts [3,%d].\n",
                             scals.num_dates );
             exit(1);
