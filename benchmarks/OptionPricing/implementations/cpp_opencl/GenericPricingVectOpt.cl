@@ -2,7 +2,7 @@
 /************* MACROS ***************/
 /************************************/
 
-#define TYPE real_T
+#define TYPE real_t
 #define FLAG uchar
 #include "Utilities.cl"
 
