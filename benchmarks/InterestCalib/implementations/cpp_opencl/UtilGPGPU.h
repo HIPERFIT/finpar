@@ -189,7 +189,7 @@ void compileGPUprog( OclObjects& objs ) {
     sprintf( compile_option, "%s -D lgWARP=%d -D TODAY=%10f -D LWG_FB=%d -D INFTY=%f -D MAX_DATE=%f -D MIN_DATE=%f -D SOBOL_BITS_NUM=%d -D%s -I%s/include -I%s/include -I%s/SrcCL",
 	     flags, lgWARP, TODAY, LWG_FB, INFTY, MAX_DATE, MIN_DATE, NUM_SOBOL_BITS,
              REAL_FLAG,
-             HIPERMARK_BENCHMARK_LIB_DIR, HIPERMARK_LIB_DIR, IMPLEMENTATION_DIR);
+             HIPERMARK_BENCHMARK_LIB_DIR, HIPERMARK_LIB_DIR, HIPERMARK_IMPLEMENTATION_DIR);
 
     fprintf(stderr, "compiling like this: %s\n", compile_option);
     objs.dev_id = 0;
