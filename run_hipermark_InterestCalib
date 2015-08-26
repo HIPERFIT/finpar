@@ -2,8 +2,8 @@
 
 clear
 echo Deleting all files in instantiations/InterestCalib
-echo Running hipermark InterestCalib CppOpenMP small dataset, 2 times.
+echo Running hipermark InterestCalib cpp_openmp small dataset, 2 times.
 echo Storing all results in instantiations/
 
 rm -rf instantiations/InterestCalib
-../hipermark/hipermark instantiations/ 2 benchmarks/InterestCalib CppOpenMP small
+../hipermark/hipermark instantiations/ 2 benchmarks/InterestCalib cpp_openmp small
