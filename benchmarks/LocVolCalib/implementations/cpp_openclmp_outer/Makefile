@@ -46,10 +46,6 @@ clean:
 	@# clean nVidia compiler cache
 	rm -rf $(HOME)/.nv/ComputeCache/*
 
-data: $(HIPERMARK_INPUT)
-	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) outer num_x num_y num_t > datasets/$(HIPERMARK_INPUT_NAME)/input.data
-
 run:
-	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | \
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) outer num_x num_y num_t | \
          OMP_NUM_THREADS=$(HIPERMARK_CONFIG_NUM_THREADS) ./$(EXECUTABLE)

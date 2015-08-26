@@ -34,9 +34,6 @@ run_large: $(EXECUTABLE)
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
 
-data: $(HIPERMARK_INPUT)
-	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) outer num_x num_y num_t > datasets/$(HIPERMARK_INPUT_NAME)/input.data
-
 run:
-	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | ./$(EXECUTABLE)
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) outer num_x num_y num_t | \
+	 ./$(EXECUTABLE)

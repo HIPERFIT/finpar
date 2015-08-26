@@ -25,10 +25,6 @@ $(EXECUTABLE): $(OBJECTS)
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
 
-data: $(HIPERMARK_INPUT)
-	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs > datasets/$(HIPERMARK_INPUT_NAME)/input.data
-
 run:
-	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | \
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs | \
 	 ./$(EXECUTABLE)

@@ -17,10 +17,6 @@ $(EXECUTABLE): $(HIPERMARK_IMPLEMENTATION_DIR)/$(SOURCES)
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
 
-data: $(HIPERMARK_INPUT)
-	mkdir -p datasets/$(HIPERMARK_INPUT_NAME)
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT) contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data > datasets/$(HIPERMARK_INPUT_NAME)/input.data
-
 run:
-	cat datasets/$(HIPERMARK_INPUT_NAME)/input.data | \
+	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data | \
 	 ./$(EXECUTABLE)
