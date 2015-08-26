@@ -33,6 +33,9 @@ import qualified Data.Vector.Unboxed as V
 signed :: Parser String -> Parser String
 signed p = (char '-' >> (('-':) <$> p)) <|> p
 
+exponented :: Parser String -> Parser String
+exponented p = (++) <$> p <*> (((:) <$> oneOf "eE" <*> signed (many1 digit)) <|> pure "")
+
 whitespace :: Parser ()
 whitespace = spaces <* optional (string "//" >> manyTill anyChar (char '\n') >> whitespace)
 
@@ -46,7 +49,7 @@ readInt :: Parser Int
 readInt = lexeme $ read <$> signed (many1 digit)
 
 readDouble :: Parser Double
-readDouble = lexeme $ read <$> signed (s2 <|> s1)
+readDouble = lexeme $ read <$> exponented (signed $ s2 <|> s1)
   where s1 = do bef <- many1 digit
                 aft <- fromMaybe "" <$> optional ((:) <$> char '.' <*> many1 digit)
                 return $ bef ++ aft
