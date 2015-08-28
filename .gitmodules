@@ -1,0 +1,3 @@
+[submodule "hipermark"]
+	path = hipermark
+	url = https://github.com/HIPERFIT/hipermark.git
