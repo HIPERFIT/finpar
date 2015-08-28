@@ -306,7 +306,9 @@ const char* oclErrorString(cl_int error)
                     if(ciErrNum == CL_SUCCESS)
                     {
   		                shrLog(stdlog, "Platform name is %s\n", chBuffer);
-                        if(strstr(chBuffer, "NVIDIA") != NULL || strstr(chBuffer, "Apple") != NULL)
+                        if( strstr(chBuffer, "NVIDIA") != NULL || 
+                            strstr(chBuffer, "Apple")  != NULL || 
+                            strstr(chBuffer, "Advanced") != NULL )
                         {
                             *clSelectedPlatformID = clPlatformIDs[i];
                             break;
@@ -823,7 +825,7 @@ void build_for_GPU(
 
         if (true || failed) {
             // write out standard error, Build Log and PTX, then cleanup and exit
-  	    shrLog(stdlog, "BUILDING ERROR: %d: %s\n", ciErr1, oclErrorString(ciErr1));
+            shrLog(stdlog, "BUILDING ERROR: %d: %s\n", ciErr1, oclErrorString(ciErr1));
             //oclLogBuildInfo(cpProgram, cdDevices[dev_id]);
 
             //oclLogPtx(cpProgram, cdDevices[dev_id], ptx_name.c_str());
