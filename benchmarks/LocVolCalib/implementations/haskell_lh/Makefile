@@ -15,5 +15,6 @@ $(EXECUTABLE): $(HIPERMARK_IMPLEMENTATION_DIR)/$(SOURCES)
 clean:
 	rm $(EXECUTABLE) *o *hi
 
-run:
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) outer num_x num_y num_t | ./$(EXECUTABLE)
+HIPERMARK_DATA_FIELDS=outer num_x num_y num_t
+HIPERMARK_RUN_ENVIRONMENT=
+include $(HIPERMARK_LIB_DIR)/flat_data_helper.mk

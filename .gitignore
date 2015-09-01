@@ -20,6 +20,10 @@ GenericPricing/HaskellLH/GenPricing
 GenericPricing/Orig_COpenMp/GenPricing
 CalibVolDiff/Original/CalibVol
 
+# Ad-hoc run artifacts
+benchmarks/*/implementations/*/result.json
+benchmarks/*/implementations/*/runtime.txt
+
 # all instantiations
 instantiations/*
 

@@ -32,20 +32,13 @@ $(EXECUTABLE):
 	$(CXX) $(CXXFLAGS) -D IS_GPU=1 $(GPU_OPTS) $(INCLUDES) -o $(EXECUTABLE) $(SOURCES_CPP) $(LIB)
 
 
-run_small:
-	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt
-
-run_medium:
-	cat ../Data/Medium/input.data ../Data/Medium/output.data | ./$(EXECUTABLE) 2> Debug.txt
-
-run_large:
-	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
-
 clean:
 	rm -f $(EXECUTABLE) $(OBJECTS) ./*.ptx ./Debug.txt
 	@# clean nVidia compiler cache
 	rm -rf $(HOME)/.nv/ComputeCache/*
 
-run:
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) outer num_x num_y num_t | \
-         OMP_NUM_THREADS=$(HIPERMARK_CONFIG_NUM_THREADS) ./$(EXECUTABLE)
+HIPERMARK_DATA_FIELDS=outer num_x num_y num_t
+ifdef HIPERMARK_CONFIG_NUM_THREADS
+  HIPERMARK_RUN_ENVIRONMENT=OMP_NUM_THREADS=$(HIPERMARK_CONFIG_NUM_THREADS)
+endif
+include $(HIPERMARK_LIB_DIR)/flat_data_helper.mk

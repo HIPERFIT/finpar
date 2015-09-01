@@ -25,6 +25,6 @@ $(EXECUTABLE): $(OBJECTS)
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
 
-run:
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs | \
-	 ./$(EXECUTABLE)
+HIPERMARK_DATA_FIELDS=population_size convergence_iterations num_swaption_quotes swaption_quotes num_hermite_coefficients hermite_coefficients hermite_coefficient_weights sobol_num_bits sobol_dir_vs
+HIPERMARK_RUN_ENVIRONMENT=
+include $(HIPERMARK_LIB_DIR)/flat_data_helper.mk

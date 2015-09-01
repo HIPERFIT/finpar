@@ -17,6 +17,6 @@ $(EXECUTABLE): $(HIPERMARK_IMPLEMENTATION_DIR)/$(SOURCES)
 clean:
 	rm -f Debug.txt $(EXECUTABLE) $(OBJECTS)
 
-run:
-	$(HIPERMARK_LIB_DIR)/linearise_data.py $(HIPERMARK_INPUT_FILE) contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data | \
-	 ./$(EXECUTABLE)
+HIPERMARK_DATA_FIELDS=contract_number monte_carlo_iterations num_path_dates num_underlyings num_models num_bits dir_vs md_c md_vols md_drifts md_starts md_deterministic_values md_discounts bb_inds bb_data
+HIPERMARK_RUN_ENVIRONMENT=
+include $(HIPERMARK_LIB_DIR)/flat_data_helper.mk

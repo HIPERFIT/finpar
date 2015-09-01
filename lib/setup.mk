@@ -1,8 +1,8 @@
 # If we are run from outside Hipermark itself, a number of environment
 # variables will be missing.  Set these to hopefully-working values to
 # support standalone compilation.
-HIPERMARK_BENCHMARK_LIB_DIR ?= ../../lib/
-HIPERMARK_IMPLEMENTATION_DIR    ?= .
+HIPERMARK_BENCHMARK_LIB_DIR  ?= ../../lib/
+HIPERMARK_IMPLEMENTATION_DIR ?= .
 
 OS=$(shell uname -s)
 
