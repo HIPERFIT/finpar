@@ -70,5 +70,27 @@
             "dataset_name": "medium",
             "REAL_TYPE": "float"},
         "sticky": "True"
+    },
+    "LocVolCalib, cpp_sequential, small ds, real type double": {
+        "benchmark_name": "LocVolCalib",
+        "implementation_name": "cpp_sequential",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "REAL_TYPE",
+        "locked_vars": {
+            "dataset_name": "medium"},
+        "sticky": "False"
+    },
+    "LocVolCalib, cpp_sequential, small ds, real type float": {
+        "benchmark_name": "LocVolCalib",
+        "implementation_name": "cpp_sequential",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "REAL_TYPE",
+        "locked_vars": {
+            "dataset_name": "medium"},
+        "sticky": "True"
     }
 }
