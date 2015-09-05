@@ -151,5 +151,29 @@
             "dataset_name": "medium",
             "REAL_TYPE": "double"},
         "sticky": "False"
+    },
+    "OptionPricing, cpp_openmp, 1 thread, real type double": {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "locked_vars": {
+            "NUM_THREADS": "1",
+            "REAL_TYPE": "double"},
+        "sticky": "False"
+    },
+    "OptionPricing, cpp_openmp, 4 threads, real type double": {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "locked_vars": {
+            "NUM_THREADS": "4",
+            "REAL_TYPE": "double"},
+        "sticky": "False"
     }
 }
