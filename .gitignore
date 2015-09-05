@@ -27,6 +27,9 @@ benchmarks/*/implementations/*/runtime.txt
 # all instantiations
 instantiations/*
 
+#all hiperpret-created data
+hiperpret/*
+
 # emacs backups
 *~
 

@@ -1,0 +1,74 @@
+{
+    "InterestCalib, cpp_openmp, small ds, real type double": {
+        "benchmark_name": "InterestCalib",
+        "implementation_name": "cpp_openmp",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "NUM_THREADS",
+        "locked_vars": {
+            "dataset_name": "small",
+            "REAL_TYPE": "double"},
+        "sticky": "False"
+    },
+    "InterestCalib, cpp_openmp, small ds, real type float": {
+        "benchmark_name": "InterestCalib",
+        "implementation_name": "cpp_openmp",       
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "NUM_THREADS",
+        "locked_vars": {
+            "dataset_name": "small",
+            "REAL_TYPE": "float"},
+        "sticky": "True"
+    }, 
+    "OptionPricing, cpp_openmp, small ds, real type double": {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "NUM_THREADS",
+        "locked_vars": {
+            "dataset_name": "small",
+            "REAL_TYPE": "double"},
+        "sticky": "False"
+    },
+    "OptionPricing, cpp_openmp, small ds, real type float": {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "NUM_THREADS",
+        "locked_vars": {
+            "dataset_name": "small",
+            "REAL_TYPE": "float"},
+        "sticky": "True"
+    },
+    "LocVolCalib, cpp_openmp_naive, small ds, real type double": {
+        "benchmark_name": "LocVolCalib",
+        "implementation_name": "cpp_openmp_naive",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "NUM_THREADS",
+        "locked_vars": {
+            "dataset_name": "medium",
+            "REAL_TYPE": "double"},
+        "sticky": "False"
+    },
+    "LocVolCalib, cpp_openmp, small ds, real type float": {
+        "benchmark_name": "LocVolCalib",
+        "implementation_name": "cpp_openmp_naive",
+        "type": "graph",
+        "dependent_var": "average runtime",
+        "get normalized performance": "True",
+        "free_var": "NUM_THREADS",
+        "locked_vars": {
+            "dataset_name": "medium",
+            "REAL_TYPE": "float"},
+        "sticky": "True"
+    }
+}
