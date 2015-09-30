@@ -1,0 +1,74 @@
+[
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "legend": "Double, 32 threads",
+        "locked_vars": {
+            "NUM_THREADS": "32",
+            "REAL_TYPE": "double"}
+    },
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "legend": "Double, 16 threads",
+        "locked_vars": {
+            "NUM_THREADS": "16",
+            "REAL_TYPE": "double"}
+    },
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "legend": "Double, 8 threads",
+        "locked_vars": {
+            "NUM_THREADS": "8",
+            "REAL_TYPE": "double"}
+    },
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "legend": "Double, 4 threads",
+        "locked_vars": {
+            "NUM_THREADS": "4",
+            "REAL_TYPE": "double"}
+    },
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "legend": "Double, 2 threads",
+        "locked_vars": {
+            "NUM_THREADS": "2",
+            "REAL_TYPE": "double"}
+    },
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "dataset_name",
+        "legend": "Double, 1 threads",
+        "locked_vars": {
+            "NUM_THREADS": "1",
+            "REAL_TYPE": "double"}
+    }
+]

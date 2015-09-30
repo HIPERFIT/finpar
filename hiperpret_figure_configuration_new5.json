@@ -1,0 +1,26 @@
+[
+    {
+      "benchmark_name": "OptionPricing",
+      "implementation_name": "cpp_openmp",
+      "type": "graph",
+      "dependent_var": "mean runtime",
+      "get normalized performance": "False",
+      "free_var": "NUM_THREADS",
+      "legend": "Double, medium",
+      "locked_vars": {
+          "dataset_name": "medium",
+          "REAL_TYPE": "double"}
+    },
+    {
+      "benchmark_name": "OptionPricing",
+      "implementation_name": "cpp_openmp",       
+      "type": "graph",
+      "dependent_var": "mean runtime",
+      "get normalized performance": "False",
+      "free_var": "NUM_THREADS",
+      "legend": "Float, medium",
+      "locked_vars": {
+          "dataset_name": "medium",
+          "REAL_TYPE": "float"}
+    }
+]

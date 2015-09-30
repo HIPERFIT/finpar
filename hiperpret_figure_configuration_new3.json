@@ -1,0 +1,26 @@
+[
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "REAL_TYPE",
+        "legend": "32 threads, small",
+        "locked_vars": {
+            "NUM_THREADS": "32",
+            "dataset_name": "small"}
+    },
+    {
+        "benchmark_name": "OptionPricing",
+        "implementation_name": "cpp_openmp",
+        "type": "bar",
+        "dependent_var": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "REAL_TYPE",
+        "legend": "32 threads, medium",
+        "locked_vars": {
+            "NUM_THREADS": "32",
+            "dataset_name": "medium"}
+    }
+]
