@@ -4,7 +4,7 @@ clear
 echo Deleting all files in ./hiperpret
 echo Running Hiperpret analysis, assuming that the option pricing dataset from Napoleon is present in ./instantiations.
 echo Storing analysis results in ./hiperpret
-echo Expecting five config JSONs in this folder.
+echo Expecting one figure config JSONs in this folder.
 
 rm -rf hiperpret/
-../hipermark/hiperpret -i ./instantiations/ -f hiperpret_figure_configuration_new.json -f hiperpret_figure_configuration_new2.json -f hiperpret_figure_configuration_new3.json -f hiperpret_figure_configuration_new4.json -f hiperpret_figure_configuration_new5.json -o ./hiperpret
+../hipermark/hiperpret -i ./instantiations/ -f hiperpret_figure_configuration.json -f hiperpret_figure_configuration_underspecified.json -o ./hiperpret

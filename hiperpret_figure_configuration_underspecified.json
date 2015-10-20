@@ -1,0 +1,11 @@
+[
+    {
+        "type": "underspecified",
+        "dependent variable": "mean runtime",
+        "locked variables": {
+            "benchmark_name": "OptionPricing",
+            "implementation_name": "cpp_openmp",
+            "dataset_name": "medium"
+        }
+    }
+]

@@ -1,7 +1,7 @@
 [
     {
-      "benchmark_name": "OptionPricing",
-      "implementation_name": "cpp_openmp",
+      "benchmark": "OptionPricing",
+      "implementation": "cpp_openmp",
       "type": "graph",
       "dependent_var": "mean runtime",
       "get normalized performance": "True",
@@ -12,8 +12,8 @@
           "REAL_TYPE": "double"}
     },
     {
-      "benchmark_name": "OptionPricing",
-      "implementation_name": "cpp_openmp",       
+      "benchmark": "OptionPricing",
+      "implementation": "cpp_openmp",       
       "type": "graph",
       "dependent_var": "mean runtime",
       "get normalized performance": "True",
@@ -24,8 +24,8 @@
           "REAL_TYPE": "float"}
     },
     {
-      "benchmark_name": "OptionPricing",
-      "implementation_name": "cpp_openmp",
+      "benchmark": "OptionPricing",
+      "implementation": "cpp_openmp",
       "type": "graph",
       "dependent_var": "mean runtime",
       "get normalized performance": "True",
@@ -36,8 +36,8 @@
           "REAL_TYPE": "double"}
     },
     {
-      "benchmark_name": "OptionPricing",
-      "implementation_name": "cpp_openmp",       
+      "benchmark": "OptionPricing",
+      "implementation": "cpp_openmp",       
       "type": "graph",
       "dependent_var": "mean runtime",
       "get normalized performance": "True",
