@@ -1,0 +1,10 @@
+#!/bin/bash
+
+clear
+echo Deleting all files in ./hiperpret
+echo Running Hiperpret analysis, assuming that the option pricing dataset from Napoleon is present in ./instantiations.
+echo Storing analysis results in ./hiperpret
+echo Expecting one figure config JSONs in this folder.
+
+rm -rf hiperpret/
+../hipermark/hiperpret -i ./instantiations/ -f hiperpret_figure_configuration.json -f hiperpret_figure_configuration_runtimes.json -o ./hiperpret

@@ -1,0 +1,14 @@
+[
+    {
+        "type": "bar",
+        "dependent variable": "mean runtime",
+        "get normalized performance": "False",
+        "free_var": "NUM_THREADS",
+        "legend": "OptionPricing, cpp_openmp, medium dataset, double precision",
+        "locked variables": {
+            "benchmark_name": "OptionPricing",
+            "implementation_name": "cpp_openmp",
+            "dataset_name": "medium",
+            "REAL_TYPE": "double"}
+    }
+]

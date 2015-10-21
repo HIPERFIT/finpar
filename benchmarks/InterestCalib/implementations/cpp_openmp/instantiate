@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+cp $HIPERMARK_LIB_DIR/setup.mk .
+cp $HIPERMARK_LIB_DIR/include/ParserC.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/ParseInput.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/WriteResult.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/Constants.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/KerConsts.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/GenAlgUtil.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/Date.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/Candidate.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/IrregShape.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/EvalGenomeInl.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/G2PP.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/G2ppUtil.h .
+cp $HIPERMARK_BENCHMARK_LIB_DIR/include/MathModule.h .
+cp $HIPERMARK_IMPLEMENTATION_DIR/*cpp $HIPERMARK_IMPLEMENTATION/*h $HIPERMARK_IMPLEMENTATION/Makefile .
+cp $HIPERMARK_IMPLEMENTATION_DIR/run .
+cp $HIPERMARK_LIB_DIR/include/Util.h .
+
+
+$HIPERMARK_LIB_DIR/generate_platform_mk.py $HIPERMARK_PLATFORM > platform.mk
+
+make
