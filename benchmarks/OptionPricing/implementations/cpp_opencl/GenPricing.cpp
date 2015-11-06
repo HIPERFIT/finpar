@@ -49,9 +49,23 @@ run_GPUkernel (
     { // build the OpenCL program
         const char* preamble =  makeGPUprogPreamble( ro_scal, kernel_type );
         char  compile_opts[1024];
-        sprintf( compile_opts, "-D lgWARP=%d -D TILE=%d -D%s -I%s/include -I%s/include -I%s",
+#ifdef _OPTIMIZATION_SOBOL_STRENGTH_RED_RECURR
+#define STRENGTH_RED_FLAG "-D_OPTIMIZATION_SOBOL_STRENGTH_RED_RECURR"
+#else
+#define STRENGTH_RED_FLAG ""
+#endif
+#if (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 0)
+#define VECT_FLAG "-D_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV=0"
+#elif (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 1)
+#define VECT_FLAG "-D_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV=1"
+#elif (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 2)
+#define VECT_FLAG "-D_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV=2"        
+#endif
+        
+        sprintf( compile_opts, "-D lgWARP=%d -D TILE=%d -D%s %s -I%s/include -I%s/include -I%s",
                  lgWARP, TILE,
                  REAL_FLAG,
+                 STRENGTH_RED_FLAG,
                  HIPERMARK_BENCHMARK_LIB_DIR,
                  HIPERMARK_LIB_DIR,
                  HIPERMARK_IMPLEMENTATION_DIR);
