@@ -1,3 +1,5 @@
 {
-    "REAL_TYPE" : ["float", "double"]
+    "REAL_TYPE" : ["float", "double"],
+    "STRENGTH_REDUCTION" : ["on", "off"],
+    "VECTORIZATION" : ["on", "off", "auto"]
 }
