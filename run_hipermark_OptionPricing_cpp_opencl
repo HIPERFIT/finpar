@@ -1,0 +1,9 @@
+#!/bin/bash
+
+clear
+echo Deleting all files in instantiations/OptionPricing/
+echo Running hipermark OptionPricing cpp_sequential and cpp_opencl small dataset, 4 times.
+echo Storing all results in instantiations/
+
+rm -rf instantiations/OptionPricing/
+../hipermark/hipermark instantiations/ 4 benchmarks/OptionPricing cpp_sequential,cpp_opencl small

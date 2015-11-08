@@ -1,0 +1,9 @@
+[
+    {
+        "type": "runtimes",
+        "dependent variable": "mean runtime",
+        "locked variables": {
+            "benchmark_name": "OptionPricing"
+        }
+    }
+]

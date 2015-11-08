@@ -4,8 +4,7 @@
         "dependent variable": "mean runtime",
         "locked variables": {
             "benchmark_name": "OptionPricing",
-            "dataset_name": "medium",
-            "NUM_THREADS": "4"
+            "dataset_name": "small"
         }
     }
 ]
