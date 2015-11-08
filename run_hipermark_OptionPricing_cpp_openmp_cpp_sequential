@@ -2,8 +2,9 @@
 
 clear
 echo Deleting all files in instantiations/OptionPricing/
-echo Running hipermark OptionPricing cpp_sequential and cpp_openmp small and medium dataset, 10 times.
+echo Running hipermark OptionPricing cpp_sequential and cpp_openmp small dataset, 10 times.
 echo Storing all results in instantiations/
 
 rm -rf instantiations/OptionPricing/
-../hipermark/hipermark instantiations/ 10 benchmarks/OptionPricing cpp_sequential,cpp_openmp small,medium
+#../hipermark/hipermark instantiations/ 10 benchmarks/OptionPricing cpp_sequential,cpp_openmp small
+../hipermark/hipermark -o instantiations/ -n 10 -b benchmarks/OptionPricing -m cpp_sequential -m cpp_openmp -d small -d medium

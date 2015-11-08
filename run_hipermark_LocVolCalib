@@ -6,4 +6,4 @@ echo Running hipermark LocVolCalib cpp_openmp_naive + cpp_sequential medium data
 echo Storing all results in instantiations/
 
 rm -rf instantiations/LocVolCalib
-../hipermark/hipermark instantiations/ 2 benchmarks/LocVolCalib cpp_openmp_naive,cpp_sequential medium
+../hipermark/hipermark -o instantiations/ -n 2 -b benchmarks/LocVolCalib -m cpp_openmp_naive -m cpp_sequential -d medium

@@ -6,4 +6,4 @@ echo Running hipermark InterestCalib cpp_openmp small dataset, 2 times.
 echo Storing all results in instantiations/
 
 rm -rf instantiations/InterestCalib
-../hipermark/hipermark instantiations/ 2 benchmarks/InterestCalib cpp_openmp small
+../hipermark/hipermark -o instantiations/ -n 2 -b benchmarks/InterestCalib -m cpp_openmp -d small
