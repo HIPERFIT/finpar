@@ -6,4 +6,4 @@ echo Running hipermark OptionPricing cpp_sequential and cpp_opencl small dataset
 echo Storing all results in instantiations/
 
 rm -rf instantiations/OptionPricing/
-../hipermark/hipermark -o instantiations/ -n 4 -b benchmarks/OptionPricing -m cpp_sequential -m cpp_opencl -d small
+../hipermark/hipermark -o instantiations/ -n 30 -b benchmarks/OptionPricing -m cpp_opencl -m cpp_sequential -m cpp_openmp -d small -d medium -d large

@@ -7,4 +7,4 @@ echo Storing analysis results in ./hiperpret
 echo Expecting one figure configs JSONs in this folder.
 
 rm -rf hiperpret/
-../hipermark/hiperpret -i ./instantiations/ -f hiperpret_figure_configuration_runtimes_OptionPricing_small.json -f hiperpret_figure_configuration_runtimes_OptionPricing_medium.json -f hiperpret_figure_configuration_runtimes_OptionPricing_large.json -o ./hiperpret
+../hipermark/hiperpret -i ./instantiations/ -o ./hiperpret
