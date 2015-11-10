@@ -1,6 +1,6 @@
 # If we are run from outside Hipermark itself, a number of environment
 # variables will be missing.  Set these to hopefully-working values to
-# support standalone compilation.
+# support standalone compilation.  Users should not need to modify this.
 HIPERMARK_BENCHMARK_LIB_DIR  ?= ../../lib/
 HIPERMARK_IMPLEMENTATION_DIR ?= .
 
@@ -24,6 +24,7 @@ else
   INCLUDES   = -I$(OPENCL_INCDIR) -I. -I../../include
 endif
 
+# Users should not modify this.
 CXXFLAGS    += -DHIPERMARK_IMPLEMENTATION_DIR='"$(HIPERMARK_IMPLEMENTATION_DIR)"'
 CXXFLAGS    += -DHIPERMARK_BENCHMARK_LIB_DIR='"$(HIPERMARK_BENCHMARK_LIB_DIR)"'
 CXXFLAGS    += -DHIPERMARK_LIB_DIR='"$(HIPERMARK_LIB_DIR)"'
