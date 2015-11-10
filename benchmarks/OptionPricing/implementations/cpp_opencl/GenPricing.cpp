@@ -73,9 +73,6 @@ run_GPUkernel (
                         cdDevices,    cpProgram,      GPU_DEV_ID,
                         compile_opts, preamble,       kernel_filename  );
     }
-    // we do not measure the just-in-time compilation time!
-    struct timeval t_start, t_end, t_diff;
-    gettimeofday(&t_start, NULL);
 
     {
         num_cores = discriminate_cost_model(ro_scal, cdDevices[GPU_DEV_ID], kernel_type);
@@ -86,6 +83,21 @@ run_GPUkernel (
     }
 
     oclLoopArrays ocl_arrs;
+    { // allocate RO scalars
+      cl_int ciErr2;
+      ocl_arrs.ro_scals = clCreateBuffer(
+					 cxGPUContext, CL_MEM_READ_ONLY, sizeof(LoopROScalars), NULL, &ciErr2
+					 );
+      ciErr2 |= clEnqueueWriteBuffer(cqCommandQueue[GPU_DEV_ID], ocl_arrs.ro_scals, CL_TRUE, 0,
+				     sizeof(LoopROScalars), &ro_scal, 0, NULL, NULL);
+      oclCheckError(ciErr2, CL_SUCCESS);
+      clFinish(cqCommandQueue[GPU_DEV_ID]);
+    }
+
+    // we do not measure the just-in-time compilation time!
+    struct timeval t_start, t_end, t_diff;
+    gettimeofday(&t_start, NULL);
+
     if(kernel_type == PRIV) { // CALL THE PRIVATE KERNEL
         glb_vhat = oclAllocArrays_PrivKernel(
                         ocl_arrs, cxGPUContext, cqCommandQueue[GPU_DEV_ID],
@@ -137,13 +149,13 @@ run_GPUkernel (
         ro_scal.sobol_count_ini = sob_ini_count;
     }
 
-    for(UINT ii = 0; ii<ro_scal.num_models; ii++) {
-        vhat_fin[ii] = vhat_fin[ii] / ro_scal.num_mcits;
-    }
-
     gettimeofday(&t_end, NULL);
     timeval_subtract(&t_diff, &t_end, &t_start);
     elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
+
+    for(UINT ii = 0; ii<ro_scal.num_models; ii++) {
+        vhat_fin[ii] = vhat_fin[ii] / ro_scal.num_mcits;
+    }
 
     { // free allocated space
         shrLog(stderr, "Release CPU buffers and OpenCL objects...\n");

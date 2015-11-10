@@ -278,7 +278,7 @@ __kernel void mlfi_comp_traj1(
     UINT dim       = ro_scal->num_under;
     UINT dim_sq    = dim*dim;
     UINT dim_paths = dim*ro_scal->num_dates;
-    ULONG cur_it = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it = get_global_id (0) << ro_scal->log_chunk;
 
     UINT UB = (cur_it+(1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ? cur_it + (1<<ro_scal->log_chunk) : ro_scal->num_gpuits; 
 
@@ -360,7 +360,7 @@ __kernel void mlfi_reduction_step1(
     UINT j;
     uint block_size = get_local_size(0);
     int  sobol_dim  = ro_scal->num_under * ro_scal->num_dates;
-    ULONG cur_it = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it = get_global_id (0) << ro_scal->log_chunk;
     
     //UINT UB = min(cur_it + (1<<ro_scal->log_chunk), ro_scal->num_gpuits);
     UINT UB = ( cur_it + (1<<ro_scal->log_chunk) < ro_scal->num_gpuits) ?

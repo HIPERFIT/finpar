@@ -90,6 +90,10 @@ enum GPU_KERNEL { PRIV, VECT };
 
 GPU_KERNEL 
 priv_or_vect_kernel(const LoopROScalars& ro_scal) {
+#ifndef _OPTIMIZATION_MEM_COALES_ON
+  return VECT;
+#endif
+
 #if   (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 1)
     return VECT;
 #elif (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 2)
@@ -240,7 +244,9 @@ oclAllocArrays_PrivKernel (
     cl_int ciErr2;
     size_t cur_size;
     real_t*  glb_vhat = NULL;
+    ciErr = 0;
 
+#if 0
     { // 1. RO scalars
         cur_size = sizeof(LoopROScalars);
         ocl_arrs.ro_scals = clCreateBuffer(
@@ -251,6 +257,7 @@ oclAllocArrays_PrivKernel (
         ciErr |= clEnqueueWriteBuffer(cqCommandQueue, ocl_arrs.ro_scals, CL_TRUE, 0,
                                         cur_size, &ro_scals, 0, NULL, NULL);
     }
+#endif
 
     { // 2. Sobol RO Arrays
         const SobolArrays& cpu_arrs = sob_arrs;
@@ -352,7 +359,7 @@ runGPU_PRIV(
 
     oclCheckError(ciErr1, CL_SUCCESS);
 
-    clFinish(cqCommandQueue);
+    //clFinish(cqCommandQueue);
     struct timeval t_start, t_end, t_diff; unsigned long long elapsed;
     gettimeofday(&t_start, NULL);
 
@@ -422,7 +429,8 @@ oclAllocArrays_VectKernel (
     cl_int ciErr2;
     size_t cur_size;
     real_t*  glb_vhat;
-
+    ciErr = 0;
+#if 0
     { // 1. RO scalars
         cur_size = sizeof(LoopROScalars);
         ocl_arrs.ro_scals = clCreateBuffer(
@@ -432,6 +440,7 @@ oclAllocArrays_VectKernel (
         ciErr |= clEnqueueWriteBuffer(  cqCommandQueue, ocl_arrs.ro_scals, CL_TRUE, 0,
                                         cur_size, &ro_scals, 0, NULL, NULL);
     }
+#endif
 
     { // 2. SOBOL DIR VECTOR
         const SobolArrays& cpu_arrs = sob_arrs;
