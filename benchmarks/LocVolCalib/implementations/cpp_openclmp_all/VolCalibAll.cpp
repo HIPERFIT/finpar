@@ -152,7 +152,7 @@ int main() {
     {
       FILE* runtime = fopen(getenv("HIPERMARK_RUNTIME"), "w");
       FILE* result = fopen(getenv("HIPERMARK_RESULT"), "w");
-      fprintf(runtime, "%d\n", elapsed_usec / 1000);
+      fprintf(runtime, "%d\n", elapsed_usec);
       fclose(runtime);
       write_1Darr(result, res, OUTER_LOOP_COUNT);
       fclose(result);

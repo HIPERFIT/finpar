@@ -247,10 +247,10 @@ main = do s <- getContents
                                 hermite_coeffs hermite_weights (V.fromList sobol_dir_vct)
 
                  return $ do
-                   start <- getCPUTime -- In picoseconds; 1 millisecond == 10^9 picoseconds.
+                   start <- getCPUTime -- In picoseconds; 1 microsecond == 10^6 picoseconds.
                    let v = (win_genome, win_logLik, win_swap_arr)
                    end <- v `deepseq` getCPUTime
-                   return (v, (end - start) `div` 1000000000)
+                   return (v, (end - start) `div` 1000000)
 
         readInt1d    = readArray readInt
         readDouble1d = readArray readDouble

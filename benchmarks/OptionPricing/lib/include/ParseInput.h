@@ -135,7 +135,7 @@ void readDataSet(   LoopROScalars& scals, SobolArrays&      sob_arrs,
         }
 
         sob_arrs.sobol_fix_ind = (UCHAR*) (sob_arrs.sobol_dirvcts + sob_dim * scals.sobol_bits);
-        for ( int j; j < (1<<logMAX_CHUNK); j ++ ) sob_arrs.sobol_fix_ind[j] = 0;
+        for ( int j = 0; j < (1<<logMAX_CHUNK); j ++ ) sob_arrs.sobol_fix_ind[j] = 0;
     }
 
     { // reading the market (models) data

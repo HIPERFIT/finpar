@@ -204,7 +204,7 @@ __kernel void mlfi_brownianbridge_wiener_path1(
     __constant int  *bb_li, *bb_bi, *bb_ri;
     __constant real_t *bb_rw, *bb_lw, *bb_sd;
 
-    ULONG cur_it = get_global_id (0) << ro_scal->log_chunk;
+    unsigned long cur_it = get_global_id (0) << ro_scal->log_chunk;
     UINT m, i, md_dim = ro_scal->num_under, nb_path_dates = ro_scal->num_dates;
     UINT sobol_dim = ro_scal->num_under * nb_path_dates;
 

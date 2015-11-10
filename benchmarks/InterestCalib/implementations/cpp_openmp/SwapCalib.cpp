@@ -44,7 +44,7 @@ int main()
         FILE* runtime = fopen(getenv("HIPERMARK_RUNTIME"), "w");
         FILE* result = fopen(getenv("HIPERMARK_RESULT"), "w");
         const int Ps = get_CPU_num_threads();
-        fprintf(runtime, "%d\n", elapsed_usec / 1000);
+        fprintf(runtime, "%d\n", elapsed_usec);
         fclose(runtime);
 
         writeResult(result,
