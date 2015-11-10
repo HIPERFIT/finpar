@@ -51,6 +51,18 @@ run_medium:
 run_large: 
 	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
 
+prof_small:
+	export COMPUTE_PROFILE=1
+	export COMPUTE_PROFILE_CONFIG=/home/coancea/bin/nvvp.cfg
+	cat ../Data/Small/input.data ../Data/Small/output.data | ./$(EXECUTABLE) 2> Debug.txt
+	sed 's/OPENCL_/CUDA_/g' opencl_profile_0.log | sed 's/ndrange/grid/g' | sed 's/workitem/thread/g' | sed 's/workitem/thread/g' | sed 's/workgroupsize/threadblocksize/g' | sed 's/stapmemperworkgroup/stasmemperblock/g' >cuda_profile_0.log
+
+prof_large:
+	export COMPUTE_PROFILE=1
+	export COMPUTE_PROFILE_CONFIG=/home/coancea/bin/nvvp.cfg
+	cat ../Data/Large/input.data ../Data/Large/output.data | ./$(EXECUTABLE) 2> Debug.txt
+	sed 's/OPENCL_/CUDA_/g' opencl_profile_0.log | sed 's/ndrange/grid/g' | sed 's/workitem/thread/g' | sed 's/workitem/thread/g' | sed 's/workgroupsize/threadblocksize/g' | sed 's/stapmemperworkgroup/stasmemperblock/g' >cuda_profile_0.log
+
 
 #default: $(OBJECTS)
 #	$(CXX) $(CXXFLAGS) $(INCLUDES) -o $(EXECUTABLE) $(OBJECTS) $(LIB)
