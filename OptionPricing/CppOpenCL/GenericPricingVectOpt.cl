@@ -1,7 +1,7 @@
 /************************************/
 /************* MACROS ***************/
 /************************************/
-
+ 
 #define TYPE REAL
 #define FLAG uchar
 #include "../../include/Utilities.cl"
@@ -577,6 +577,13 @@ __kernel void mlfi_reduction_step1(
     {
         segm_scan_reg_block ( vhat_local - get_local_id(0), block_size * ro_scal->num_models, block_size );
         if( get_local_id(0) == 0 ) { 
+#if 0
+            for( int jj = 0; jj < ro_scal->num_models*block_size; jj+=block_size ) {
+                for( int ii = 0; ii < block_size-1; ii++ ) {
+                    vhat_local[jj+block_size-1] += vhat_local[jj+ii];
+                }
+            }
+#endif
             UINT glob_size = get_global_size(0)/block_size;
             for ( j = 0; j < ro_scal->num_models; j ++ ) {
                 model_vhat[ j * glob_size + get_group_id(0) ] = 

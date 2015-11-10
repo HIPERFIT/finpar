@@ -229,7 +229,8 @@ const char* oclErrorString(unsigned int err)
                     if(ciErrNum == CL_SUCCESS)
                     {
   		                shrLog(stdlog, "Platform name is %s\n", chBuffer);
-                        if( strstr(chBuffer, "NVIDIA") != NULL || 
+			if( //strstr(chBuffer, "Intel") != NULL || 
+                            strstr(chBuffer, "NVIDIA") != NULL || 
                             strstr(chBuffer, "Apple")  != NULL || 
                             strstr(chBuffer, "Advanced") != NULL )
                         {
@@ -662,10 +663,12 @@ void build_for_GPU(
 
         // 3. get devices
         shrLog(stdlog, "Get devices...\n");
-        ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_GPU, 0, NULL, &nDevice);
+//        ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_GPU, 0, NULL, &nDevice);
+        ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_ALL, 0, NULL, &nDevice);
         oclCheckError(ciErr1, CL_SUCCESS);
         cdDevices = (cl_device_id *)malloc(nDevice * sizeof(cl_device_id) );
-        ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_GPU, nDevice, cdDevices, NULL);
+        //ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_GPU, nDevice, cdDevices, NULL);
+        ciErr1 = clGetDeviceIDs(cpPlatform, CL_DEVICE_TYPE_ALL, nDevice, cdDevices, NULL);
         oclCheckError(ciErr1, CL_SUCCESS);
 	shrLog(stdlog, "Got %d devices:\n", nDevice);
 	#define MAX_STRING_LENGTH 1024

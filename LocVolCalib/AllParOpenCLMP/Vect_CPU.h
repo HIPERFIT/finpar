@@ -87,7 +87,7 @@ void iteration_expanded_CPU (
 
             const unsigned int ind = k*NUM_X*NUM_Y + j*NUM_X;
 
-#if 0
+#if 1
             // As a (vectorized) scan (the vector is dimension "y")
             tridag_scan_array(
                     a+ind, b+ind, c+ind,
@@ -129,7 +129,7 @@ void iteration_expanded_CPU (
 
             const unsigned int ind = k*NUM_X*NUM_Y + i*NUM_Y;
 
-#if 0
+#if 1
             // As a (vectorized) scan (the vector is dimension "x")
             tridag_scan_array(
                     a+ind, b+ind, c+ind,
