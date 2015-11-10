@@ -240,7 +240,8 @@ oclAllocArrays_PrivKernel (
     cl_int ciErr2;
     size_t cur_size;
     REAL*  glb_vhat = NULL;
-
+    ciErr = 0;
+#if 0
     { // 1. RO scalars
         cur_size = sizeof(LoopROScalars);
         ocl_arrs.ro_scals = clCreateBuffer(
@@ -251,6 +252,7 @@ oclAllocArrays_PrivKernel (
         ciErr |= clEnqueueWriteBuffer(cqCommandQueue, ocl_arrs.ro_scals, CL_TRUE, 0,
                                         cur_size, &ro_scals, 0, NULL, NULL);
     }
+#endif
 
     { // 2. Sobol RO Arrays
         const SobolArrays& cpu_arrs = sob_arrs;
@@ -350,25 +352,27 @@ runGPU_PRIV(
     priv_sz = PRIV_MULT * ro_scals.num_models;
     ciErr1 |= clSetKernelArg(ckGenPricing, counter++, priv_sz, NULL); // model_vhat (the private one)
 
-    oclCheckError(ciErr1, CL_SUCCESS);
+    //oclCheckError(ciErr1, CL_SUCCESS);
+    //clFinish(cqCommandQueue);
 
-    clFinish(cqCommandQueue);
+#if 0
     struct timeval t_start, t_end, t_diff; unsigned long long elapsed;
     gettimeofday(&t_start, NULL);
-
+#endif
     // 8. ENQUEUE KERNEL!!!  //
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, ckGenPricing, 1, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL);
-    oclCheckError(ciErr1, CL_SUCCESS);
+    //oclCheckError(ciErr1, CL_SUCCESS);
 
     clFinish(cqCommandQueue);
+#if 0
     gettimeofday(&t_end, NULL);
     timeval_subtract(&t_diff, &t_end, &t_start);
     elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     printf("KERNEL TIME IS: %llu\n\n", elapsed);
 
     gettimeofday(&t_start, NULL);
-
+#endif
     // 9. FINALLY, WRITE BACK!!! //
     priv_sz = (globalWorkSize[0]/ro_scals.BLOCK)*ro_scals.num_models*sizeof(REAL);
 
@@ -379,10 +383,12 @@ runGPU_PRIV(
     clReleaseKernel(ckGenPricing);
 
     clFinish(cqCommandQueue);
+#if 0
     gettimeofday(&t_end, NULL);
     timeval_subtract(&t_diff, &t_end, &t_start);
     elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     printf("COPY-OUT and KERNEL RELEASE TIME IS: %llu\n\n", elapsed);
+#endif
 }
 
 
@@ -422,7 +428,8 @@ oclAllocArrays_VectKernel (
     cl_int ciErr2;
     size_t cur_size;
     REAL*  glb_vhat;
-
+    ciErr = 0;
+#if 0
     { // 1. RO scalars
         cur_size = sizeof(LoopROScalars);
         ocl_arrs.ro_scals = clCreateBuffer(
@@ -432,7 +439,7 @@ oclAllocArrays_VectKernel (
         ciErr |= clEnqueueWriteBuffer(  cqCommandQueue, ocl_arrs.ro_scals, CL_TRUE, 0,
                                         cur_size, &ro_scals, 0, NULL, NULL);
     }
-
+#endif
     { // 2. SOBOL DIR VECTOR
         const SobolArrays& cpu_arrs = sob_arrs;
 
