@@ -435,10 +435,10 @@ main = do s <- getContents
                  let params = (0.03, 5.0, 0.2, 0.6, 0.5) --(s0, t, alpha, nu, beta)
 
                  return $ do
-                   start <- getCPUTime -- In picoseconds; 1 millisecond == 10^9 picoseconds.
+                   start <- getCPUTime -- In picoseconds; 1 microsecond == 10^6 picoseconds.
                    let v = compute (outer, num_x, num_y, num_t) params
                    end <- v `deepseq` getCPUTime
-                   return (v, (end - start) `div` 1000000000)
+                   return (v, (end - start) `div` 1000000)
 
 -- ghc -O2 -msse2 -rtsopts  PricingLexiFi.hs
 -- ./PricingLexiFi +RTS -K128m -RTS < ../Data/Medium/input.data
