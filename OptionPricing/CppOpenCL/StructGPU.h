@@ -90,6 +90,9 @@ enum GPU_KERNEL { PRIV, VECT };
 
 GPU_KERNEL 
 priv_or_vect_kernel(const LoopROScalars& ro_scal) {
+#ifndef _OPTIMIZATION_MEM_COALES_ON
+    return VECT;
+#endif
 #if   (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 1)
     return VECT;
 #elif (_OPTIMIZATION_COST_MODEL_OR_FORCE_VECT_OR_FORCE_PRIV == 2)
