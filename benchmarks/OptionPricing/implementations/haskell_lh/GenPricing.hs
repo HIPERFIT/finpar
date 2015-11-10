@@ -483,9 +483,9 @@ main = do s <- getContents
                                 md_discts bb_inds   bb_data
 
                  return $ do
-                   start <- getCPUTime -- In picoseconds; 1 millisecond == 10^9 picoseconds.
+                   start <- getCPUTime -- In picoseconds; 1 microsecond == 10^6 picoseconds.
                    end <- v `deepseq` getCPUTime
-                   return (v, (end - start) `div` 1000000000)
+                   return (v, (end - start) `div` 1000000)
 
 
         readInt2d    = readArray $ readArray readInt
