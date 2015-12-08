@@ -1,5 +1,7 @@
 #define FAST_BB
 
+#define _OPTIMIZATION_SOBOL_STRENGTH_RED_RECURR
+
 #include <iostream>
 #include <fstream>
 
