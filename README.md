@@ -8,7 +8,7 @@ working directories:
 1. Option Pricing
   ./OptionPricing/OrigCpp      -- sequential, original C(++) code
   ./OptionPricing/CppOpenMP    -- OpenMP version
-  ./OptionPricing/CppOpenCL    -- GPU version using OpenCL
+  ./OptionPricing/CppOpenCL    -- GPU version using OpenCL. Various optimizations, such as memory coalescing, fussion-fission, Sobol strength reduction, can be (de)selected by macro definition in file "./OptionPricing/includeC/Optimizations.h".
   ./OptionPricing/HaskellLH    -- Haskell version documenting all parallelism.
 
 2. Local Volatility Calibration

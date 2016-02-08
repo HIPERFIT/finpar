@@ -110,21 +110,21 @@ struct OclBuffers {
     cl_mem best_ind;
     cl_mem best_val;
 
-    cl_mem    shape;           // [ SS * 4 ]
-    cl_mem    swap_quotes;     // [ NUM_SWAP_QUOTES * 4 ]
-    cl_mem    genomes;         // [13 * POP_SIZE]
-    cl_mem    ci_t1cs_scale;   // [ 4 * SS * POP_SIZE ]
-    cl_mem    new_quote_price; // [ 2 * NUM_SWAP_QUOTES * POP_SIZE ]
-    cl_mem    accum0;          // [ NUM_SWAP_QUOTES * NUM_HERMITE ]
-    cl_mem    scalars;         // [ 8 * NUM_SWAP_QUOTES * POP_SIZE ]
+    cl_mem    shape;           // [ SS * 4 ] (short)
+    cl_mem    swap_quotes;     // [ NUM_SWAP_QUOTES * 4 ] (real)
+    cl_mem    genomes;         // [13 * POP_SIZE] (real)
+    cl_mem    ci_t1cs_scale;   // [ 4 * SS * POP_SIZE ] (real)
+    cl_mem    new_quote_price; // [ 2 * NUM_SWAP_QUOTES * POP_SIZE ] (real)
+    cl_mem    accum0;          // [ NUM_SWAP_QUOTES * NUM_HERMITE ]  (real)
+    cl_mem    scalars;         // [ 8 * NUM_SWAP_QUOTES * POP_SIZE ] (real)
 
-    cl_mem    gauss_coefs;
-    cl_mem    gauss_weights;
+    cl_mem    gauss_coefs;    // NUM_HERMITE * sizeof(REAL);
+    cl_mem    gauss_weights;  // NUM_HERMITE * sizeof(REAL);
 
-    cl_mem    gene_ranges;
-    cl_mem    sobol_dir_vct;
+    cl_mem    gene_ranges;    // 10 * sizeof(REAL)
+    cl_mem    sobol_dir_vct;  // 30 * sizeof(REAL)
 
-    cl_mem    accept_cond;
+    cl_mem    accept_cond;    // POP_SIZE*sizeof(char)
 
 
     void releaseResources (  ) {
