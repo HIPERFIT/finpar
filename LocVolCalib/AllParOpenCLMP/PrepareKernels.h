@@ -200,7 +200,6 @@ cl_kernel make_prepare_tridag_X(
     { // Finally, enqueue kernel
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckPreTridagX, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -215,7 +214,6 @@ void run_prepare_tridag_X(
     cl_int    ciErr1;
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckPreTridagX, 3, NULL,
                                          kernels.GWS_XYZ, kernels.LWS_XYZ, 0, NULL, NULL);
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -281,7 +279,6 @@ void run_NordeaKernelX(
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckNordeaKernelX, 1, NULL,
                                        &globalWorkSize, &localWorkSize, 0, NULL, NULL);
 
-    ciErr1 |= clFinish(cqCommandQueue);
 
     oclCheckError(ciErr1, CL_SUCCESS);
 }
@@ -337,7 +334,6 @@ cl_kernel make_prepare_tridag_Y(
     { // Finally, enqueue kernel
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckPreTridagY, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -352,7 +348,6 @@ void run_prepare_tridag_Y(
     cl_int    ciErr1;
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckPreTridagY, 3, NULL,
                                          &kernels.GWS_YXZ[0], &kernels.LWS_YXZ[0], 0, NULL, NULL);
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -416,7 +411,6 @@ void run_NordeaKernelY(
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckNordeaKernelY, 1, NULL,
                                        &globalWorkSize, &localWorkSize, 0, NULL, NULL);
 
-    ciErr1 |= clFinish(cqCommandQueue);
 
     oclCheckError(ciErr1, CL_SUCCESS);
 }
@@ -466,7 +460,6 @@ cl_kernel make_MatMultScan(
     { // Finally, the array size:
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckTridagMatMultX, 1, NULL,
                                          &globalWorkSize, &localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -488,7 +481,6 @@ void run_MatMultScan(
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckTridagMatMult[X], 1, NULL,
                                         &globalWorkSize, &localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -530,7 +522,6 @@ cl_kernel make_FwdFunCompScan(
 #if 0
     ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckTridagFwdFunComp, 1, NULL,
                                      &globalWorkSize, &localWorkSize, 0, NULL, NULL);
-    ciErr1 |= clFinish(cqCommandQueue);
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
 
@@ -551,7 +542,6 @@ void run_FwdFunCompScan(
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckTridagFwdFunComp[X], 1, NULL,
                                         &globalWorkSize, &localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -589,7 +579,6 @@ cl_kernel make_conclude_matmult (
     { // Finally, enqueue kernel!
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckConcludeMatMult, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -612,7 +601,6 @@ void run_conclude_matmult(
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckConcludeMatMult[X], 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -650,7 +638,6 @@ cl_kernel make_preludeFwdMapFunComp (
     { // Finally, enqueue kernel!
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckPreludeFwdFunComp, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -672,7 +659,6 @@ void run_preludeFwdMapFunComp(
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckPreludeFwdFunComp[X], 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -705,7 +691,6 @@ cl_kernel make_postFwdMapFunComp (
     { // Finally, enqueue kernel!
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckPostFwdFunComp, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -727,7 +712,6 @@ void run_postFwdMapFunComp (
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckPostFwdFunComp[X], 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -765,7 +749,6 @@ cl_kernel make_preludeBwdMapFunComp (
     { // Finally, enqueue kernel!
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckPreludeBwdFunComp, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -787,7 +770,6 @@ void run_preludeBwdMapFunComp (
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckPreludeBwdFunComp[X], 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -821,7 +803,6 @@ cl_kernel make_postBwdMapFunComp (
     { // Finally, enqueue kernel!
         ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckPostBwdFunComp, 3, NULL,
                                          globalWorkSize, localWorkSize, 0, NULL, NULL);
-        ciErr1 |= clFinish(cqCommandQueue);
     }
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
@@ -843,7 +824,6 @@ void run_postBwdMapFunComp (
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckPostBwdFunComp[X], 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -912,7 +892,6 @@ void run_TRIDAG_ALL_OPT (
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckTridagAllOpt[X], 1, NULL,
                                         &globalWorkSize, &localWorkSize, 0, NULL, NULL );
 
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -956,7 +935,6 @@ cl_kernel make_transposeGPU(
     // enqueue kernel
     ciErr1 |= clEnqueueNDRangeKernel(cqCommandQueue, ckMatTransp, 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL);
-    ciErr1 |= clFinish(cqCommandQueue);
 #endif
     oclCheckError(ciErr1, CL_SUCCESS);
 
@@ -974,7 +952,6 @@ void run_transposeGPU (
 
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernel, 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -1014,7 +991,6 @@ void run_transposeGPU_WithUpdate (
 
     ciErr1 = clEnqueueNDRangeKernel(cqCommandQueue, kernels.ckMatTranspUpdate, 3, NULL,
                                         globalWorkSize, localWorkSize, 0, NULL, NULL );
-    ciErr1 |= clFinish(cqCommandQueue);
     oclCheckError(ciErr1, CL_SUCCESS);
 }
 
@@ -1389,7 +1365,6 @@ void testMatMultScan (
 
             oclCheckError(ciErr, CL_SUCCESS);
             shrLog(stdlog, "After executing kernel!\n");
-            ciErr |= clFinish(cqCommandQueue);
         }
 
         { // read back from GPU
@@ -1397,7 +1372,6 @@ void testMatMultScan (
                             cqCommandQueue, cl_tmp, CL_TRUE, 0,
                             4 * NUM_X * NUM_Y * sizeof(REAL), tmp, 0, NULL, NULL
                     );
-            ciErr |= clFinish(cqCommandQueue);
             oclCheckError(ciErr, CL_SUCCESS);
 
             clReleaseKernel(ckTridagMatMultX);
@@ -1515,7 +1489,6 @@ void testFunCompScan (
 
             oclCheckError(ciErr, CL_SUCCESS);
             shrLog(stdlog, "After executing kernel!\n");
-            ciErr |= clFinish(cqCommandQueue);
         }
 
         { // read back from GPU
@@ -1523,7 +1496,6 @@ void testFunCompScan (
                             cqCommandQueue, cl_tmp, CL_TRUE, 0,
                             ARR_SIZE, tmp, 0, NULL, NULL
                     );
-            ciErr |= clFinish(cqCommandQueue);
             oclCheckError(ciErr, CL_SUCCESS);
 
             clReleaseKernel(ckTridagMatMultX);
