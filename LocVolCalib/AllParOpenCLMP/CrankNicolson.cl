@@ -698,7 +698,7 @@ __kernel void transposeUpdateScalars(
 /**************** INLINED TRIDAG VERSION ***********************/
 /***************************************************************/
 
-inline void tridag_inline_local (
+static inline void tridag_inline_local (
         /*** Read-Write Temporary Arrays ***/
 //        __global   REAL*        a,
         REAL                    a_elem,
