@@ -138,7 +138,6 @@ runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs
             cxGPUContext, cqCommandQueue[dev_id], ro_scal, cpu_arrs, ocl_arrs
         );
 
-
     // make all kernels!
     make_kernels( cqCommandQueue[dev_id], cpProgram, ro_scal, ocl_arrs, kernels );
 
@@ -151,6 +150,11 @@ runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs
             run_GPUkernels_one_time_iteration ( cqCommandQueue[dev_id], kernels );
         } // END TIME LOOP!
 
+        clFinish(cqCommandQueue[dev_id]);
+
+        gettimeofday(&t_end, NULL);
+        timeval_subtract(&t_diff, &t_end, &t_start);
+        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
 
         { // WRITE BACK THE RESULT ARRAY TO CPU !!! //
             cl_int  ciErr;
@@ -166,10 +170,6 @@ runOnGPU ( RWScalars& ro_scal, NordeaArrays& cpu_arrs, oclNordeaArrays& ocl_arrs
                     cqCommandQueue[dev_id], cxGPUContext, cpProgram, cdDevices, ocl_arrs, kernels
                 );
         }
-
-        gettimeofday(&t_end, NULL);
-        timeval_subtract(&t_diff, &t_end, &t_start);
-        elapsed = t_diff.tv_sec*1e6+t_diff.tv_usec;
     }
 
     return elapsed;
